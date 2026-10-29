@@ -42,10 +42,10 @@ jobs:
           build-mode: manual
 
       - name: Restore locked dependencies
-        run: dotnet restore src/DungeonGuide/DungeonGuide.csproj --locked-mode
+        run: dotnet restore Valheim.DungeonGuide.slnx --locked-mode
 
       - name: Build for analysis
-        run: dotnet build src/DungeonGuide/DungeonGuide.csproj --configuration Release --no-restore
+        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
 
       - name: Analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4

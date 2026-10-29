@@ -36,9 +36,9 @@ Install the .NET SDK selected in [`global.json`](../global.json), then run from
 the repository root:
 
 ```sh
-dotnet restore src/DungeonGuide/DungeonGuide.csproj --locked-mode
-dotnet format src/DungeonGuide/DungeonGuide.csproj --no-restore --verify-no-changes --severity warn
-dotnet build src/DungeonGuide/DungeonGuide.csproj --configuration Release --no-restore
+dotnet restore Valheim.DungeonGuide.slnx --locked-mode
+dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
+dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
 ```
 
 The output is `src/DungeonGuide/bin/Release/netstandard2.1/DungeonGuide.dll`.
@@ -61,10 +61,17 @@ into the plugin artifact. These references do not establish compatibility with
 every Valheim version or authorize redistribution of game assemblies.
 
 When deliberately updating a dependency, change its version, run
-`dotnet restore src/DungeonGuide/DungeonGuide.csproj --force-evaluate`, and review
+`dotnet restore Valheim.DungeonGuide.slnx --force-evaluate`, and review
 the resulting `packages.lock.json` alongside the code change.
 
 ## Structure
+
+[`Valheim.DungeonGuide.slnx`](../Valheim.DungeonGuide.slnx) is the repository's
+solution and the entry point for IDEs, local builds, formatting, and CI. The
+repository's .NET 10 SDK supports this XML solution format. Keep one solution
+and register each new production or test project with
+`dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj` so repository-wide
+checks include it.
 
 `src/DungeonGuide/GuidePlugin.cs` is the BepInEx entry point. It currently only
 logs startup. `PluginInfo.cs` owns the stable identity and version used by the

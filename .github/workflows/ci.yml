@@ -38,13 +38,13 @@ jobs:
           global-json-file: global.json
 
       - name: Restore locked dependencies
-        run: dotnet restore src/DungeonGuide/DungeonGuide.csproj --locked-mode
+        run: dotnet restore Valheim.DungeonGuide.slnx --locked-mode
 
       - name: Check formatting
-        run: dotnet format src/DungeonGuide/DungeonGuide.csproj --no-restore --verify-no-changes --severity warn
+        run: dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
 
       - name: Build
-        run: dotnet build src/DungeonGuide/DungeonGuide.csproj --configuration Release --no-restore
+        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
 
       - name: Prepare plugin artifact
         if: runner.os == 'Linux'

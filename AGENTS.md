@@ -84,6 +84,9 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 ## Verification and handoff
 
+- Use `Valheim.DungeonGuide.slnx` for repository-wide restore, formatting, and
+  builds. Add every new production or test project to this solution so CI
+  includes it; do not maintain a duplicate legacy `.sln`.
 - Always state the target Valheim version in the README and release notes.
   Keep the environment, verification date, and evidence in
   `docs/development.md#compatibility-and-verification` current when changing the
