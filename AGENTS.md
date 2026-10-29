@@ -78,6 +78,12 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 ## Verification and handoff
 
+- Always state the target Valheim version in the README and release notes.
+  Keep the environment, verification date, and evidence in
+  `docs/development.md#compatibility-and-verification` current when changing the
+  target. Distinguish compile-time reference versions from the installed game,
+  and compilation from actual load/gameplay verification. Do not claim support
+  for untested versions.
 - Run the relevant build, domain tests, and formatting checks for implementation
   changes, using the commands actually present in the repository.
 - Do not invent projects, commands, passing checks, or compatibility claims.

@@ -1,5 +1,35 @@
 # Development
 
+## Compatibility and verification
+
+The current development target was checked against a local Windows installation
+on **2026-10-29**:
+
+| Component | Recorded version |
+| --- | --- |
+| Valheim | **1.0.21** |
+| Steam build ID | `26249040` |
+| BepInExPack Valheim | `5.4.2351` |
+| BepInEx loader | `5.4.23.5` |
+| Unity runtime | `6000.0.75.2503836` |
+
+The game, loader, pack, and Unity versions were read from the installed game's
+`BepInEx/LogOutput.log`; the Steam build ID came from `appmanifest_892970.acf`.
+This records the intended runtime environment. The bootstrap has passed CI
+compilation and CodeQL analysis, but has not yet been load-tested in this game.
+Other game versions are unverified.
+
+The compile-time package references are `BepInEx.BaseLib 5.4.21` and
+`UnityEngine.Modules 2022.3.50`, not copies of the installed game assemblies.
+They provide the small shared API surface used by the bootstrap; they do not
+mean it was built against the exact Unity 6 assemblies above. Revisit the
+reference baseline when introducing game-specific integration APIs.
+
+For each release, record the target Valheim version and the runtime environment
+actually checked, including the date and verification method. Update the README
+target summary together with this table. Report compilation, load checks, and
+gameplay checks separately rather than inferring support from a successful build.
+
 ## Build
 
 Install the .NET SDK selected in [`global.json`](../global.json), then run from
