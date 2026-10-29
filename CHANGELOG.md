@@ -4,6 +4,8 @@
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
 
+- English interface by default; Czech follows Valheim's Czech language selection.
+  Other languages fall back to English, and saved names/notes remain unchanged.
 - Automatic activation only inside generated dungeon rooms; outdoor bases retain
   the native map unless manual outdoor mapping is explicitly enabled.
 - Native dungeon floor maps and minimap, explored-only by default, with a full scanned view toggle.

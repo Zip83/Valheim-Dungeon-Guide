@@ -80,7 +80,7 @@ projects with `dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj`.
 | --- | --- |
 | `src/DungeonGuide/DungeonGuide.cs` | Composition and Unity lifecycle callbacks |
 | `src/DungeonGuide.Domain/` | Geometry graph, route/floor policies, exploration, chest rules, save records |
-| `src/DungeonGuide.Domain/Content/` | Shared player-facing copy; Czech for this version |
+| `src/DungeonGuide.Domain/Content/` | English player-facing copy with Czech selected only by the game language |
 | `src/DungeonGuide/Application/` | Session and navigation coordination, commands, scheduling |
 | `src/DungeonGuide/Integration/` | Unity/game inspection, bounded scans, input, Harmony hooks |
 | `src/DungeonGuide/Presentation/` | Native-map integration, texture/UI rendering, instructions, map palette |
@@ -88,10 +88,18 @@ projects with `dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj`.
 | `tests/DungeonGuide.Tests/` | xUnit regressions against the production domain assembly |
 
 The domain project has no Unity, BepInEx, Harmony, or filesystem references.
-`GuideText` is internal shared content exposed only to the plugin through a friend
-assembly; tests retain independent expected labels. The pure floor-label formatter
-uses this catalog. `MapPalette` owns visual colors. Configuration keys and engine
-API identifiers remain at their respective integration boundaries.
+`GuideText` is an instance catalog with an injected selected-language accessor.
+English is the fallback; only Valheim's `Czech` language selects Czech copy.
+`GameLanguage` reads `Localization.instance.GetSelectedLanguage()` at most once
+per frame. This public instance API was inspected in the installed Valheim 1.0.21
+assembly. Neither OS culture nor a separate mod language option controls the UI.
+The native map recreates its controls when switching between English and Czech;
+other captions use the live catalog. Pure domain formatters receive the language
+accessor without depending on Unity. Tests use independent expected labels and
+cover fallback, live switching, and preservation of saved names. The catalog is
+internal, with friend access for the plugin and its tests. `MapPalette` owns
+visual colors. Configuration keys and engine API identifiers remain at their
+respective integration boundaries.
 
 `PluginInfo` owns the stable GUID, display name, and version. Keep its version
 aligned with both production projects. `Awake` is a Unity message, not an override

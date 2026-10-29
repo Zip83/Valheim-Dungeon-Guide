@@ -9,6 +9,7 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class CommandDispatcher
 {
+    private readonly GuideText _text;
     private readonly GuideRuntime _runtime;
     private readonly MapViewState _view;
     private readonly NavigationCoordinator _navigator;
@@ -37,8 +38,10 @@ internal sealed class CommandDispatcher
         ChestActions chests,
         GuideSettings settings,
         UserNotice notice,
-        FloorNavigationPolicy floorPolicy)
+        FloorNavigationPolicy floorPolicy,
+        GuideText text)
     {
+        _text = text;
         _runtime = runtime;
         _view = view;
         _navigator = navigator;
@@ -132,7 +135,7 @@ internal sealed class CommandDispatcher
                 var list = session.Chests.Targets();
                 if (list.Count == 0)
                 {
-                    _notice.Show(GuideText.NoKnownChest);
+                    _notice.Show(_text.NoKnownChest);
                     break;
                 }
 
@@ -154,7 +157,7 @@ internal sealed class CommandDispatcher
         var floor = _floorPolicy.Next(session.Layout, Player.m_localPlayer.transform.position.y, delta);
         if (floor < 0 || floor >= session.Floors.Count)
         {
-            _notice.Show(GuideText.NoAdjacentFloor);
+            _notice.Show(_text.NoAdjacentFloor);
             return;
         }
 

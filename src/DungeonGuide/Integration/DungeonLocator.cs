@@ -9,6 +9,16 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class DungeonLocator
 {
+    private readonly GuideText _text;
+
+    /// <summary>
+    /// Uses the shared player-facing text catalog for the game's selected language.
+    /// </summary>
+    public DungeonLocator(GuideText text)
+    {
+        _text = text;
+    }
+
     /// <summary>
     /// Returns the loaded generated dungeon containing the supplied position, or null outside one.
     /// </summary>
@@ -72,7 +82,7 @@ internal sealed class DungeonLocator
     {
         Id = "fortress_" + Mathf.FloorToInt(p.x / 128) + "_" + Mathf.FloorToInt(p.y / 1000) + "_"
             + Mathf.FloorToInt(p.z / 128),
-        Label = GuideText.ManualArea,
+        Label = _text.ManualArea,
         IsManual = true,
         Bounds = new Bounds(p, new Vector3(radius * 2, height * 2, radius * 2)),
         Rooms = Array.Empty<Bounds>()

@@ -7,6 +7,16 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class ChestNameDialog
 {
+    private readonly GuideText _text;
+
+    /// <summary>
+    /// Uses the shared player-facing text catalog for the game's selected language.
+    /// </summary>
+    public ChestNameDialog(GuideText text)
+    {
+        _text = text;
+    }
+
     /// <summary>
     /// Adapts the native text-input receiver contract to a pending chest-note update.
     /// </summary>
@@ -38,7 +48,7 @@ internal sealed class ChestNameDialog
     {
         if (TextInput.instance)
         {
-            TextInput.instance.RequestText(new Receiver(text, accept), GuideText.ChestNotePrompt, 80);
+            TextInput.instance.RequestText(new Receiver(text, accept), _text.ChestNotePrompt, 80);
         }
     }
 }

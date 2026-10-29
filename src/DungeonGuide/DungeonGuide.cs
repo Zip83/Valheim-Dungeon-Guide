@@ -21,6 +21,8 @@ public sealed class DungeonGuide : BaseUnityPlugin
     /// </summary>
     private void Awake()
     {
+        var language = new GameLanguage();
+        var text = new GuideText(language.Current);
         var settings = new GuideSettings(Config);
         var notice = new UserNotice();
         var view = new MapViewState
@@ -39,11 +41,11 @@ public sealed class DungeonGuide : BaseUnityPlugin
                 new BreakablePassageVerifier(settings.Approved)),
             new JumpEvaluator(physics));
         var repository = new JsonRunRepository(Path.Combine(Paths.ConfigPath, "DungeonGuide"), new SaveMigration());
-        var lifecycle = new SessionLifecycle(repository, Logger, notice);
+        var lifecycle = new SessionLifecycle(repository, Logger, notice, text);
         var runtime = new GuideRuntime(
             this,
             settings,
-            new DungeonLocator(),
+            new DungeonLocator(text),
             new DungeonActivationPolicy(),
             scanner,
             new FloorDetector(new FloorLandingDetector()),
@@ -53,18 +55,19 @@ public sealed class DungeonGuide : BaseUnityPlugin
             Logger,
             notice);
         var floorPolicy = new FloorNavigationPolicy();
-        var numbering = new FloorNumbering();
+        var numbering = new FloorNumbering(language.Current);
         var navigator = new NavigationCoordinator(new RoutePlanner(), locator, floorPolicy);
         var cursor = new RouteCursor();
         var chests = new ChestActions(
             new ChestSelector(new ChestTargetPolicy()),
             new ChestSnapshotReader(),
-            new ChestNameDialog(),
+            new ChestNameDialog(text),
             locator,
             lifecycle,
-            notice);
+            notice,
+            text);
         chests.DestinationRequested += navigator.ToChest;
-        var commands = new CommandDispatcher(runtime, view, navigator, chests, settings, notice, floorPolicy);
+        var commands = new CommandDispatcher(runtime, view, navigator, chests, settings, notice, floorPolicy, text);
         var input = new InputRouter(settings, commands.Execute);
         var texture = new MapTextureRenderer(new MapExtentFitter());
         var maps = new NativeMapPresenter(
@@ -73,7 +76,8 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new MapViewportController(),
             numbering,
             commands.Execute,
-            navigator.ToChest);
+            navigator.ToChest,
+            text);
         _loop = new GuideGameLoop(
             runtime,
             view,
@@ -82,9 +86,9 @@ public sealed class DungeonGuide : BaseUnityPlugin
             navigator,
             texture,
             maps,
-            new OverlayPresenter(texture, numbering),
-            new NavigationHud(notice, new NavigationInstructionFormatter(cursor, numbering)),
-            new DynamicRouteValidator(physics, cursor));
+            new OverlayPresenter(texture, numbering, text),
+            new NavigationHud(notice, new NavigationInstructionFormatter(cursor, numbering, text)),
+            new DynamicRouteValidator(physics, cursor, text));
         commands.ViewChanged += _loop.RefreshView;
         commands.FitRequested += maps.Center;
         _hooks = new MapHooks(

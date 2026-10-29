@@ -9,14 +9,16 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class NavigationInstructionFormatter
 {
+    private readonly GuideText _text;
     private readonly RouteCursor _cursor;
     private readonly FloorNumbering _numbering;
 
     /// <summary>
     /// Uses route progress and entrance-relative floor labels to format instructions.
     /// </summary>
-    public NavigationInstructionFormatter(RouteCursor cursor, FloorNumbering numbering)
+    public NavigationInstructionFormatter(RouteCursor cursor, FloorNumbering numbering, GuideText text)
     {
+        _text = text;
         _cursor = cursor;
         _numbering = numbering;
     }
@@ -29,12 +31,12 @@ internal sealed class NavigationInstructionFormatter
         switch (navigation.Goal)
         {
             case NavigationGoal.Explore:
-                return GuideText.Explore;
+                return _text.Explore;
             case NavigationGoal.Chest:
-                return (navigation.Chest.collect ? GuideText.CollectChest : GuideText.ChestDestination)
+                return (navigation.Chest.collect ? _text.CollectChest : _text.ChestDestination)
                 + navigation.Chest.label;
             case NavigationGoal.Entrance:
-                return session.Area.Entrance.HasValue ? GuideText.EntranceRoom : GuideText.UnknownEntrance;
+                return session.Area.Entrance.HasValue ? _text.EntranceRoom : _text.UnknownEntrance;
             case NavigationGoal.Floor:
                 return _numbering.Label(session.Floors, navigation.DestinationFloor, session.Area.Entrance?.y);
             default:
@@ -58,13 +60,13 @@ internal sealed class NavigationInstructionFormatter
             switch (navigation.Status)
             {
                 case NavigationStatus.OffGraph:
-                    return GuideText.ApproachPassage;
+                    return _text.ApproachPassage;
                 case NavigationStatus.ExplorationExhausted:
-                    return GuideText.ExplorationExhausted;
+                    return _text.ExplorationExhausted;
                 case NavigationStatus.NoRoute:
-                    return GuideText.NoVerifiedRoute;
+                    return _text.NoVerifiedRoute;
                 default:
-                    return session.Scanning ? GuideText.PreparingRoute : "";
+                    return session.Scanning ? _text.PreparingRoute : "";
             }
         }
 
@@ -76,26 +78,26 @@ internal sealed class NavigationInstructionFormatter
         var edge = a.Edges.FirstOrDefault(e => e.To == route[next]);
         if (near == next && Point.Distance(UnityPoints.P(player.transform.position), b.Position) < 2)
         {
-            return GuideText.NearDestination;
+            return _text.NearDestination;
         }
 
         if (edge?.Kind == PassageKind.Jump)
         {
-            return GuideText.JumpInstruction;
+            return _text.JumpInstruction;
         }
 
         if (edge?.Kind == PassageKind.Drop)
         {
-            return GuideText.DropInstruction;
+            return _text.DropInstruction;
         }
 
         var delta = UnityPoints.V(b.Position) - player.transform.position;
         var angle = Vector3.SignedAngle(player.transform.forward, new Vector3(delta.x, 0, delta.z), Vector3.up);
         var turn = Mathf.Abs(angle) < 25
-            ? GuideText.Straight
-            : Mathf.Abs(angle) > 145 ? GuideText.TurnAround : angle > 0 ? GuideText.Right : GuideText.Left;
-        return turn + (delta.y > 0.5f ? GuideText.UpIndicator : delta.y < -0.5f ? GuideText.DownIndicator : "")
-            + GuideText.Separator
+            ? _text.Straight
+            : Mathf.Abs(angle) > 145 ? _text.TurnAround : angle > 0 ? _text.Right : _text.Left;
+        return turn + (delta.y > 0.5f ? _text.UpIndicator : delta.y < -0.5f ? _text.DownIndicator : "")
+            + _text.Separator
             + delta.magnitude.ToString("0.0")
             + " m";
     }

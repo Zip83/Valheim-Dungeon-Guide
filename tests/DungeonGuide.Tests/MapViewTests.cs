@@ -9,7 +9,7 @@ namespace DungeonGuide.Tests;
 public sealed class MapViewTests
 {
     /// <summary>
-    /// Floor labels describe their position relative to the known entrance.
+    /// Czech floor labels describe their position relative to the known entrance.
     /// </summary>
     [Theory]
     [InlineData(1, 12f, "Vstupní patro 0")]
@@ -18,7 +18,7 @@ public sealed class MapViewTests
     [InlineData(0, null, "Patro 0 (odspodu)")]
     public void LabelsFloorRelativeToEntrance(int floor, float? entrance, string expected)
     {
-        Assert.Equal(expected, new FloorNumbering().Label(new List<float> { 0, 12, 24 }, floor, entrance));
+        Assert.Equal(expected, new FloorNumbering(() => "Czech").Label(new List<float> { 0, 12, 24 }, floor, entrance));
     }
 
     /// <summary>

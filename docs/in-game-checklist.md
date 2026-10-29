@@ -4,6 +4,17 @@ Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**, plugin **0.2.1**.
 Status: pending for this repository build. Record actual results, dungeon type,
 other map mods, versions, and relevant log excerpts when performing these checks.
 
+## Language selection
+
+1. Select English in Valheim: map controls, floor labels, navigation, chest prompts,
+   and new automatic chest names must be English. OS language must not override this.
+2. Change Valheim to Czech and reopen the map: all map buttons and newly generated
+   instructions must use Czech, including floor numbers and chest-note prompts.
+3. Select another game language: the plugin must fall back to English. Existing
+   saved chest names and notes must stay unchanged throughout these switches.
+4. Check both languages at the normal UI scale for clipped control captions and
+   readable Czech glyphs. Verify the same language behavior in the optional overlay.
+
 ## Activation and outdoor bases
 
 1. With default settings, open M at an outdoor player base and press F5/F6.

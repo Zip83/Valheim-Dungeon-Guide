@@ -27,7 +27,8 @@ Diagnostics: BepInEx/LogOutput.log
 
 Maps depend on loaded geometry. Routes and detected floors may be incomplete.
 Optional breakable/jump routes are disabled by default. The guide never controls
-your character or transfers inventory items. The current interface is Czech.
+your character or transfers inventory items. The interface defaults to English and uses Czech only when Valheim is set to Czech.
+Other game languages fall back to English. Existing chest names and notes stay unchanged.
 
 Full documentation and source:
 https://github.com/Zip83/Valheim-Dungeon-Guide

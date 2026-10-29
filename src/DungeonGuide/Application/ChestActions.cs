@@ -9,6 +9,7 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class ChestActions
 {
+    private readonly GuideText _text;
     private readonly ChestSelector _selector;
     private readonly ChestSnapshotReader _reader;
     private readonly GraphLocator _locator;
@@ -30,8 +31,10 @@ internal sealed class ChestActions
         ChestNameDialog nameDialog,
         GraphLocator locator,
         SessionLifecycle lifecycle,
-        UserNotice notice)
+        UserNotice notice,
+        GuideText text)
     {
+        _text = text;
         _selector = selector;
         _reader = reader;
         _nameDialog = nameDialog;
@@ -64,7 +67,7 @@ internal sealed class ChestActions
         var selected = _selector.Select(Player.m_localPlayer);
         if (!selected)
         {
-            _notice.Show(GuideText.ChestTargetRequired);
+            _notice.Show(_text.ChestTargetRequired);
             return null;
         }
 
@@ -86,7 +89,7 @@ internal sealed class ChestActions
         session.Chests.Mark(chest);
         _lifecycle.Save(session);
         DestinationRequested?.Invoke(chest);
-        _notice.Show(GuideText.CollectChest + chest.label);
+        _notice.Show(_text.CollectChest + chest.label);
     }
 
     /// <summary>
@@ -129,7 +132,7 @@ internal sealed class ChestActions
             chest.label = value.Trim();
             session.Chests.Mark(chest);
             _lifecycle.Save(session);
-            _notice.Show(GuideText.ChestSaved + chest.label);
+            _notice.Show(_text.ChestSaved + chest.label);
         });
     }
 }

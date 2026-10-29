@@ -7,14 +7,16 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class OverlayPresenter
 {
+    private readonly GuideText _text;
     private readonly MapTextureRenderer _renderer;
     private readonly FloorNumbering _numbering;
 
     /// <summary>
     /// Uses the shared floor texture and floor-label formatter for a manually enabled map.
     /// </summary>
-    public OverlayPresenter(MapTextureRenderer renderer, FloorNumbering numbering)
+    public OverlayPresenter(MapTextureRenderer renderer, FloorNumbering numbering, GuideText text)
     {
+        _text = text;
         _renderer = renderer;
         _numbering = numbering;
     }
@@ -36,10 +38,10 @@ internal sealed class OverlayPresenter
         GUI.Label(
             new Rect(32, 99, 440, 30),
             session.Scan == null
-                ? GuideText.PreparingMap
+                ? _text.PreparingMap
                 : _numbering.Label(session.Floors, state.SelectedFloor, session.Area.Entrance?.y)
-                + GuideText.Separator
-                + (state.RevealAll ? GuideText.FullDungeon : GuideText.Explored));
+                + _text.Separator
+                + (state.RevealAll ? _text.FullDungeon : _text.Explored));
         if (session.Scan != null)
         {
             GUI.DrawTextureWithTexCoords(
@@ -48,7 +50,7 @@ internal sealed class OverlayPresenter
                 _renderer.FitFloor(session, state.SelectedFloor));
         }
 
-        GUI.Label(new Rect(32, 590, 440, 24), GuideText.OverlayControls);
+        GUI.Label(new Rect(32, 590, 440, 24), _text.OverlayControls);
         GUI.matrix = old;
     }
 }

@@ -8,6 +8,7 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class SessionLifecycle
 {
+    private readonly GuideText _text;
     private readonly IRunRepository _repository;
     private readonly ManualLogSource _log;
     private readonly UserNotice _notice;
@@ -15,8 +16,9 @@ internal sealed class SessionLifecycle
     /// <summary>
     /// Connects save persistence with diagnostics and short player notices.
     /// </summary>
-    public SessionLifecycle(IRunRepository repository, ManualLogSource log, UserNotice notice)
+    public SessionLifecycle(IRunRepository repository, ManualLogSource log, UserNotice notice, GuideText text)
     {
+        _text = text;
         _repository = repository;
         _log = log;
         _notice = notice;
@@ -46,11 +48,11 @@ internal sealed class SessionLifecycle
                 start = start
             };
             _log.LogError("Cannot load run; persistence disabled for this run: " + e);
-            _notice.Show(GuideText.SaveReadFailed);
+            _notice.Show(_text.SaveReadFailed);
         }
 
         session.Exploration.Load(session.Data.visited);
-        session.Chests = new ChestRegistry(session.Data.chests);
+        session.Chests = new ChestRegistry(session.Data.chests, () => _text.SelectedLanguage);
         return session;
     }
 
@@ -72,7 +74,7 @@ internal sealed class SessionLifecycle
         catch (Exception e)
         {
             _log.LogError("Cannot save guide run: " + e);
-            _notice.Show(GuideText.SaveWriteFailed);
+            _notice.Show(_text.SaveWriteFailed);
         }
     }
 }

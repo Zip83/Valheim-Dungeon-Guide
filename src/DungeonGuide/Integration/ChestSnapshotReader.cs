@@ -34,7 +34,7 @@ internal sealed class ChestSnapshotReader
             contents = string.Join(
                 ", ",
                 inventory.GetAllItems().Take(5)
-                    .Select(i => i.m_stack + GuideText.ItemCountSeparator
+                    .Select(i => i.m_stack + "× "
                         + (Localization.instance != null
                         ? Localization.instance.Localize(i.m_shared.m_name)
                         : i.m_shared.m_name)));

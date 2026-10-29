@@ -1,3 +1,5 @@
+using System;
+
 namespace DungeonGuide;
 
 /// <summary>
@@ -5,6 +7,17 @@ namespace DungeonGuide;
 /// </summary>
 public sealed class FloorNumbering
 {
+    private readonly GuideText _text;
+
+    /// <summary>
+    /// Uses the supplied game-language accessor, or English when no accessor is available.
+    /// </summary>
+    /// <param name="selectedLanguage">Accessor for Valheim's selected language; null uses English.</param>
+    public FloorNumbering(Func<string> selectedLanguage = null)
+    {
+        _text = new GuideText(selectedLanguage);
+    }
+
     /// <summary>
     /// Labels the entrance as zero, lower floors negatively, and higher floors positively; unknown entrances use
     /// bottom-up numbering.
@@ -17,17 +30,17 @@ public sealed class FloorNumbering
     {
         if (levels.Count == 0 || floor < 0 || floor >= levels.Count)
         {
-            return GuideText.FloorUnknown;
+            return _text.FloorUnknown;
         }
 
         if (!entranceHeight.HasValue)
         {
-            return GuideText.FloorPrefix + floor + GuideText.BottomUp;
+            return _text.FloorPrefix + floor + _text.BottomUp;
         }
 
         var relative = floor - FloorDetector.Nearest(levels, entranceHeight.Value);
         return relative == 0
-            ? GuideText.EntranceFloor
-            : relative > 0 ? GuideText.FloorPositive + relative : GuideText.FloorNegative + (-relative);
+            ? _text.EntranceFloor
+            : relative > 0 ? _text.FloorPositive + relative : _text.FloorNegative + (-relative);
     }
 }

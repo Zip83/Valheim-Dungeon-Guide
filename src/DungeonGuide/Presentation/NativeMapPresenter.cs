@@ -11,6 +11,7 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class NativeMapPresenter : IDisposable
 {
+    private readonly GuideText _text;
     private static readonly string[] s_largeChrome =
     {
         "m_pinRootLarge",
@@ -38,6 +39,7 @@ internal sealed class NativeMapPresenter : IDisposable
     private NativeMapLayer _large;
     private MapControlsView _controls;
     private Minimap _boundMap;
+    private bool _controlsCzech;
     private int _lastFloor = -1;
     private readonly FloorNumbering _numbering;
 
@@ -63,8 +65,10 @@ internal sealed class NativeMapPresenter : IDisposable
         MapViewportController viewport,
         FloorNumbering numbering,
         Action<GuideCommand> command,
-        Action<ChestRecord> select)
+        Action<ChestRecord> select,
+        GuideText text)
     {
+        _text = text;
         _state = state;
         _renderer = renderer;
         _viewport = viewport;
@@ -94,7 +98,7 @@ internal sealed class NativeMapPresenter : IDisposable
 
     private void Bind()
     {
-        if (_boundMap == Minimap.instance && _controls?.Root)
+        if (_boundMap == Minimap.instance && _controls?.Root && _controlsCzech == _text.IsCzech)
         {
             return;
         }
@@ -111,12 +115,13 @@ internal sealed class NativeMapPresenter : IDisposable
         var root = Object("m_largeRoot");
         if (!sm || !lg || !root)
         {
-            throw new InvalidOperationException(GuideText.MapPanelsUnavailable);
+            throw new InvalidOperationException(_text.MapPanelsUnavailable);
         }
 
         _small = new NativeMapLayer(sm, _renderer.Texture, Chrome(false));
         _large = new NativeMapLayer(lg, _renderer.Texture, Chrome(true));
-        _controls = new MapControlsView(root.transform, _numbering, _command);
+        _controls = new MapControlsView(root.transform, _numbering, _command, _text);
+        _controlsCzech = _text.IsCzech;
     }
 
     /// <summary>

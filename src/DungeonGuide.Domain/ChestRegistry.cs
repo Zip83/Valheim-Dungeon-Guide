@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,14 +10,17 @@ namespace DungeonGuide;
 public sealed class ChestRegistry
 {
     private readonly List<ChestRecord> _records;
+    private readonly GuideText _text;
 
     /// <summary>
     /// Uses the session-owned chest records so observations and marker changes remain persistent.
     /// </summary>
     /// <param name="records">Session-owned persistent chest records, updated in place.</param>
-    public ChestRegistry(List<ChestRecord> records)
+    /// <param name="selectedLanguage">Accessor for Valheim's selected language; null uses English for new names.</param>
+    public ChestRegistry(List<ChestRecord> records, Func<string> selectedLanguage = null)
     {
         _records = records;
+        _text = new GuideText(selectedLanguage);
     }
 
     /// <summary>
@@ -31,7 +35,7 @@ public sealed class ChestRegistry
         {
             record = new ChestRecord
             {
-                label = GuideText.ChestPrefix + (_records.Count + 1)
+                label = _text.ChestPrefix + (_records.Count + 1)
             };
             _records.Add(record);
         }

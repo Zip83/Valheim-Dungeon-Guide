@@ -9,14 +9,16 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class DynamicRouteValidator
 {
+    private readonly GuideText _text;
     private readonly GeometryPhysics _physics;
     private readonly RouteCursor _cursor;
 
     /// <summary>
     /// Uses collision queries and route progress to recheck upcoming passages.
     /// </summary>
-    public DynamicRouteValidator(GeometryPhysics physics, RouteCursor cursor)
+    public DynamicRouteValidator(GeometryPhysics physics, RouteCursor cursor, GuideText text)
     {
+        _text = text;
         _physics = physics;
         _cursor = cursor;
     }
@@ -50,12 +52,12 @@ internal sealed class DynamicRouteValidator
 
         if (edge?.Kind == PassageKind.Door)
         {
-            return GuideText.OpenDoor;
+            return _text.OpenDoor;
         }
 
         if (edge?.Kind == PassageKind.Breakable)
         {
-            return GuideText.BreakObstacle + edge.Obstacle;
+            return _text.BreakObstacle + edge.Obstacle;
         }
 
         if (edge?.Kind == PassageKind.Jump || edge?.Kind == PassageKind.Drop)
@@ -69,6 +71,6 @@ internal sealed class DynamicRouteValidator
             b.Edges.RemoveAll(e => e.To == route[near]);
         }
 
-        return GuideText.RouteBlocked;
+        return _text.RouteBlocked;
     }
 }

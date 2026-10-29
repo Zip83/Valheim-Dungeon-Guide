@@ -26,8 +26,11 @@ this repository build is still pending.
 - **Alt+M** switches to Valheim's world map for native pins and multiplayer pings.
 - A standalone map overlay available on demand; it starts hidden.
 
-The current player-facing interface is Czech. Configuration descriptions and
-repository documentation are English.
+The interface follows Valheim's selected language: English by default, Czech
+only when Valheim is set to Czech. All other languages fall back to English.
+Changing the game language updates the map controls and navigation text. Existing
+saved chest names and personal notes are preserved. Configuration descriptions,
+logs, and repository documentation are English.
 
 ## Installation
 
