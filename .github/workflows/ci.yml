@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-    branches: [master]
   push:
     branches: [master]
   workflow_dispatch:
@@ -54,12 +53,24 @@ jobs:
       - name: Build
         run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
 
+      - name: Test domain behavior
+        run: dotnet test Valheim.DungeonGuide.slnx --configuration Release --no-build --no-restore --logger trx --results-directory artifacts/TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: TestResults-${{ matrix.os }}-${{ github.sha }}
+          path: artifacts/TestResults/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Prepare plugin artifact
         if: runner.os == 'Linux'
         shell: bash
         run: |
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide
-          cp src/DungeonGuide/bin/Release/netstandard2.1/DungeonGuide.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
+          cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp LICENSE README.md artifacts/DungeonGuide/
 
       - name: Upload plugin artifact
