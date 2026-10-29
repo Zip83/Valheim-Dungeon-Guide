@@ -36,6 +36,12 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 - Leave nullable reference types disabled; do not add `Nullable=enable`,
   `#nullable enable`, or nullable reference annotations.
+- Keep machine-enforceable style rules in `.editorconfig`, not only in prose.
+  Use error severity for required rules. `Directory.Build.props` applies the
+  nullable and analyzer policy to every project; do not override it in a project.
+- Verify formatting enforcement with ordinary `dotnet build`, including a
+  deliberate invalid-code probe when changing the enforcement configuration.
+  Restore probe changes before committing; do not auto-format source during builds.
 - Follow `.editorconfig` and `docs/coding-conventions.md`.
 - Leave exactly one blank line between constructors, methods, and distinct
   property declarations. Never stack method declarations without separation.

@@ -12,6 +12,18 @@ compatibility implications, and verification approach in an issue first.
 
 ## Code and architecture
 
+Nullable reference types are not used. The shared `Directory.Build.props`
+disables them for every project. Do not enable them in project files, add
+`#nullable enable`, or introduce nullable reference annotations. This policy
+does not prohibit nullable value types such as `int?` when the domain needs them.
+
+Put machine-enforceable formatting and code-style preferences in `.editorconfig`.
+Required rules have error severity and are enforced by ordinary `dotnet build`
+through the shared analyzer settings. Do not override these settings or rely
+only on editor preferences. A build checks source; it must not rewrite it.
+When adjusting enforcement, confirm that representative violations fail the
+build, restore the deliberate violations, and confirm a clean build succeeds.
+
 Use strict SRP at class and method level. Keep domain decisions, game API access,
 presentation, and persistence separate. Keep the plugin entry point small.
 Use one top-level type per file and meaningful names that match actual behavior.

@@ -45,6 +45,14 @@ The output is `src/DungeonGuide/bin/Release/netstandard2.1/DungeonGuide.dll`.
 The plugin targets .NET Standard 2.1 and C# 10; the build SDK does not change
 the game's runtime requirements. No local Valheim installation is needed to build.
 
+`Directory.Build.props` keeps nullable reference types disabled and enables
+build-time style analysis for all projects. Required style rules live in
+`.editorconfig` with error severity: invalid indentation, brace placement,
+missing control-flow braces, and the configured code-style violations fail
+ordinary `dotnet build`. Fix source with your editor or `dotnet format` and rerun
+the build. Builds never auto-format files. Logical blank-line grouping still
+requires review as described in the coding conventions.
+
 Dependencies are compile-only references from the BepInEx package feed, with
 source mapping and a committed NuGet lock file. `BepInEx.BaseLib` supplies the
 BepInEx 5 plugin API; Harmony is not needed by the bootstrap. Unity reference

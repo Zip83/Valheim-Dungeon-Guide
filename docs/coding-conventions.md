@@ -67,6 +67,8 @@ repository abstraction.
 
 ## Naming and expressions
 
+- Nullable reference types are disabled repository-wide. Do not enable them or
+  use nullable reference annotations; nullable value types remain available.
 - `PascalCase` for types, methods, properties, events, and constants.
 - `camelCase` for parameters and local variables; `_camelCase` for private
   instance fields; `s_camelCase` for private static non-constant fields.
@@ -96,8 +98,12 @@ reasoning rather than narrate the next line.
 
 ## Enforcement
 
-`.editorconfig` provides machine-readable formatting preferences. Once C#
-projects are present, use their formatting and analysis commands. Standard
+`.editorconfig` is the source of machine-enforceable formatting and style rules.
+Required rules use error severity. `Directory.Build.props` disables nullable
+reference types, enables build-time style analysis, and treats warnings as errors
+for every project. Ordinary `dotnet build` must reject supported violations;
+CI also runs `dotnet format --verify-no-changes`. Neither check rewrites source.
+Standard
 `dotnet format` does not reliably enforce blank lines between every member or
 the logical groups inside methods. Review both explicitly; do not claim that
 a formatter check proves those readability rules were followed.
