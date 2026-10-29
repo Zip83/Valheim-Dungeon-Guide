@@ -1,4 +1,4 @@
-# Valheim Dungeon Guide 0.2.1
+# Valheim Dungeon Guide 0.1.0
 
 Development target: Valheim 1.0.21 with BepInExPack Valheim 5.4.2351.
 Gameplay verification of this repository build is pending.

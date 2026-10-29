@@ -3,7 +3,7 @@
 A client-side BepInEx mod for navigating Valheim's dungeons, exploring their floors,
 and finding your way back to chests left behind.
 
-**Version:** 0.2.1 Â· **Development target:** Valheim **1.0.21** with
+**Version:** 0.1.0 | **Development target:** Valheim **1.0.21** with
 BepInExPack Valheim **5.4.2351**.
 See [compatibility and verification](docs/development.md#compatibility-and-verification)
 for the recorded environment and verification status. Gameplay verification of

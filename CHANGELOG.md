@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1
+## 0.1.0
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
 

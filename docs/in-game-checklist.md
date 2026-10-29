@@ -1,6 +1,6 @@
 # In-game verification
 
-Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**, plugin **0.2.1**.
+Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**, plugin **0.1.0**.
 Status: pending for this repository build. Record actual results, dungeon type,
 other map mods, versions, and relevant log excerpts when performing these checks.
 
