@@ -3,34 +3,68 @@
 Development target: Valheim 1.0.21 with BepInExPack Valheim 5.4.2351.
 Gameplay verification of this repository build is pending.
 
-Close Valheim. Extract this package's BepInEx directory into the game directory.
-Keep both DungeonGuide.dll and DungeonGuide.Domain.dll together in
-BepInEx/plugins/DungeonGuide/. Install BepInExPack first and remove duplicate
+## Installation
+
+Close Valheim. Extract this package's `BepInEx` directory into the game directory.
+Keep both `DungeonGuide.dll` and `DungeonGuide.Domain.dll` together in
+`BepInEx/plugins/DungeonGuide/`. Install BepInExPack first and remove duplicate
 copies of this plugin. Disable competing dungeon-map mods in the same profile.
 
-M opens the dungeon map. Alt+M switches to the ordinary world map for pins and pings.
-Page Up/Down browse floors; Home follows and fits your current floor.
-F6 toggles the optional overlay, hidden by default. Explored-only visibility is the default;
-use the map button to show all scanned geometry on the selected floor.
+## Default controls
 
-F5 rescans dungeon interiors. Outdoor bases keep the ordinary map by default.
-To explicitly map outdoors, enable Display.AllowOutdoorMapping in the config,
-then press F5; the option never starts an outdoor scan automatically.
- F7 marks the open or directly targeted chest; Shift+F7 adds a name/note;
-Ctrl+F7 confirms collection at that actual chest. F8 cycles navigation destinations.
-F9 starts exploration, Shift+F9 stops navigation, and F10 returns to the entrance
-(or explicitly labeled scan origin when the entrance is unknown).
+### Map and floors
 
-Settings: BepInEx/config/zip.dungeonguide.cfg
-Saved exploration and chest notes: BepInEx/config/DungeonGuide/
-Diagnostics: BepInEx/LogOutput.log
+- **M** — Open or close the map. Inside a dungeon, it shows the dungeon floor map.
+- **Left Alt + M** — Switch between dungeon and ordinary world maps for pins and pings.
+- **Page Up / Page Down** — Browse higher or lower floors while the dungeon map or overlay is visible.
+- **Home** — Return to your current floor and fit the entire floor into view.
+- **Mouse wheel** — Zoom the full dungeon map in or out.
+- **Hold left mouse button and drag** — Pan the full dungeon map.
+- **F6** — Show or hide the optional standalone map overlay. It starts hidden.
+- **F5** — Rescan dungeon geometry.
+
+The map shows explored areas by default. Use its reveal-mode button to switch
+between explored areas and all scanned geometry on the selected floor.
+
+### Navigation
+
+- **F9** — Start navigation toward unexplored reachable areas.
+- **Left Shift + F9** — Stop navigation.
+- **F10** — Navigate to the entrance. If the entrance is unknown, the destination
+  is explicitly labeled as the scan origin.
+- **Go up / Go down map buttons** — Navigate to an adjacent floor. Page Up and
+  Page Down only change the displayed floor; they do not start navigation.
+
+### Chests and collection
+
+- **F7** — Mark the open or directly targeted chest for later collection.
+- **Left Shift + F7** — Edit that chest's name or note.
+- **Left Ctrl + F7** — Mark that actual chest as collected.
+- **F8** — Cycle known chest navigation destinations.
+
+Open the chest or aim at its interaction prompt before using the F7 shortcuts.
+F8 chooses a destination; it does not select the chest edited by F7.
+Collection markers record your confirmation and do not transfer inventory items.
+
+## Settings and saved data
+
+- **Configuration and configurable shortcuts:** `BepInEx/config/zip.dungeonguide.cfg`
+- **Saved exploration and chest notes:** `BepInEx/config/DungeonGuide/`
+- **Diagnostic log:** `BepInEx/LogOutput.log`
+
+Outdoor bases keep the ordinary world map by default. To map outdoors manually,
+enable `Display.AllowOutdoorMapping` in the configuration, then press **F5**.
+Enabling this option never starts an outdoor scan automatically.
+
+## Language and limitations
+
+The interface defaults to English and uses Czech only when Valheim is set to Czech.
+Other game languages fall back to English. Existing chest names and notes stay unchanged.
 
 Maps depend on loaded geometry. Routes and detected floors may be incomplete.
 Optional breakable/jump routes are disabled by default. The guide never controls
-your character or transfers inventory items. The interface defaults to English and uses Czech only when Valheim is set to Czech.
-Other game languages fall back to English. Existing chest names and notes stay unchanged.
+your character or transfers inventory items.
 
-Full documentation and source:
-https://github.com/Zip83/Valheim-Dungeon-Guide
+[Full documentation and source](https://github.com/Zip83/Valheim-Dungeon-Guide)
 
 License: MIT; see LICENSE.
