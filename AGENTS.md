@@ -1,0 +1,92 @@
+# Repository rules for AI coding assistants
+
+These rules apply throughout the repository. Read this file, `CONTRIBUTING.md`,
+and `docs/coding-conventions.md` before making changes. Read any more specific
+`AGENTS.md` in the area being changed. Explicit user instructions take precedence.
+
+## Scope and working process
+
+- Inspect the current files, Git status, and relevant contracts before editing.
+- Complete the requested task with the smallest coherent change. Preserve user
+  edits and avoid unrelated refactoring, formatting churn, or dependency upgrades.
+- Do not import implementation code, add frameworks, or expand product scope
+  unless the task calls for it.
+- Prefer established local patterns. Introduce abstractions only when they
+  separate real responsibilities or remove demonstrated complexity.
+- Keep repository documentation, identifiers, and code comments in English.
+- Use UTF-8 without BOM. Never commit secrets, local game files, save data,
+  third-party reference binaries, or generated build outputs.
+- Review the final diff against the request before committing. Do not rewrite
+  shared history or force-push without explicit authorization.
+
+## Strict single responsibility principle
+
+- Every class, method, file, and test must have one clear responsibility.
+- Use one top-level type per source file, named after that type.
+- Keep parsing, normalization, validation, domain decisions, persistence, and
+  presentation in separate focused units when they have different reasons to change.
+- Names are contracts: a method called `Validate` validates; it does not also
+  load data, normalize it, save it, and display a notification.
+- A small orchestrator may sequence collaborators. It must not absorb their
+  scanning, routing, rendering, or persistence implementations.
+- Split by responsibility, not by an arbitrary line count. Avoid generic
+  `Utils`, `Helpers`, or manager classes that accumulate unrelated work.
+
+## C# readability
+
+- Follow `.editorconfig` and `docs/coding-conventions.md`.
+- Leave exactly one blank line between constructors, methods, and distinct
+  property declarations. Never stack method declarations without separation.
+- Inside methods, separate meaningful logical steps with one blank line, such
+  as a guard clause, preparation, processing, and returning the result.
+- Keep tightly related statements together. Do not insert a blank line after
+  every statement or use multiple consecutive empty lines.
+- Use four spaces, Allman braces, and braces for all control-flow bodies.
+- Expand nontrivial expressions and long conditions instead of compressing code.
+- Review whitespace manually: the standard formatter does not enforce every
+  member-separation or logical-grouping rule.
+
+## Game integration boundaries
+
+- Keep domain rules independent of Unity, BepInEx, Harmony, and filesystem APIs.
+- Keep game scanning and game API access at the integration boundary; keep
+  rendering separate from navigation rules and persistence.
+- Keep plugin startup focused on composition and lifecycle management.
+- Use narrow Harmony patches. Clean up patches, event handlers, UI objects, and
+  owned resources during teardown.
+- Access Unity objects on the game thread. Bound scanning work per frame and
+  avoid expensive scene searches or repeated allocations in hot paths.
+- Inspect actual referenced game APIs before relying on private members.
+  Handle unsupported versions explicitly; do not silently report success.
+- Keep user-facing text at a presentation/localization boundary, and visual
+  constants in a focused style definition rather than scattering them through logic.
+- Preserve native world-map interaction and multiplayer behavior. Do not add
+  network ownership changes or world mutations as a shortcut for inspection.
+
+## Persistence and compatibility
+
+- Treat saved field names and identifiers as compatibility contracts.
+- Describe format changes and migration behavior before implementing them.
+  Preserve old saves and test migrations with representative data.
+- Write each logical save atomically. Do not overwrite corrupt or unsupported
+  data with an empty state; surface a useful diagnostic instead.
+- Keep proprietary game references external and locally configurable.
+- Use only language/runtime features supported by the actual Unity/BepInEx
+  target. A newer .NET SDK does not make newer runtime APIs available in-game.
+
+## Verification and handoff
+
+- Run the relevant build, domain tests, and formatting checks for implementation
+  changes, using the commands actually present in the repository.
+- Do not invent projects, commands, passing checks, or compatibility claims.
+- Add focused regression coverage for meaningful logic changes. Each test
+  verifies one behavior; use data-driven variants where practical. Keep tests
+  outside production files and avoid Arrange/Act/Assert scaffolding comments.
+- Do not suppress diagnostics or disable checks merely to obtain a passing run.
+  Document a narrowly justified exception when compatibility requires one.
+- Documentation-only changes need link, consistency, and diff checks rather
+  than an unrelated game build.
+- Distinguish automated tests, static API inspection, and actual in-game tests.
+  Never present one as proof of the others.
+- Report what changed, what was verified, and any material remaining limitation.
+  If a check cannot run, state the command, blocker, and practical risk.

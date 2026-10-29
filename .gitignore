@@ -1,0 +1,47 @@
+# .NET build, package, and test output
+**/[Bb]in/
+**/[Oo]bj/
+artifacts/
+TestResults/
+coverage/
+*.nupkg
+*.snupkg
+*.trx
+*.coverage
+*.coveragexml
+
+# IDE and user-specific settings
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Local dependencies and runtime installations (never redistribute game libraries)
+/game/
+/GameReferences/
+/local-libs/
+/BepInEx/
+/valheim_Data/
+*.dll
+*.exe
+*.pdb
+
+# Local paths, secrets, logs, saves, and temporary files
+.env
+.env.*
+!.env.example
+*.local.props
+*.local.targets
+*.log
+*.tmp
+*.bak
+*.fwl
+*.db
+.local-data/
+.dotnet/
+.nuget/
+.DS_Store
+Thumbs.db
