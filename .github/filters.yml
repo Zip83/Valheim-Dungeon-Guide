@@ -1,0 +1,10 @@
+# Any file outside these documentation/metadata exclusions requires verification.
+# Unknown file types deliberately keep verification enabled.
+code:
+  - '**'
+  - '!**/*.md'
+  - '!docs/**'
+  - '!LICENSE'
+  - '!.gitignore'
+  - '!.github/CODEOWNERS'
+  - '!.github/ISSUE_TEMPLATE/**'

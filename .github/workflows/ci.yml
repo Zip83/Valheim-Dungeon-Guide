@@ -15,8 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
   build:
     name: Build (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -62,3 +70,24 @@ jobs:
           path: artifacts/DungeonGuide/
           if-no-files-found: error
           retention-days: 14
+
+  result:
+    name: CI result
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify required build result
+        env:
+          DETECTION_RESULT: ${{ needs.changes.result }}
+          CODE_CHANGED: ${{ needs.changes.outputs.code }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          if [[ "$DETECTION_RESULT" != 'success' ]]; then exit 1; fi
+          if [[ "$CODE_CHANGED" == 'true' && "$BUILD_RESULT" == 'success' ]]; then exit 0; fi
+          if [[ "$CODE_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]; then
+            echo 'Documentation/metadata only: build was not required.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit 1

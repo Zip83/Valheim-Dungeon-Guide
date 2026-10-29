@@ -99,7 +99,9 @@ Add a separate test project with the first testable behavior.
 
 ## Continuous integration
 
-Pull requests targeting `master` and pushes to `master` run:
+Pull requests targeting `master` and pushes to `master` first classify changed
+files using the shared `.github/filters.yml`. Changes outside Markdown,
+`docs/`, the license, `.gitignore`, CODEOWNERS, and issue templates require:
 
 - Locked dependency restore, formatting checks, and Release compilation on Linux
   and Windows. Compiler warnings fail the build.
@@ -107,11 +109,30 @@ Pull requests targeting `master` and pushes to `master` run:
   bootstrap build, not a released dungeon mapper.
 - CodeQL analysis of the C# build, with a weekly scheduled scan as well.
 
+Documentation/metadata-only changes skip compilation, formatting, artifact
+creation, and CodeQL analysis. Lightweight detection and result jobs still run,
+so required status checks complete instead of staying pending. Any source,
+test, solution, dependency, build configuration, analyzer setting, workflow,
+filter, or otherwise unclassified file keeps verification enabled. Scheduled
+CodeQL scans and manually dispatched workflows always perform verification.
+
+Pull requests are classified using their entire diff against the base branch;
+adding a documentation-only commit to a PR that already changes code still
+requires verification. Pushes to `master` use the changes in that push.
+
+`CI result` and `CodeQL result` fail when detection fails, a required job fails,
+or the expected result is missing. A successful documentation-only result
+explicitly records that the heavy job was skipped. No empty SARIF or fabricated
+analysis result is uploaded.
+
 Workflows use commit-pinned actions. CI does not install into a game, publish a
 release, or test gameplay. Build and formatting checks are not gameplay tests.
 
-After the checks have run, repository administrators can make `Build
-(ubuntu-latest)` and `Build (windows-latest)` required checks in the ruleset.
+After the checks have run, make **CI result** and **CodeQL result** the required
+status checks in the ruleset. Do not require individual matrix job names or the
+tool-generated **CodeQL** status for every PR: those may be absent when work is
+skipped. The separate **Require code scanning results** rule governs real
+CodeQL findings; it is distinct from required status checks.
 CodeQL results are separate from GitHub's Code Quality requirement; if the latter
 is enabled, it also needs to be configured in repository settings. Use either
 the supplied advanced CodeQL workflow or GitHub's default CodeQL setup, not both.

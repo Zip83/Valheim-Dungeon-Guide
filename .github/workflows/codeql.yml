@@ -17,8 +17,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
   analyze:
     name: Analyze C#
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -51,3 +59,24 @@ jobs:
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           category: /language:csharp
+
+  result:
+    name: CodeQL result
+    needs: [changes, analyze]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify required analysis result
+        env:
+          DETECTION_RESULT: ${{ needs.changes.result }}
+          CODE_CHANGED: ${{ needs.changes.outputs.code }}
+          ANALYSIS_RESULT: ${{ needs.analyze.result }}
+        run: |
+          if [[ "$DETECTION_RESULT" != 'success' ]]; then exit 1; fi
+          if [[ "$CODE_CHANGED" == 'true' && "$ANALYSIS_RESULT" == 'success' ]]; then exit 0; fi
+          if [[ "$CODE_CHANGED" == 'false' && "$ANALYSIS_RESULT" == 'skipped' ]]; then
+            echo 'Documentation/metadata only: CodeQL analysis was not required; no SARIF was uploaded.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit 1
