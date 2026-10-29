@@ -34,6 +34,8 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 ## C# readability
 
+- Leave nullable reference types disabled; do not add `Nullable=enable`,
+  `#nullable enable`, or nullable reference annotations.
 - Follow `.editorconfig` and `docs/coding-conventions.md`.
 - Leave exactly one blank line between constructors, methods, and distinct
   property declarations. Never stack method declarations without separation.
