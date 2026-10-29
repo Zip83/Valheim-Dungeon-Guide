@@ -5,6 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>DungeonGuide</AssemblyName>
     <RootNamespace>DungeonGuide</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Version>0.1.0</Version>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <Deterministic>true</Deterministic>

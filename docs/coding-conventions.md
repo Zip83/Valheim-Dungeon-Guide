@@ -91,6 +91,12 @@ repository abstraction.
 
 ## Responsibilities and errors
 
+Use XML documentation for public APIs and lifecycle entry points. Use
+`<inheritdoc />` for actual overrides and interface implementations when the
+inherited contract describes the member. Unity message callbacks such as
+`Awake` are not overrides; document their purpose with a `<summary>` and add
+relevant lifecycle details in `<remarks>`.
+
 Keep one top-level type per file. Separate validation, mapping, routing rules,
 game inspection, drawing, and saving when they represent different responsibilities.
 An orchestrator delegates those steps; it does not implement all of them inline.

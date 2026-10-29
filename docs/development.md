@@ -78,9 +78,13 @@ and register each new production or test project with
 `dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj` so repository-wide
 checks include it.
 
-`src/DungeonGuide/GuidePlugin.cs` is the BepInEx entry point. It currently only
+`src/DungeonGuide/DungeonGuide.cs` is the BepInEx entry point. It currently only
 logs startup. `PluginInfo.cs` owns the stable identity and version used by the
 plugin attribute. Keep its version aligned with the project version.
+
+`Awake` is a Unity lifecycle message, not a virtual method overridden from
+`BaseUnityPlugin`. Its XML documentation describes the callback explicitly.
+The build emits `DungeonGuide.xml` alongside the DLL for documentation tools.
 
 Add focused domain, application, integration, presentation, and storage units
 when their behavior is introduced. Keep domain rules independent of Unity and
