@@ -14,12 +14,17 @@ internal sealed class DungeonLocator
     /// </summary>
     public DungeonArea Locate(Vector3 position)
     {
+        if (!Character.InInterior(position))
+        {
+            return null;
+        }
+
         DungeonArea result = null;
         var best = float.MaxValue;
         foreach (var g in UnityEngine.Object.FindObjectsByType<DungeonGenerator>(FindObjectsSortMode.None))
         {
             var rooms = g.GetComponentsInChildren<Room>(true);
-            if (rooms.Length == 0)
+            if (rooms.Length == 0 || !rooms.Any(r => Contains(r, position)))
             {
                 continue;
             }
@@ -68,9 +73,21 @@ internal sealed class DungeonLocator
         Id = "fortress_" + Mathf.FloorToInt(p.x / 128) + "_" + Mathf.FloorToInt(p.y / 1000) + "_"
             + Mathf.FloorToInt(p.z / 128),
         Label = GuideText.ManualArea,
+        IsManual = true,
         Bounds = new Bounds(p, new Vector3(radius * 2, height * 2, radius * 2)),
         Rooms = Array.Empty<Bounds>()
     };
+
+    private static bool Contains(Room room, Vector3 position)
+    {
+        var local = room.transform.InverseTransformPoint(position);
+        var halfSize = (Vector3)room.m_size * 0.5f;
+        const float Tolerance = 0.5f;
+
+        return Mathf.Abs(local.x) <= halfSize.x + Tolerance
+            && Mathf.Abs(local.y) <= halfSize.y + Tolerance
+            && Mathf.Abs(local.z) <= halfSize.z + Tolerance;
+    }
 
     private static Bounds RoomBounds(Room r)
     {

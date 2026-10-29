@@ -44,6 +44,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             this,
             settings,
             new DungeonLocator(),
+            new DungeonActivationPolicy(),
             scanner,
             new FloorDetector(new FloorLandingDetector()),
             lifecycle,

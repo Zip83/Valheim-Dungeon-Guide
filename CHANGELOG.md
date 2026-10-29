@@ -4,6 +4,8 @@
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
 
+- Automatic activation only inside generated dungeon rooms; outdoor bases retain
+  the native map unless manual outdoor mapping is explicitly enabled.
 - Native dungeon floor maps and minimap, explored-only by default, with a full scanned view toggle.
 - First-open floor fitting, persistent manual viewport, and entrance-relative floor labels.
 - Exploration, chest, entrance, and physical adjacent-floor navigation.

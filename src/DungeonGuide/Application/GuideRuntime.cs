@@ -15,6 +15,7 @@ internal sealed class GuideRuntime : IDisposable
     private readonly MonoBehaviour _host;
     private readonly GuideSettings _settings;
     private readonly DungeonLocator _locator;
+    private readonly DungeonActivationPolicy _activation;
     private readonly GeometryScanner _scanner;
     private readonly FloorDetector _floors;
     private readonly SessionLifecycle _lifecycle;
@@ -58,6 +59,7 @@ internal sealed class GuideRuntime : IDisposable
         MonoBehaviour host,
         GuideSettings settings,
         DungeonLocator locator,
+        DungeonActivationPolicy activation,
         GeometryScanner scanner,
         FloorDetector floors,
         SessionLifecycle lifecycle,
@@ -69,6 +71,7 @@ internal sealed class GuideRuntime : IDisposable
         _host = host;
         _settings = settings;
         _locator = locator;
+        _activation = activation;
         _scanner = scanner;
         _floors = floors;
         _lifecycle = lifecycle;
@@ -92,9 +95,15 @@ internal sealed class GuideRuntime : IDisposable
             return;
         }
 
-        if (Session != null && Session.Data.world != World)
+        var inInterior = Character.InInterior(player.transform.position);
+        if (Session != null && (Session.Data.world != World || !CanRetainSession(player.transform.position)))
         {
             Close();
+        }
+
+        if (!inInterior && Session == null)
+        {
+            return;
         }
 
         if (Time.unscaledTime >= _nextDetect)
@@ -149,7 +158,9 @@ internal sealed class GuideRuntime : IDisposable
         }
 
         var area = _locator.Locate(p.transform.position);
-        if (area == null && manual)
+        if (area == null && manual && _activation.CanScanManually(
+            Character.InInterior(p.transform.position),
+            _settings.AllowOutdoorMapping.Value))
         {
             area = _locator.Manual(
                 p.transform.position,
@@ -159,7 +170,7 @@ internal sealed class GuideRuntime : IDisposable
 
         if (area == null)
         {
-            if (Session != null && !Session.Area.Bounds.Contains(p.transform.position))
+            if (Session != null && (!Session.Area.IsManual || !CanRetainSession(p.transform.position)))
             {
                 Close();
             }
@@ -186,16 +197,15 @@ internal sealed class GuideRuntime : IDisposable
     /// <summary>
     /// Schedules a replacement scan without assuming the player position is the dungeon entrance.
     /// </summary>
-    public void Rescan()
+    public void Rescan() => Detect(true);
+
+    private bool CanRetainSession(Vector3 position)
     {
-        if (Session == null)
-        {
-            Detect(true);
-        }
-        else
-        {
-            StartScan();
-        }
+        return _activation.CanRetainSession(
+            Session.Area.IsManual,
+            Session.Area.Bounds.Contains(position),
+            Character.InInterior(position),
+            _settings.AllowOutdoorMapping.Value);
     }
 
     /// <summary>

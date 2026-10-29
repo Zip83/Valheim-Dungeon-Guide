@@ -13,7 +13,10 @@ Page Up/Down browse floors; Home follows and fits your current floor.
 F6 toggles the optional overlay, hidden by default. Explored-only visibility is the default;
 use the map button to show all scanned geometry on the selected floor.
 
-F5 rescans. F7 marks the open or directly targeted chest; Shift+F7 adds a name/note;
+F5 rescans dungeon interiors. Outdoor bases keep the ordinary map by default.
+To explicitly map outdoors, enable Display.AllowOutdoorMapping in the config,
+then press F5; the option never starts an outdoor scan automatically.
+ F7 marks the open or directly targeted chest; Shift+F7 adds a name/note;
 Ctrl+F7 confirms collection at that actual chest. F8 cycles navigation destinations.
 F9 starts exploration, Shift+F9 stops navigation, and F10 returns to the entrance
 (or explicitly labeled scan origin when the entrance is unknown).

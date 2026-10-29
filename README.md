@@ -3,7 +3,7 @@
 A client-side BepInEx mod for navigating Valheim's dungeons, exploring their floors,
 and finding your way back to chests left behind.
 
-**Version:** 0.2.1 · **Development target:** Valheim **1.0.21** with
+**Version:** 0.2.1 Â· **Development target:** Valheim **1.0.21** with
 BepInExPack Valheim **5.4.2351**.
 See [compatibility and verification](docs/development.md#compatibility-and-verification)
 for the recorded environment and verification status. Gameplay verification of
@@ -12,6 +12,8 @@ this repository build is still pending.
 ## Dungeon maps
 
 - Floor plans in the native **M** map and minimap, showing explored areas by default.
+  Automatic activation requires a dungeon interior and membership in a generated room;
+  outdoor bases keep the ordinary Valheim map.
 - A toggle for all scanned geometry on the selected floor.
 - Automatic current-floor selection, with higher and lower floors available to browse.
 - A view fitted to the entire selected floor on first opening and when changing floors.
@@ -49,7 +51,7 @@ must not be copied from the build references into the plugin directory.
 | **Alt+M** | Switch dungeon/world map |
 | **Page Up / Page Down** | Browse floors while the map is open |
 | **Home** | Follow and fit your current floor |
-| **F5** | Rescan geometry; also starts a bounded manual scan outside a detected dungeon |
+| **F5** | Rescan geometry; starts a bounded manual scan in an undetected interior |
 | **F6** | Toggle the optional standalone overlay |
 | **F7** | Mark the open or directly targeted chest for collection |
 | **Shift+F7** | Name the actual chest or add a note |
@@ -70,6 +72,11 @@ The first run creates `BepInEx/config/zip.dungeonguide.cfg`. Shortcuts are
 configurable there; F5 can conflict with an enabled Valheim console.
 `Display.RevealAll` defaults to `false`. The overlay always starts hidden.
 Breakable and jump routes both default to disabled.
+`Display.AllowOutdoorMapping` defaults to `false`: F5 at an outdoor base leaves
+its ordinary map alone. Enable this option only if you want explicit F5 scans
+outside dungeon interiors. Enabling it does not start outdoor scans automatically.
+Leaving a dungeon restores the ordinary map, including teleporting outside an
+interior while still within its former scan bounds.
 
 Exploration, chest notes, and verified traversals are stored per world and dungeon
 under `BepInEx/config/DungeonGuide/`. State is saved periodically, when leaving,

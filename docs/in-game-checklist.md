@@ -4,6 +4,18 @@ Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**, plugin **0.2.1**.
 Status: pending for this repository build. Record actual results, dungeon type,
 other map mods, versions, and relevant log excerpts when performing these checks.
 
+## Activation and outdoor bases
+
+1. With default settings, open M at an outdoor player base and press F5/F6.
+   The native world map and minimap must remain available without a dungeon layer.
+   Repeat near a generated outdoor camp and just outside a dungeon entrance.
+2. Enter a Mistlands mine or Deep North interior: automatic dungeon maps should
+   activate only while inside a generated room. Exit or teleport back to the base;
+   the ordinary map must return even within the old scan's horizontal footprint.
+3. Enable `Display.AllowOutdoorMapping`, press F5 at the base, and check that
+   a manual map is now available. Enabling the option alone must not start a scan.
+   Turn it off during the manual session and verify the ordinary map returns.
+
 ## Loading and map interaction
 
 1. With the game closed, install both project DLLs in a test profile. Avoid duplicate

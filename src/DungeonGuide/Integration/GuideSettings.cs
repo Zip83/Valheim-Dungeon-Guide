@@ -38,6 +38,11 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<int> Budget;
 
     /// <summary>
+    /// Whether explicit manual scans may replace the world map outside dungeon interiors.
+    /// </summary>
+    public readonly ConfigEntry<bool> AllowOutdoorMapping;
+
+    /// <summary>
     /// Whether all scanned geometry is shown instead of explored floor samples only.
     /// </summary>
     public readonly ConfigEntry<bool> RevealAll;
@@ -118,6 +123,11 @@ internal sealed class GuideSettings
         Height = file.Bind("Scan", "ManualVerticalRange", 120f, "Metres above and below manual scan origin.");
         Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
         Budget = file.Bind("Scan", "ColumnsPerFrame", 24, "Work budget per frame, also limited by time.");
+        AllowOutdoorMapping = file.Bind(
+            "Display",
+            "AllowOutdoorMapping",
+            false,
+            "Opt in to manual F5 mapping outside dungeon interiors, including player bases. No automatic outdoor scans.");
         RevealAll = file.Bind(
             "Display",
             "RevealAll",
@@ -139,7 +149,10 @@ internal sealed class GuideSettings
             "",
             "Comma separated EXACT prefab names verified as breakable passages. Unapproved destructibles remain candidates.");
         Overlay = Key("ToggleMap", KeyCode.F6, "Optional overlay; always hidden on game startup.");
-        Rescan = Key("Rescan", KeyCode.F5, "Rebuild geometry; may conflict with enabled Valheim console.");
+        Rescan = Key(
+            "Rescan",
+            KeyCode.F5,
+            "Rebuild dungeon geometry; outdoor scans require Display.AllowOutdoorMapping. May conflict with the console.");
         Mark = Key("MarkChest", KeyCode.F7, "Mark the actual open or aimed chest.");
         Name = Key("NameChest", KeyCode.F7, "Name actual chest.", KeyCode.LeftShift);
         Collected = Key(

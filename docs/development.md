@@ -124,10 +124,16 @@ The xUnit suite covers walk connectivity, directional optional traversals,
 route costs, floor landing and elevation selection, floor labels, viewport fitting,
 map state, chest identity/selection, exploration reload, and save migration.
 Tests reference the production domain library, not copied implementations.
+`DungeonActivationPolicy` separates manual outdoor permission from generated
+interior sessions. Integration uses the installed game's `Character.InInterior`
+API (inspected in Valheim 1.0.21) and room-local bounds rather than proximity to
+a generator's encompassing box. Generated sessions close when room membership
+is lost; outdoor permission applies only to explicitly requested manual scans.
+The default is `Display.AllowOutdoorMapping = false`.
 
 During the initial import, all 58 checks in the earlier standalone regression
-runner also passed against this domain assembly. The repository suite has 59
-cases, including an independent serialized-field contract check. Identifiers in
+runner also passed against this domain assembly. The repository suite additionally checks outdoor activation permissions, session
+retention across interior exits, and the independent serialized-field contract. Identifiers in
 that check are compared using ordinal ordering, independent of the machine culture.
 
 A failed test requires investigation of the application contract first; do not

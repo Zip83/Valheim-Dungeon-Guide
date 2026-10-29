@@ -20,6 +20,11 @@ internal sealed class DungeonArea
     public string Label;
 
     /// <summary>
+    /// Whether this area was explicitly requested rather than detected from a dungeon generator.
+    /// </summary>
+    public bool IsManual;
+
+    /// <summary>
     /// World-space bounds limiting collision sampling.
     /// </summary>
     public Bounds Bounds;
