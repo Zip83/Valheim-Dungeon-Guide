@@ -2,7 +2,7 @@
 
 A client-side BepInEx mod for navigating Valheim's dungeons, exploring their floors, and finding your way back to chests left behind.
 
-## Features
+## Planned capabilities
 
 - Dungeon floor maps in the native map view and minimap.
 - Explored areas by default, with an optional full scanned floor view.
@@ -15,6 +15,9 @@ A client-side BepInEx mod for navigating Valheim's dungeons, exploring their flo
 Floor detection and routes depend on the geometry loaded by the game. Unusual layouts can require rescanning or manual navigation; coverage of every room is not guaranteed.
 
 ## Contributing
+
+See [Development](docs/development.md) for build commands, project structure,
+and CI checks.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and
 [C# coding conventions](docs/coding-conventions.md) for code structure and formatting.
