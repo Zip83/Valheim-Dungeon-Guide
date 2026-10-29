@@ -43,6 +43,11 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   deliberate invalid-code probe when changing the enforcement configuration.
   Restore probe changes before committing; do not auto-format source during builds.
 - Follow `.editorconfig` and `docs/coding-conventions.md`.
+- Prefer `var` for local variables whenever inference preserves the intended
+  static type. Use an explicit type when inference is unavailable or would
+  change the intended type, conversion, or overload behavior.
+- Use the configured naming conventions, `readonly` for private fields that
+  are only assigned during initialization, and omit unnecessary `this.`.
 - Leave exactly one blank line between constructors, methods, and distinct
   property declarations. Never stack method declarations without separation.
 - Inside methods, separate meaningful logical steps with one blank line, such
@@ -99,6 +104,17 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 - Add focused regression coverage for meaningful logic changes. Each test
   verifies one behavior; use data-driven variants where practical. Keep tests
   outside production files and avoid Arrange/Act/Assert scaffolding comments.
+- Add tests when they protect meaningful behavior, invariants, boundary cases,
+  or a regression. Do not add tests that only repeat the implementation or
+  assert trivial scaffolding to increase a test count.
+- When a test fails, reproduce it and compare the expected result with the
+  intended contract before editing anything. Investigate the application code
+  first: the test may have exposed a real bug. Fix production code when its
+  behavior violates the contract, preserving the regression assertion.
+- Change a test expectation only when evidence shows the test is incorrect or
+  an intentional requirement change makes it obsolete; explain that reason in
+  the PR. Never weaken, skip, delete, or rewrite a failing test merely to get a
+  passing run. Rerun the failing case and the relevant suite after the fix.
 - Do not suppress diagnostics or disable checks merely to obtain a passing run.
   Document a narrowly justified exception when compatibility requires one.
 - Documentation-only changes need link, consistency, and diff checks rather

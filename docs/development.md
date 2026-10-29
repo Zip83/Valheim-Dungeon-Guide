@@ -53,6 +53,11 @@ ordinary `dotnet build`. Fix source with your editor or `dotnet format` and reru
 the build. Builds never auto-format files. Logical blank-line grouping still
 requires review as described in the coding conventions.
 
+`Directory.Build.targets` also runs the read-only style formatter before
+compilation. This covers IDE-only rules such as unnecessary `this.` that are
+not reported by the compiler's build-time analyzers. Design-time builds skip
+the check so the formatter can load projects without recursively invoking itself.
+
 Dependencies are compile-only references from the BepInEx package feed, with
 source mapping and a committed NuGet lock file. `BepInEx.BaseLib` supplies the
 BepInEx 5 plugin API; Harmony is not needed by the bootstrap. Unity reference

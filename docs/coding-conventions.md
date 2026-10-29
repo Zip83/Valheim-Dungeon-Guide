@@ -41,7 +41,7 @@ public sealed class CollectionMarker
 
     public bool MarkCollected(ChestId chestId)
     {
-        Chest chest = _chests.Find(chestId);
+        var chest = _chests.Find(chestId);
         if (chest == null)
         {
             return false;
@@ -55,7 +55,7 @@ public sealed class CollectionMarker
 
     public bool IsCollected(ChestId chestId)
     {
-        Chest chest = _chests.Find(chestId);
+        var chest = _chests.Find(chestId);
 
         return chest != null && chest.IsCollected;
     }
@@ -75,7 +75,12 @@ repository abstraction.
 - Prefix interfaces with `I`; use an `Async` suffix for asynchronous methods.
 - Use explicit accessibility modifiers. Prefer the narrowest useful visibility.
 - Use C# keyword types such as `int` and `string`.
-- Use `var` when the type is apparent from the expression; otherwise name the type.
+- Prefer `var` for local variables when inference preserves the intended static
+  type, including built-in types and method results. Keep explicit types when
+  inference is unavailable or would change the intended type or conversion,
+  such as a specific interface/base type, numeric conversion, or `null` initializer.
+- Mark private fields `readonly` when assigned only inline or in constructors.
+- Omit unnecessary `this.` qualifiers; keep them when needed for disambiguation.
 - Expression-bodied members are appropriate for short, clear expressions.
   Use blocks for branching, side effects, or longer logic; do not compress work
   merely to reduce line count.
@@ -102,8 +107,9 @@ reasoning rather than narrate the next line.
 Required rules use error severity. `Directory.Build.props` disables nullable
 reference types, enables build-time style analysis, and treats warnings as errors
 for every project. Ordinary `dotnet build` must reject supported violations;
-CI also runs `dotnet format --verify-no-changes`. Neither check rewrites source.
-Standard
+`Directory.Build.targets` runs the style formatter before compilation to catch
+IDE-only rules as well. CI also runs `dotnet format --verify-no-changes`.
+Neither check rewrites source. Standard
 `dotnet format` does not reliably enforce blank lines between every member or
 the logical groups inside methods. Review both explicitly; do not claim that
 a formatter check proves those readability rules were followed.

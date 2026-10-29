@@ -20,13 +20,20 @@ does not prohibit nullable value types such as `int?` when the domain needs them
 Put machine-enforceable formatting and code-style preferences in `.editorconfig`.
 Required rules have error severity and are enforced by ordinary `dotnet build`
 through the shared analyzer settings. Do not override these settings or rely
-only on editor preferences. A build checks source; it must not rewrite it.
+only on editor preferences. `Directory.Build.targets` additionally verifies
+IDE-only style rules with the formatter before compilation. A build checks
+source; it must not rewrite it.
 When adjusting enforcement, confirm that representative violations fail the
 build, restore the deliberate violations, and confirm a clean build succeeds.
 
 Use strict SRP at class and method level. Keep domain decisions, game API access,
 presentation, and persistence separate. Keep the plugin entry point small.
 Use one top-level type per file and meaningful names that match actual behavior.
+
+Prefer `var` for local variables when inference preserves the intended static
+type. Keep explicit types when required by inference or intended conversions.
+Follow the configured naming conventions, mark initialization-only private
+fields `readonly`, and omit unnecessary `this.` qualifiers.
 
 Readability is part of correctness. Leave a blank line between methods and
 between meaningful logical steps within a method. Use Allman braces and avoid
@@ -39,6 +46,15 @@ Avoid unrelated dependency upgrades or broad formatting changes in behavior PRs.
 
 ## Verification
 
+- Test behavior where coverage provides value: domain decisions, invariants,
+  edge cases, and regressions. Avoid tests that mirror implementation details
+  or only assert trivial scaffolding.
+- A failing test is evidence to investigate, not an instruction to rewrite the
+  test. Reproduce the failure, check the intended contract, and investigate
+  application code first. If the application is wrong, fix it and keep the
+  regression assertion. Change a test only when its expectation is demonstrably
+  incorrect or requirements intentionally changed, and explain why in the PR.
+  Never weaken, skip, or remove a test solely to make the suite pass.
 - Run the build, relevant tests, and formatting checks provided by the affected
   project. Record the exact commands and results in the pull request.
 - Add regression tests for routing, floor detection, exploration, and persistence
