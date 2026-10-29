@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/DungeonGuide.Domain/DungeonGuide.Domain.csproj" />
     <Project Path="src/DungeonGuide/DungeonGuide.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DungeonGuide.Tests/DungeonGuide.Tests.csproj" />
   </Folder>
 </Solution>

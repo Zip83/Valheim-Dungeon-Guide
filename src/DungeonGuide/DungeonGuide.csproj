@@ -1,11 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <LangVersion>10.0</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>DungeonGuide</AssemblyName>
     <RootNamespace>DungeonGuide</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.1</Version>
+    <GameDir Condition="'$(GameDir)' == ''">$(VALHEIM_DIR)</GameDir>
+    <GameReferenceSuffix Condition="'$(GameDir)' == ''">-publicized</GameReferenceSuffix>
+    <GameReferences Condition="'$(GameDir)' != ''">$(GameDir)/valheim_Data/Managed</GameReferences>
+    <GameReferences Condition="'$(GameDir)' == ''">$(NuGetPackageRoot)digitalroot.valheim.common.references/1.0.22/ref/net48</GameReferences>
+    <UiReferences Condition="'$(GameDir)' != ''">$(GameReferences)</UiReferences>
+    <UiReferences Condition="'$(GameDir)' == ''">$(NuGetPackageRoot)digitalroot.references.unity/6000.0.75/ref/net48</UiReferences>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
@@ -13,6 +19,28 @@
 
   <ItemGroup>
     <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" IncludeAssets="compile" PrivateAssets="all" />
-    <PackageReference Include="UnityEngine.Modules" Version="2022.3.50" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="6000.0.75" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="HarmonyX" Version="2.9.0" IncludeAssets="compile" PrivateAssets="all" />
+    <ProjectReference Include="../DungeonGuide.Domain/DungeonGuide.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GameDir)' == ''">
+    <PackageDownload Include="Digitalroot.Valheim.Common.References" Version="[1.0.22]" />
+    <PackageDownload Include="Digitalroot.References.Unity" Version="[6000.0.75]" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="assembly_valheim">
+      <HintPath>$(GameReferences)/assembly_valheim$(GameReferenceSuffix).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_guiutils">
+      <HintPath>$(GameReferences)/assembly_guiutils$(GameReferenceSuffix).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(UiReferences)/UnityEngine.UI$(GameReferenceSuffix).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 </Project>
