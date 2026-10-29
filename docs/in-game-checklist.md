@@ -4,6 +4,25 @@ Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**, plugin **0.1.0**.
 Status: pending for this repository build. Record actual results, dungeon type,
 other map mods, versions, and relevant log excerpts when performing these checks.
 
+## Scan responsiveness and other plugins
+
+1. Start a large multi-floor scan while moving, fighting, and using other installed
+   mods' hotkeys. Confirm input, physics, UI, and the other mods continue updating.
+   Record frame-time spikes across sampling, graph linking, and floor analysis;
+   check all phases rather than only average FPS or scan duration.
+2. Rescan while a map/route already exists. The old map and navigation must remain
+   usable until the new graph and floors are published together. Opening M, toggling
+   the overlay, using the world map, and receiving teammate pings must stay responsive.
+3. Press F5 repeatedly during a scan: it must not create parallel scans. Leave or
+   teleport to another dungeon during sampling and during floor analysis. The old job
+   must stop without waiting or publishing into the new session. Repeat on logout/quit.
+4. Try the minimum and maximum time budgets and a dense area with many overlapping
+   colliders. Saturated clearance buffers must reject an uncertain passage rather
+   than allowing routes through omitted blockers. Compare geometry with the earlier map.
+5. Use a representative mod profile, including map/UI/automation mods, and record
+   exact versions and frame-time measurements. Unity queries are indivisible;
+   automated tests alone cannot establish zero stutter or universal mod compatibility.
+
 ## Language selection
 
 1. Select English in Valheim: map controls, floor labels, navigation, chest prompts,

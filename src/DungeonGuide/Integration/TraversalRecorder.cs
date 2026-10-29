@@ -12,6 +12,7 @@ namespace DungeonGuide;
 internal sealed class TraversalRecorder
 {
     private readonly GraphLocator _locator;
+    private readonly TraversalProofVerifier _verifier;
     private Point _grounded;
     private bool _hasGround;
     private bool _airborne;
@@ -20,15 +21,14 @@ internal sealed class TraversalRecorder
     private readonly FieldInfo _debugFly = typeof(Player).GetField(
         "m_debugFly",
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-    private ScanResult _cachedScan;
-    private List<(NavNode node, NavEdge edge)> _candidates = new();
 
     /// <summary>
     /// Uses supported graph snapping to match observed takeoff and landing positions.
     /// </summary>
-    public TraversalRecorder(GraphLocator locator)
+    public TraversalRecorder(GraphLocator locator, TraversalProofVerifier verifier)
     {
         _locator = locator;
+        _verifier = verifier;
     }
 
     /// <summary>
@@ -37,6 +37,7 @@ internal sealed class TraversalRecorder
     public void Reset()
     {
         _hasGround = _airborne = false;
+        _verifier.Reset();
     }
 
     /// <summary>
@@ -107,34 +108,12 @@ internal sealed class TraversalRecorder
             return;
         }
 
-        // Proof does not survive reduced jump capability. Current stamina is also required for jumps.
-        if (_cachedScan != session.Scan)
-        {
-            _cachedScan = session.Scan;
-            _candidates = session.Scan.Graph.Nodes
-                .SelectMany(n => n.Edges
-                    .Where(e => e.Kind == PassageKind.Jump || e.Kind == PassageKind.Drop)
-                    .Select(e => (n, e)))
-                .ToList();
-        }
-
-        var skill = player.GetSkillFactor(Skills.SkillType.Jump);
-        var force = player.m_jumpForce;
-        var stamina = player.GetStamina();
-        var proofs = new Dictionary<(string, string), TraversalProof>();
-        foreach (var proof in session.Data.traversals)
-        {
-            proofs[(Point.Key(proof.from), Point.Key(proof.to))] = proof;
-        }
-
-        foreach (var candidate in _candidates)
-        {
-            var node = candidate.node;
-            var edge = candidate.edge;
-            var to = session.Scan.Graph.Nodes[edge.To];
-            edge.Verified = proofs.TryGetValue((node.Key, to.Key), out var proof) && proof.jumpForce <= force + 0.01f
-                && proof.jumpSkill <= skill + 0.01f
-                && (edge.Kind == PassageKind.Drop || stamina >= player.m_jumpStaminaUsage);
-        }
+        _verifier.Apply(
+            session.Scan.TraversalCandidates,
+            session.Data.traversals,
+            player.m_jumpForce,
+            player.GetSkillFactor(Skills.SkillType.Jump),
+            player.GetStamina(),
+            player.m_jumpStaminaUsage);
     }
 }

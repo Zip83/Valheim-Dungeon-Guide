@@ -44,8 +44,18 @@ internal sealed class GeometryScanner
     /// <summary>
     /// Samples loaded geometry over multiple frames and invokes completion with graph and truncation metadata.
     /// </summary>
-    public IEnumerator Scan(DungeonArea area, float spacing, int limit, int budget, Action<ScanResult> complete)
+    public IEnumerator Scan(
+        DungeonArea area,
+        float spacing,
+        int limit,
+        int stepsPerFrame,
+        float millisecondsPerFrame,
+        Action<ScanResult> complete)
     {
+        // StartCoroutine executes immediately until its first yield; defer physics work out of the caller's input handler.
+        yield return null;
+        var work = new FrameWorkBudget(stepsPerFrame, millisecondsPerFrame);
+        var overflowRevision = _physics.BufferOverflows;
         var result = new ScanResult
         {
             Spacing = spacing
@@ -56,8 +66,6 @@ internal sealed class GeometryScanner
         var z0 = Mathf.FloorToInt(bounds.min.z / spacing);
         var z1 = Mathf.CeilToInt(bounds.max.z / spacing);
         var count = 0;
-        var work = 0;
-        var timer = System.Diagnostics.Stopwatch.StartNew();
         for (var x = x0; x <= x1; x++)
         {
             for (var z = z0; z <= z1; z++)
@@ -68,12 +76,9 @@ internal sealed class GeometryScanner
                     goto Link;
                 }
 
-                Column(area, result, x, z);
-                if (++work >= budget || timer.ElapsedMilliseconds >= 4)
+                foreach (var pause in Column(area, result, x, z, work))
                 {
-                    work = 0;
-                    yield return null;
-                    timer.Restart();
+                    yield return pause;
                 }
             }
         }
@@ -81,6 +86,12 @@ internal sealed class GeometryScanner
     Link:
         foreach (var col in result.Columns)
         {
+            while (!work.TryStartWork())
+            {
+                yield return null;
+                work.BeginFrame();
+            }
+
             foreach (var offset in s_walkOffsets)
             {
                 if (result.Columns.TryGetValue(
@@ -91,6 +102,12 @@ internal sealed class GeometryScanner
                     {
                         foreach (var b in neighbours)
                         {
+                            while (!work.TryStartWork())
+                            {
+                                yield return null;
+                                work.BeginFrame();
+                            }
+
                             _passages.Connect(result.Graph, a, b);
                         }
                     }
@@ -108,6 +125,12 @@ internal sealed class GeometryScanner
                     {
                         foreach (var b in neighbours)
                         {
+                            while (!work.TryStartWork())
+                            {
+                                yield return null;
+                                work.BeginFrame();
+                            }
+
                             var pa = UnityPoints.V(result.Graph.Nodes[a].Position);
                             var pb = UnityPoints.V(result.Graph.Nodes[b].Position);
                             if (result.Graph.Nodes[a].Edges.Exists(e => e.To == b))
@@ -123,27 +146,34 @@ internal sealed class GeometryScanner
                                 continue;
                             }
 
-                            if (_jumps.Candidate(pa, pb))
+                            var candidate = false;
+                            foreach (var pause in _jumps.Candidate(pa, pb, work, valid => candidate = valid))
+                            {
+                                yield return pause;
+                            }
+
+                            if (candidate)
                             {
                                 result.Graph.Connect(a, b, pb.y < pa.y - 0.6f ? PassageKind.Drop : PassageKind.Jump, false, false);
+                                var node = result.Graph.Nodes[a];
+                                result.TraversalCandidates[(node.Key, result.Graph.Nodes[b].Key)] = node.Edges[node.Edges.Count - 1];
                             }
                         }
                     }
                 }
             }
-
-            if (++work >= budget || timer.ElapsedMilliseconds >= 4)
-            {
-                work = 0;
-                yield return null;
-                timer.Restart();
-            }
         }
 
+        result.Truncated |= _physics.BufferOverflows != overflowRevision;
         complete(result);
     }
 
-    private void Column(DungeonArea area, ScanResult result, int x, int z)
+    private IEnumerable<object> Column(
+        DungeonArea area,
+        ScanResult result,
+        int x,
+        int z,
+        FrameWorkBudget work)
     {
         var top = area.Bounds.max.y + 1;
         var bottom = area.Bounds.min.y - 1;
@@ -151,6 +181,12 @@ internal sealed class GeometryScanner
         var count = 0;
         while (top > bottom && count++ < 160)
         {
+            while (!work.TryStartWork())
+            {
+                yield return null;
+                work.BeginFrame();
+            }
+
             if (!Physics.Raycast(
                 new Vector3(x * result.Spacing, top, z * result.Spacing),
                 Vector3.down,
@@ -172,6 +208,12 @@ internal sealed class GeometryScanner
             if (area.Rooms.Length > 0 && !area.Rooms.Any(b => b.SqrDistance(hit.point) < 4))
             {
                 continue;
+            }
+
+            while (!work.TryStartWork())
+            {
+                yield return null;
+                work.BeginFrame();
             }
 
             if (!_physics.Standing(hit.point))

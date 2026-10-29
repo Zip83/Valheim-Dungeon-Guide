@@ -126,6 +126,46 @@ Two compatibility exceptions are intentional:
   `__instance`, and `__0`. Narrow, per-method IDE1006 suppressions document that
   injection contract; ordinary parameter naming remains enforced everywhere else.
 
+## Cooperative scanning and graph ownership
+
+`GeometryScanner` yields once before performing physics work, then shares one
+`FrameWorkBudget` across sampling and linking. Checks occur before individual
+ray samples, standing checks, candidate pairs, and individual jump-arc queries,
+including empty-neighbor column overhead;
+a tall column or many stacked floors cannot bypass yielding until the end of
+an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
+0.25–4 ms. The existing `Scan.ColumnsPerFrame` key now caps individual work
+steps instead of whole columns, keeping existing configuration files usable.
+The budget is cooperative: an indivisible Unity query or passage evaluation
+can overrun it, after which the next step yields. Do not promise zero frame-time impact.
+
+All collision/game queries remain on Unity's main thread. Reusable NonAlloc
+buffers and a reusable blocker list reduce allocation pressure in passage,
+standing, and clearance checks; a saturated
+buffer rejects clearance conservatively instead of silently dropping blockers.
+
+Only the completed, private new graph is sent to `FloorAnalysisJob`. Its worker
+runs pure floor/landing detection with frequent cancellation checks and never
+calls Unity, BepInEx, UI, inventory, or networking APIs. The game thread polls
+completion without waiting; a task outcome is read only after `IsCompleted`.
+Failures reach the scan error handler, and faults in abandoned jobs are observed.
+Cancellation never joins a worker. Session close cancels the job and stops sampling;
+late results are never published into another session. Iterator disposal propagates
+through the scan guard. Publication of graph/layout and callbacks stays on the game
+thread. Existing navigation/maps continue using the old graph until that publication,
+so traversal observation cannot race with the worker mutating new floor assignments.
+
+Traversal candidates are indexed during cooperative linking. Publication does not
+trigger a full-graph LINQ pass: `TraversalProofVerifier` looks up only recorded
+proofs and revokes its previously verified edges when evidence or capabilities
+change. Replacing a scan does not retain verified references from an old graph.
+
+Unit tests use a fake clock for deterministic count/time limits and controlled
+workers for nonblocking polling, cancellation, shutdown, and error propagation.
+They also compare worker floor results with synchronous reference results and
+keep the existing routing/floor regressions. These checks do not measure engine
+query latency or establish compatibility with every other plugin.
+
 ## Automated verification
 
 The xUnit suite covers walk connectivity, directional optional traversals,

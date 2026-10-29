@@ -24,6 +24,7 @@ internal sealed class GuideRuntime : IDisposable
     private readonly ManualLogSource _log;
     private readonly UserNotice _notice;
     private Coroutine _scanJob;
+    private FloorAnalysisJob _floorAnalysis;
     private float _nextDetect;
     private float _nextTrack;
     private float _nextSave;
@@ -197,7 +198,22 @@ internal sealed class GuideRuntime : IDisposable
     /// <summary>
     /// Schedules a replacement scan without assuming the player position is the dungeon entrance.
     /// </summary>
-    public void Rescan() => Detect(true);
+    public void Rescan()
+    {
+        if (Session?.Scanning == true)
+        {
+            return;
+        }
+
+        var player = Player.m_localPlayer;
+        if (Session != null && player && CanRetainSession(player.transform.position))
+        {
+            StartScan();
+            return;
+        }
+
+        Detect(true);
+    }
 
     private bool CanRetainSession(Vector3 position)
     {
@@ -228,58 +244,110 @@ internal sealed class GuideRuntime : IDisposable
 
         var session = Session;
         session.Scanning = true;
-        var task = _scanner.Scan(
+        _scanJob = _host.StartCoroutine(Guard(BuildScan(session), session));
+    }
+
+    private IEnumerator BuildScan(DungeonSession session)
+    {
+        ScanResult result = null;
+        var sampling = _scanner.Scan(
             session.Area,
             Mathf.Clamp(_settings.Spacing.Value, 0.75f, 3),
             Mathf.Clamp(_settings.Columns.Value, 1000, 120000),
             Mathf.Clamp(_settings.Budget.Value, 1, 128),
-            result =>
+            Mathf.Clamp(_settings.MillisecondsPerFrame.Value, 0.25f, 4),
+            completed => result = completed);
+        try
         {
-            if (Session != session)
+            while (sampling.MoveNext())
             {
-                return;
+                yield return sampling.Current;
             }
+        }
+        finally
+        {
+            (sampling as IDisposable)?.Dispose();
+        }
 
-            session.Scan = result;
-            session.Layout = _floors.Detect(result.Graph, result.Spacing);
-            session.Floors = session.Layout.Levels;
-            session.GeometryRevision++;
-            session.Scanning = false;
-            _log.LogInfo("Scan complete: " + session.Area.Id + ", nodes=" + result.Graph.Nodes.Count + ", floors="
-                        + session.Floors.Count
-                        + ", incomplete="
-                        + result.Truncated);
-            _log.LogInfo("Floor navigation landings=" + session.Layout.LandingNodes.Count);
-            ScanCompleted?.Invoke();
-        });
-        _scanJob = _host.StartCoroutine(Guard(task, session));
+        // The new graph is private to this scan. Existing maps/navigation retain their previous graph.
+        using (var analysis = new FloorAnalysisJob(_floors, result.Graph, result.Spacing))
+        {
+            _floorAnalysis = analysis;
+            try
+            {
+                FloorLayout layout;
+                while (!analysis.TryComplete(out layout))
+                {
+                    yield return null;
+                    if (Session != session)
+                    {
+                        yield break;
+                    }
+                }
+
+                if (Session == session)
+                {
+                    PublishScan(session, result, layout);
+                }
+            }
+            finally
+            {
+                if (_floorAnalysis == analysis)
+                {
+                    _floorAnalysis = null;
+                }
+            }
+        }
+    }
+
+    private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout)
+    {
+        // Publication and all game-facing callbacks stay on the game thread, after worker completion.
+        session.Scan = result;
+        session.Layout = layout;
+        session.Floors = layout.Levels;
+        session.GeometryRevision++;
+        session.Scanning = false;
+        _log.LogInfo("Scan complete: " + session.Area.Id + ", nodes=" + result.Graph.Nodes.Count
+            + ", floors=" + session.Floors.Count + ", incomplete=" + result.Truncated);
+        _log.LogInfo("Floor navigation landings=" + layout.LandingNodes.Count);
+        ScanCompleted?.Invoke();
     }
 
     private IEnumerator Guard(IEnumerator task, DungeonSession session)
     {
-        while (true)
+        try
         {
-            bool more;
-            try
+            while (true)
             {
-                more = task.MoveNext();
-            }
-            catch (Exception e)
-            {
-                _log.LogError("Geometry scan failed: " + e);
-                session.Scanning = false;
-                yield break;
-            }
+                bool more;
+                try
+                {
+                    more = task.MoveNext();
+                }
+                catch (Exception e)
+                {
+                    _log.LogError("Geometry scan failed: " + e);
+                    yield break;
+                }
 
-            if (!more)
-            {
-                break;
-            }
+                if (!more)
+                {
+                    break;
+                }
 
-            yield return task.Current;
+                yield return task.Current;
+            }
         }
-
-        _scanJob = null;
+        finally
+        {
+            (task as IDisposable)?.Dispose();
+            if (Session == session)
+            {
+                session.Scanning = false;
+                _scanJob = null;
+            }
+        }
     }
 
     private void Close()
@@ -289,6 +357,8 @@ internal sealed class GuideRuntime : IDisposable
             return;
         }
 
+        _floorAnalysis?.Dispose();
+        _floorAnalysis = null;
         _lifecycle.Save(Session);
         if (_scanJob != null)
         {

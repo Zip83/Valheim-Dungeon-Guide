@@ -33,9 +33,14 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<int> Columns;
 
     /// <summary>
-    /// Maximum columns processed per frame, also constrained by elapsed scan time.
+    /// Maximum scan work steps per frame, also constrained by elapsed scan time.
     /// </summary>
     public readonly ConfigEntry<int> Budget;
+
+    /// <summary>
+    /// Soft main-thread scan budget in milliseconds; a single Unity query cannot be interrupted.
+    /// </summary>
+    public readonly ConfigEntry<float> MillisecondsPerFrame;
 
     /// <summary>
     /// Whether explicit manual scans may replace the world map outside dungeon interiors.
@@ -122,7 +127,16 @@ internal sealed class GuideSettings
         Radius = file.Bind("Scan", "ManualRadius", 45f, "Manual scan radius.");
         Height = file.Bind("Scan", "ManualVerticalRange", 120f, "Metres above and below manual scan origin.");
         Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
-        Budget = file.Bind("Scan", "ColumnsPerFrame", 24, "Work budget per frame, also limited by time.");
+        Budget = file.Bind(
+            "Scan",
+            "ColumnsPerFrame",
+            24,
+            "Maximum scan steps per frame (individual samples/passage pairs), also limited by elapsed time.");
+        MillisecondsPerFrame = file.Bind(
+            "Scan",
+            "MillisecondsPerFrame",
+            1f,
+            "Soft main-thread budget, clamped to 0.25-4 ms. Individual Unity queries cannot be interrupted.");
         AllowOutdoorMapping = file.Bind(
             "Display",
             "AllowOutdoorMapping",

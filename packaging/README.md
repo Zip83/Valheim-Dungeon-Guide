@@ -56,6 +56,16 @@ Outdoor bases keep the ordinary world map by default. To map outdoors manually,
 enable `Display.AllowOutdoorMapping` in the configuration, then press **F5**.
 Enabling this option never starts an outdoor scan automatically.
 
+## Scanning responsiveness
+
+Scanning is spread across frames and leaves gameplay and other plugins running.
+The default soft time budget is **1 ms per frame**, configurable through
+`Scan.MillisecondsPerFrame` (0.25–4 ms). Lower values spread scans over more frames.
+Pure floor analysis runs on a worker; leaving the dungeon cancels the pending scan.
+During a rescan, the previous map stays available until the replacement is ready.
+A single Unity physics query cannot be interrupted, so actual frame-time impact
+still needs in-game verification.
+
 ## Language and limitations
 
 The interface defaults to English and uses Czech only when Valheim is set to Czech.

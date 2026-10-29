@@ -4,6 +4,8 @@
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
 
+- Cooperative sampling/linking with a 1 ms default soft frame budget, cancellable
+  background floor analysis, and reusable clearance buffers.
 - English interface by default; Czech follows Valheim's Czech language selection.
   Other languages fall back to English, and saved names/notes remain unchanged.
 - Automatic activation only inside generated dungeon rooms; outdoor bases retain

@@ -51,7 +51,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new FloorDetector(new FloorLandingDetector()),
             lifecycle,
             new ExplorationRecorder(physics),
-            new TraversalRecorder(locator),
+            new TraversalRecorder(locator, new TraversalProofVerifier()),
             Logger,
             notice);
         var floorPolicy = new FloorNavigationPolicy();

@@ -95,6 +95,14 @@ promise that every room in the dungeon was loaded or captured. Narrow floors,
 complex staircases, and balconies can be ambiguous. Rescan after opening or
 breaking a passage. Large scans are spread over frames and have a configurable cap.
 
+Scanning yields between individual samples and passage candidates, with a default
+soft budget of **1 ms per frame** (`Scan.MillisecondsPerFrame`). It does not pause
+the game, lock input, or disable other plugins. Pure floor analysis runs on a worker
+and is cancelled when leaving the session; the previous map remains available
+until a replacement is complete. Unity physics stays on the game thread: an
+individual engine query cannot be interrupted, so the budget is not a hard frame-time
+guarantee. Actual frame times and compatibility with other mods require in-game checks.
+
 Ordinary walking routes are preferred. Optional breakable routes require an
 approved exact prefab and geometry checks. Optional jumps and drops require a
 previously observed directional traversal and current geometry/capability checks.

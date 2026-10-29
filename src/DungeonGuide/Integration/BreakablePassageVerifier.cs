@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
@@ -22,16 +22,23 @@ internal sealed class BreakablePassageVerifier
     /// <summary>
     /// Identifies a thin supported destructible obstacle and reports whether its prefab is approved.
     /// </summary>
-    public bool Matches(Collider[] blockers, out string prefab, out bool verified)
+    public bool Matches(IReadOnlyList<Collider> blockers, out string prefab, out bool verified)
     {
         prefab = null;
         verified = false;
         var d = blockers[0].GetComponentInParent<Destructible>();
-        if (!d || d.GetComponentInParent<Piece>()
-            || !blockers.All(c => c.GetComponentInParent<Destructible>() == d)
-            || !blockers.All(c => Mathf.Min(c.bounds.size.x, c.bounds.size.z) < 1.2f))
+        if (!d || d.GetComponentInParent<Piece>())
         {
             return false;
+        }
+
+        foreach (var collider in blockers)
+        {
+            if (collider.GetComponentInParent<Destructible>() != d
+                || !(Mathf.Min(collider.bounds.size.x, collider.bounds.size.z) < 1.2f))
+            {
+                return false;
+            }
         }
 
         prefab = d.gameObject.name.Replace("(Clone)", "").Trim();

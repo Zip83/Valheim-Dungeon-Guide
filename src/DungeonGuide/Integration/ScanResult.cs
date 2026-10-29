@@ -22,12 +22,17 @@ internal sealed class ScanResult
     public readonly Dictionary<(int, int), List<int>> Columns = new();
 
     /// <summary>
+    /// Directional jump/drop edges indexed during linking, avoiding a synchronous full-graph pass at publication.
+    /// </summary>
+    public readonly Dictionary<(string, string), NavEdge> TraversalCandidates = new();
+
+    /// <summary>
     /// Horizontal sampling-grid distance in metres.
     /// </summary>
     public float Spacing;
 
     /// <summary>
-    /// Whether the scan stopped at its configured column cap.
+    /// Whether a work cap or saturated physics query made the scan potentially incomplete.
     /// </summary>
     public bool Truncated;
 }

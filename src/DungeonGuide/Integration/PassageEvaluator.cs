@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
@@ -9,6 +9,7 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class PassageEvaluator
 {
+    private readonly List<Collider> _blockers = new(32);
     private readonly GeometryPhysics _physics;
     private readonly DoorPassageVerifier _doors;
     private readonly BreakablePassageVerifier _breakables;
@@ -43,22 +44,25 @@ internal sealed class PassageEvaluator
             return;
         }
 
-        var blockers = _physics.Blockers(from + Vector3.up * 0.6f, to + Vector3.up * 0.6f, 0.18f)
-            .Concat(_physics.Blockers(from + Vector3.up * 1.25f, to + Vector3.up * 1.25f, 0.18f))
-            .Distinct()
-            .ToArray();
-        if (blockers.Length == 0 && _physics.Supported((from + to) * 0.5f))
+        _blockers.Clear();
+        if (!_physics.AddBlockers(from + Vector3.up * 0.6f, to + Vector3.up * 0.6f, 0.18f, _blockers)
+            || !_physics.AddBlockers(from + Vector3.up * 1.25f, to + Vector3.up * 1.25f, 0.18f, _blockers))
+        {
+            return;
+        }
+
+        if (_blockers.Count == 0 && _physics.Supported((from + to) * 0.5f))
         {
             graph.Connect(a, b, Mathf.Abs(from.y - to.y) > 0.25f ? PassageKind.Stairs : PassageKind.Walk);
             return;
         }
 
-        if (blockers.Length == 0)
+        if (_blockers.Count == 0)
         {
             return;
         }
 
-        if (_doors.Matches(blockers, out var door))
+        if (_doors.Matches(_blockers, out var door))
         {
             // Locked doors require the player's actual key; planning never opens anything.
             var key = _doors.CanOpen(door);
@@ -70,7 +74,7 @@ internal sealed class PassageEvaluator
             return;
         }
 
-        if (_breakables.Matches(blockers, out var prefab, out var verified)
+        if (_breakables.Matches(_blockers, out var prefab, out var verified)
             && _physics.Supported((from + to) * 0.5f))
         {
             graph.Connect(a, b, PassageKind.Breakable, verified, true, prefab);

@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -17,11 +17,23 @@ internal sealed class DoorPassageVerifier
     /// <summary>
     /// Recognizes blocker sets consisting of a supported door.
     /// </summary>
-    public bool Matches(Collider[] blockers, out Door door)
+    public bool Matches(IReadOnlyList<Collider> blockers, out Door door)
     {
         door = blockers[0].GetComponentInParent<Door>();
-        var selected = door;
-        return selected && blockers.All(c => c.GetComponentInParent<Door>() == selected);
+        if (!door)
+        {
+            return false;
+        }
+
+        foreach (var collider in blockers)
+        {
+            if (collider.GetComponentInParent<Door>() != door)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

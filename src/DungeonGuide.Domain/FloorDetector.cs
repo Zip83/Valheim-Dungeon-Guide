@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace DungeonGuide;
 
@@ -25,9 +26,13 @@ public sealed class FloorDetector
     /// </summary>
     /// <param name="graph">Sampled floor graph whose node indices are used by the operation.</param>
     /// <param name="spacing">Horizontal sample spacing in world metres.</param>
+    /// <param name="cancellationToken">Cancellation request checked throughout analysis of large graphs.</param>
     /// <returns>Detected levels and broad landing nodes; an empty graph produces no levels.</returns>
-    public FloorLayout Detect(NavGraph graph, float spacing)
+    /// <exception cref="OperationCanceledException">The scan was cancelled.</exception>
+    public FloorLayout Detect(NavGraph graph, float spacing, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Count connected, near-horizontal surfaces. Isolated treads and decoration must not
         // accumulate into artificial floors simply because they share the same elevation.
         var surfaces = new List<(float height, int count, List<int> landings)>();
@@ -35,6 +40,7 @@ public sealed class FloorDetector
         var minimum = Math.Max(6, (int)Math.Ceiling(16 / (spacing * spacing)));
         for (var i = 0; i < graph.Nodes.Count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!graph.Nodes[i].Flat || !seen.Add(i))
             {
                 continue;
@@ -48,12 +54,14 @@ public sealed class FloorDetector
             queue.Enqueue(i);
             while (queue.Count > 0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var n = queue.Dequeue();
                 count++;
                 members.Add(n);
                 sum += graph.Nodes[n].Position.y;
                 foreach (var edge in graph.Nodes[n].Edges)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var next = graph.Nodes[edge.To];
                     if (edge.Verified && (edge.Kind == PassageKind.Walk || edge.Kind == PassageKind.Stairs) && next.Flat
                         && Math.Abs(next.Position.y - reference) < 0.35f
@@ -66,7 +74,7 @@ public sealed class FloorDetector
 
             if (count >= minimum)
             {
-                var landings = _landingDetector.Find(graph, members, spacing);
+                var landings = _landingDetector.Find(graph, members, spacing, cancellationToken);
                 if (landings.Count >= 4)
                 {
                     surfaces.Add((sum / count, count, landings));
@@ -82,6 +90,7 @@ public sealed class FloorDetector
         var levels = layout.Levels;
         foreach (var bin in bins)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (bin.count >= minimum && levels.All(h => Math.Abs(h - bin.height) > 2f))
             {
                 levels.Add(bin.height);
@@ -96,13 +105,16 @@ public sealed class FloorDetector
         levels.Sort();
         foreach (var node in graph.Nodes)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             node.Floor = Nearest(levels, node.Position.y);
         }
 
         foreach (var surface in surfaces)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             foreach (var id in surface.landings)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var node = graph.Nodes[id];
                 if (levels.Count > 0 && Math.Abs(node.Position.y - levels[node.Floor]) <= 0.4f)
                 {
