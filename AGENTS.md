@@ -43,6 +43,14 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   deliberate invalid-code probe when changing the enforcement configuration.
   Restore probe changes before committing; do not auto-format source during builds.
 - Follow `.editorconfig` and `docs/coding-conventions.md`.
+- Document public types and members with meaningful XML documentation, including
+  constructors, methods, properties, fields, and events. Document lifecycle
+  entry points as well. Explain purpose, contracts, inputs, results, and relevant
+  exceptions rather than repeating names or filling templates with empty prose.
+- Use `<inheritdoc />` for genuine overrides and interface implementations when
+  their inherited contract is sufficient. Unity message callbacks need their
+  own documentation. Do not suppress missing-public-documentation errors or
+  disable XML generation to make a build pass.
 - Prefer `var` for local variables whenever inference preserves the intended
   static type. Use an explicit type when inference is unavailable or would
   change the intended type, conversion, or overload behavior.

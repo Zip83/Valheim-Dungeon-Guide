@@ -91,11 +91,21 @@ repository abstraction.
 
 ## Responsibilities and errors
 
-Use XML documentation for public APIs and lifecycle entry points. Use
+XML documentation is required for public types and members, including
+constructors, methods, properties, fields, and events, and for lifecycle entry
+points. Write a meaningful `<summary>`; describe parameters with `<param>`,
+non-void results with `<returns>`, and contractual exceptions with `<exception>`
+where applicable. Explain units, constraints, side effects, and ownership when
+they affect callers. Do not repeat the name or insert empty template text. Use
 `<inheritdoc />` for actual overrides and interface implementations when the
 inherited contract describes the member. Unity message callbacks such as
 `Awake` are not overrides; document their purpose with a `<summary>` and add
 relevant lifecycle details in `<remarks>`.
+
+All projects generate XML documentation through `Directory.Build.props`.
+CS1591 is an error for missing documentation on externally visible API.
+The compiler checks missing documentation and XML consistency; review must
+still assess usefulness and completeness of the documented contract.
 
 Keep one top-level type per file. Separate validation, mapping, routing rules,
 game inspection, drawing, and saving when they represent different responsibilities.

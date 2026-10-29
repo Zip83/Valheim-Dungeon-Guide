@@ -12,6 +12,14 @@ compatibility implications, and verification approach in an issue first.
 
 ## Code and architecture
 
+Use meaningful XML documentation for public types and members, including
+constructors, methods, properties, fields, and events, and for lifecycle entry
+points. Describe the purpose and contract; document parameters, return values,
+and expected exceptions where applicable. Use `<inheritdoc />` when a real
+inherited contract applies. Avoid comments that merely repeat a member's name.
+Missing documentation on externally visible API fails the build through CS1591.
+Documentation quality and completeness of contract details also require review.
+
 Nullable reference types are not used. The shared `Directory.Build.props`
 disables them for every project. Do not enable them in project files, add
 `#nullable enable`, or introduce nullable reference annotations. This policy

@@ -86,6 +86,12 @@ plugin attribute. Keep its version aligned with the project version.
 `BaseUnityPlugin`. Its XML documentation describes the callback explicitly.
 The build emits `DungeonGuide.xml` alongside the DLL for documentation tools.
 
+XML documentation generation is enabled for all projects in
+`Directory.Build.props`. Missing documentation on externally visible types and
+members fails the build with CS1591. Public members inside internal types are
+also documented by convention; the compiler's CS1591 check only covers the
+externally visible API. Review documentation quality alongside the code.
+
 Add focused domain, application, integration, presentation, and storage units
 when their behavior is introduced. Keep domain rules independent of Unity and
 BepInEx; do not create empty layers or placeholder service implementations.
