@@ -52,7 +52,9 @@ types disabled. SDK selection does not change the runtime APIs available in Unit
 
 No game installation is needed for the default build. NuGet restores external
 compile-time references and .NET Framework reference assemblies on both Windows
-and Linux. Dependencies use source mapping and committed lock files. `PackageDownload`
+and Linux. An explicit Microsoft.NETFramework.ReferenceAssemblies 1.0.3 reference
+keeps the dependency graph identical when a Windows runner already has a targeting
+pack installed. Dependencies use source mapping and committed lock files. `PackageDownload`
 acquires exact game/UI references without adding them as runtime assets. To check
 against a local installation instead, run:
 
