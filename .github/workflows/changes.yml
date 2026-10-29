@@ -1,0 +1,39 @@
+name: Detect changes
+
+on:
+  workflow_call:
+    outputs:
+      code:
+        description: Whether code or build inputs require verification
+        value: ${{ jobs.detect.outputs.code }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  detect:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.filter.outputs.code || 'true' }}
+    steps:
+      - name: Require verification for manual and scheduled runs
+        if: github.event_name != 'push' && github.event_name != 'pull_request'
+        run: echo 'Full verification requested.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check out filter configuration
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Classify changes
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          base: ${{ github.ref_name }}
+          filters: .github/filters.yml
+          predicate-quantifier: every

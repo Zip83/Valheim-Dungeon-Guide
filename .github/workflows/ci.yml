@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore locked dependencies
+        run: dotnet restore Valheim.DungeonGuide.slnx --locked-mode
+
+      - name: Check formatting
+        run: dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
+
+      - name: Build
+        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+
+      - name: Prepare plugin artifact
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide
+          cp src/DungeonGuide/bin/Release/netstandard2.1/DungeonGuide.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
+          cp LICENSE README.md artifacts/DungeonGuide/
+
+      - name: Upload plugin artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: DungeonGuide-${{ github.sha }}
+          path: artifacts/DungeonGuide/
+          if-no-files-found: error
+          retention-days: 14
+
+  result:
+    name: CI result
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify required build result
+        env:
+          DETECTION_RESULT: ${{ needs.changes.result }}
+          CODE_CHANGED: ${{ needs.changes.outputs.code }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          if [[ "$DETECTION_RESULT" != 'success' ]]; then exit 1; fi
+          if [[ "$CODE_CHANGED" == 'true' && "$BUILD_RESULT" == 'success' ]]; then exit 0; fi
+          if [[ "$CODE_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]; then
+            echo 'Documentation/metadata only: build was not required.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit 1

@@ -34,7 +34,28 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 ## C# readability
 
+- Leave nullable reference types disabled; do not add `Nullable=enable`,
+  `#nullable enable`, or nullable reference annotations.
+- Keep machine-enforceable style rules in `.editorconfig`, not only in prose.
+  Use error severity for required rules. `Directory.Build.props` applies the
+  nullable and analyzer policy to every project; do not override it in a project.
+- Verify formatting enforcement with ordinary `dotnet build`, including a
+  deliberate invalid-code probe when changing the enforcement configuration.
+  Restore probe changes before committing; do not auto-format source during builds.
 - Follow `.editorconfig` and `docs/coding-conventions.md`.
+- Document public types and members with meaningful XML documentation, including
+  constructors, methods, properties, fields, and events. Document lifecycle
+  entry points as well. Explain purpose, contracts, inputs, results, and relevant
+  exceptions rather than repeating names or filling templates with empty prose.
+- Use `<inheritdoc />` for genuine overrides and interface implementations when
+  their inherited contract is sufficient. Unity message callbacks need their
+  own documentation. Do not suppress missing-public-documentation errors or
+  disable XML generation to make a build pass.
+- Prefer `var` for local variables whenever inference preserves the intended
+  static type. Use an explicit type when inference is unavailable or would
+  change the intended type, conversion, or overload behavior.
+- Use the configured naming conventions, `readonly` for private fields that
+  are only assigned during initialization, and omit unnecessary `this.`.
 - Leave exactly one blank line between constructors, methods, and distinct
   property declarations. Never stack method declarations without separation.
 - Inside methods, separate meaningful logical steps with one blank line, such
@@ -76,12 +97,32 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 
 ## Verification and handoff
 
+- Use `Valheim.DungeonGuide.slnx` for repository-wide restore, formatting, and
+  builds. Add every new production or test project to this solution so CI
+  includes it; do not maintain a duplicate legacy `.sln`.
+- Always state the target Valheim version in the README and release notes.
+  Keep the environment, verification date, and evidence in
+  `docs/development.md#compatibility-and-verification` current when changing the
+  target. Distinguish compile-time reference versions from the installed game,
+  and compilation from actual load/gameplay verification. Do not claim support
+  for untested versions.
 - Run the relevant build, domain tests, and formatting checks for implementation
   changes, using the commands actually present in the repository.
 - Do not invent projects, commands, passing checks, or compatibility claims.
 - Add focused regression coverage for meaningful logic changes. Each test
   verifies one behavior; use data-driven variants where practical. Keep tests
   outside production files and avoid Arrange/Act/Assert scaffolding comments.
+- Add tests when they protect meaningful behavior, invariants, boundary cases,
+  or a regression. Do not add tests that only repeat the implementation or
+  assert trivial scaffolding to increase a test count.
+- When a test fails, reproduce it and compare the expected result with the
+  intended contract before editing anything. Investigate the application code
+  first: the test may have exposed a real bug. Fix production code when its
+  behavior violates the contract, preserving the regression assertion.
+- Change a test expectation only when evidence shows the test is incorrect or
+  an intentional requirement change makes it obsolete; explain that reason in
+  the PR. Never weaken, skip, delete, or rewrite a failing test merely to get a
+  passing run. Rerun the failing case and the relevant suite after the fix.
 - Do not suppress diagnostics or disable checks merely to obtain a passing run.
   Document a narrowly justified exception when compatibility requires one.
 - Documentation-only changes need link, consistency, and diff checks rather

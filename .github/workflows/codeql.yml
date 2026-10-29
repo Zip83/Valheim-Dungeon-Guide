@@ -1,0 +1,82 @@
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  schedule:
+    - cron: '31 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  analyze:
+    name: Analyze C#
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Restore locked dependencies
+        run: dotnet restore Valheim.DungeonGuide.slnx --locked-mode
+
+      - name: Build for analysis
+        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          category: /language:csharp
+
+  result:
+    name: CodeQL result
+    needs: [changes, analyze]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify required analysis result
+        env:
+          DETECTION_RESULT: ${{ needs.changes.result }}
+          CODE_CHANGED: ${{ needs.changes.outputs.code }}
+          ANALYSIS_RESULT: ${{ needs.analyze.result }}
+        run: |
+          if [[ "$DETECTION_RESULT" != 'success' ]]; then exit 1; fi
+          if [[ "$CODE_CHANGED" == 'true' && "$ANALYSIS_RESULT" == 'success' ]]; then exit 0; fi
+          if [[ "$CODE_CHANGED" == 'false' && "$ANALYSIS_RESULT" == 'skipped' ]]; then
+            echo 'Documentation/metadata only: CodeQL analysis was not required; no SARIF was uploaded.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit 1
