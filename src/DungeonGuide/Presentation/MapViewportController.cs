@@ -128,7 +128,8 @@ internal sealed class MapViewportController
     {
         var uv = layer.MouseUV(mouse);
         var chest = session.Data.chests.Where(c => !c.done && (state.RevealAll || c.discovered || c.collect)
-                && FloorDetector.Nearest(session.Floors, c.position.y) == state.SelectedFloor)
+                && FloorDetector.Nearest(session.Floors, c.position.y) == renderer.DisplayedFloor
+                && renderer.IsVisible(c.position))
             .OrderBy(c => Vector2.Distance(renderer.UV(c.position), uv))
             .FirstOrDefault();
         if (chest != null && Vector2.Distance(renderer.UV(chest.position), uv) < width * 0.025f)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace DungeonGuide;
 internal sealed class ExplorationRecorder
 {
     private readonly GeometryPhysics _physics;
+    private readonly Func<Point, Point, bool> _visible;
 
     /// <summary>
     /// Uses collision visibility to reveal nearby floor samples.
@@ -16,6 +18,7 @@ internal sealed class ExplorationRecorder
     public ExplorationRecorder(GeometryPhysics physics)
     {
         _physics = physics;
+        _visible = Visible;
     }
 
     /// <summary>
@@ -24,13 +27,17 @@ internal sealed class ExplorationRecorder
     /// <param name="scan">Completed geometry and its horizontal column index.</param>
     /// <param name="exploration">Session-owned explored sample set to update.</param>
     /// <param name="player">Player position in world metres.</param>
-    public void Track(ScanResult scan, Exploration exploration, Vector3 player)
+    /// <param name="physicalFloor">Detected player floor, independent of the browsed map floor.</param>
+    public void Track(ScanResult scan, Exploration exploration, Vector3 player, int physicalFloor)
     {
+        var position = UnityPoints.P(player);
         foreach (var column in NearbyColumns(scan, player))
         {
-            RevealColumn(scan, exploration, column, player);
+            RevealColumn(scan, exploration, column, position, physicalFloor);
         }
     }
+
+    private bool Visible(Point a, Point b) => _physics.Visible(UnityPoints.V(a), UnityPoints.V(b));
 
     private static IEnumerable<List<int>> NearbyColumns(ScanResult scan, Vector3 player)
     {
@@ -51,26 +58,16 @@ internal sealed class ExplorationRecorder
         }
     }
 
-    private void RevealColumn(ScanResult scan, Exploration exploration, List<int> column, Vector3 player)
+    private void RevealColumn(
+        ScanResult scan,
+        Exploration exploration,
+        List<int> column,
+        Point player,
+        int physicalFloor)
     {
         foreach (var id in column)
         {
-            RevealSample(exploration, scan.Graph.Nodes[id], player);
-        }
-    }
-
-    private void RevealSample(Exploration exploration, NavNode node, Vector3 player)
-    {
-        var position = UnityPoints.V(node.Position);
-        if (exploration.Has(node) || Mathf.Abs(player.y - position.y) > 0.9f
-            || Vector3.Distance(player, position) > 3)
-        {
-            return;
-        }
-
-        if (_physics.Visible(player, position))
-        {
-            exploration.Reveal(node);
+            ExplorationRevealPolicy.TryReveal(exploration, scan.Graph.Nodes[id], player, physicalFloor, _visible);
         }
     }
 }

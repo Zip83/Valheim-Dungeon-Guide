@@ -36,6 +36,9 @@ internal sealed class MapMarkerRenderer : IDisposable
     public float Span { get; private set; } = 1;
 
     private Vector3 _center;
+    private FloorFogMask _fog;
+    private bool _reveal;
+    private bool _playerMarker;
 
     /// <summary>
     /// Projects a world-space floor position into the shared texture coordinate system.
@@ -46,20 +49,23 @@ internal sealed class MapMarkerRenderer : IDisposable
     /// Rasterizes the selected floor, permitted chest markers, player position, and visible route sections.
     /// </summary>
     public void Render(DungeonSession session, MapViewState view, NavigationCoordinator navigator, Player player,
-        FloorPlanRaster raster)
+        FloorPlanRaster raster, FloorFogMask fog, bool reveal)
     {
+        _fog = fog;
+        _reveal = reveal;
+        _playerMarker = false;
         Span = raster.Span;
         _center = UnityPoints.V(raster.Center);
         ClearPixels();
         var floor = raster.Floor;
 
-        DrawRoute(session, navigator, floor, view.RevealAll);
+        DrawRoute(session, navigator, floor, reveal);
 
-        DrawFeatures(session, floor, view.RevealAll, raster);
+        DrawFeatures(session, floor, reveal, raster);
 
-        DrawChests(session, floor, view.RevealAll);
+        DrawChests(session, floor, reveal);
 
-        DrawEntrance(session, floor, view.RevealAll);
+        DrawEntrance(session, floor, reveal);
 
         DrawPlayer(view, player, floor);
 
@@ -107,6 +113,11 @@ internal sealed class MapMarkerRenderer : IDisposable
         if (x >= 0 && x < Size && y >= 0 && y < Size)
         {
             var index = y * Size + x;
+            if (!_playerMarker && !_reveal && _fog.Opacity[index] == 255)
+            {
+                return;
+            }
+
             if (_pixels[index].a == 0)
             {
                 _touched.Add(index);
@@ -226,6 +237,7 @@ internal sealed class MapMarkerRenderer : IDisposable
     {
         if (view.CurrentFloor == floor)
         {
+            _playerMarker = true;
             var uv = UV(UnityPoints.P(player.transform.position));
             var yaw = player.transform.eulerAngles.y * Mathf.Deg2Rad;
             var x = (int)(uv.x * Size);
