@@ -70,7 +70,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
         InstallMapHooks(maps, view, runtime, settings);
         InstallWorldChangeHooks(runtime, settings);
 
-        Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded. "
+        Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.DisplayVersion} loaded. "
             + "M: map; Alt+M: World/Dungeon; F6: optional overlay. Explored-only by default.");
     }
 

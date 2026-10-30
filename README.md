@@ -47,6 +47,11 @@ and copy **both** `DungeonGuide.dll` and `DungeonGuide.Domain.dll` from
 Copy the `cs/` subdirectory alongside them as well; it contains
 `DungeonGuide.Domain.resources.dll`, the Czech translation satellite.
 
+Development artifacts are named `DungeonGuide-<version>-dev.<run>.<attempt>`.
+Their `build-info.json` records the exact commit, CI run, PR, and Valheim target;
+startup logging reports that same build identity. Include it when reporting an issue.
+These artifacts are test builds rather than stable releases.
+
 Close the game before replacing DLLs. Keep one copy of this plugin installed;
 remove an older copy from another plugin directory. Disable competing dungeon-map
 mods in the same profile. Server installation is not required. Normal BepInEx,

@@ -139,6 +139,11 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
 - Use `Valheim.DungeonGuide.slnx` for repository-wide restore, formatting, and
   builds. Add every new production or test project to this solution so CI
   includes it; do not maintain a duplicate legacy `.sln`.
+- Keep the release prefix in `Version.props`; do not duplicate version literals
+  in plugin source or project files. Use numbered development builds for review
+  and gameplay feedback, recording the exact source commit. Do not bump a release
+  prefix for every CI run, publish a stable release, or install into a running game
+  automatically. Follow the versioning policy in `CONTRIBUTING.md`.
 - Always state the target Valheim version in the README and release notes.
   Keep the environment, verification date, and evidence in
   `docs/development.md#compatibility-and-verification` current when changing the

@@ -10,4 +10,5 @@
     <Exec Command="&quot;$(_StyleCheckDotNetHost)&quot; format style &quot;$(MSBuildProjectFullPath)&quot; --no-restore --verify-no-changes --severity error"
           WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
+  <Import Project="build/GeneratePluginBuild.targets" />
 </Project>

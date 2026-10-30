@@ -1,0 +1,36 @@
+<Project>
+  <Target Name="ValidateBuildIdentity" BeforeTargets="GenerateAssemblyInfo">
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(BuildNumber)', '^(0|[1-9][0-9]{0,4})$'))"
+           Text="BuildNumber must be a whole number between 0 and 65534." />
+    <Error Condition="$(BuildNumber) &gt; 65534"
+           Text="BuildNumber exceeds the assembly file-version limit; start a new release versioning scheme before continuing." />
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(BuildAttempt)', '^[1-9][0-9]*$'))"
+           Text="BuildAttempt must be a positive whole number." />
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(BuildCommit)', '^([0-9a-fA-F]{40}|[0-9a-fA-F]{64})?$'))"
+           Text="BuildCommit must be empty or a full hexadecimal Git commit SHA." />
+  </Target>
+
+  <Target Name="GeneratePluginBuild"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ValidateBuildIdentity"
+          Condition="'$(MSBuildProjectName)' == 'DungeonGuide'">
+    <ItemGroup>
+      <_PluginBuildLine Include="// &lt;auto-generated /&gt;" />
+      <_PluginBuildLine Include="namespace DungeonGuide%3B" />
+      <_PluginBuildLine Include="%0Ainternal static class PluginBuild" />
+      <_PluginBuildLine Include="{" />
+      <_PluginBuildLine Include="%20%20%20%20internal const string Version = &quot;$(PluginVersion)&quot;%3B" />
+      <_PluginBuildLine Include="%20%20%20%20internal const string DisplayVersion = &quot;$(InformationalVersion)&quot;%3B" />
+      <_PluginBuildLine Include="}" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)PluginBuild.g.cs"
+                      Lines="@(_PluginBuildLine)"
+                      Overwrite="true"
+                      WriteOnlyWhenDifferent="true"
+                      Encoding="UTF-8" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)PluginBuild.g.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

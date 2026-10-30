@@ -11,6 +11,13 @@ Keep both `DungeonGuide.dll` and `DungeonGuide.Domain.dll` together in
 with `DungeonGuide.Domain.resources.dll`. Install BepInExPack first and remove duplicate
 copies of this plugin. Disable competing dungeon-map mods in the same profile.
 
+## Build identity
+
+This is a development build of the release version shown above. See
+`build-info.json` for its exact development version, commit, PR, CI run, and
+Valheim target. The startup log reports the full build identity; BepInEx uses
+its numeric equivalent. Include the development version in bug reports.
+
 ## Default controls
 
 ### Map and floors

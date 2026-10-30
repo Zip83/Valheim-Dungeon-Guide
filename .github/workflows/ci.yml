@@ -53,8 +53,27 @@ jobs:
       - name: Check formatting
         run: dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
 
+      - name: Identify development build
+        id: identity
+        shell: pwsh
+        run: |
+          $identity = dotnet msbuild src/DungeonGuide/DungeonGuide.csproj -nologo `
+            '-getProperty:Version,PluginVersion' `
+            "-p:BuildNumber=$env:GITHUB_RUN_NUMBER" "-p:BuildAttempt=$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Cannot determine build identity.'
+          }
+          $properties = ($identity | ConvertFrom-Json).Properties
+          "version=$($properties.Version)" >> $env:GITHUB_OUTPUT
+          "plugin_version=$($properties.PluginVersion)" >> $env:GITHUB_OUTPUT
+          "Development build: $($properties.Version)+$env:GITHUB_SHA" >> $env:GITHUB_STEP_SUMMARY
+
       - name: Build
-        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+        shell: bash
+        run: >-
+          dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+          -p:BuildNumber="$GITHUB_RUN_NUMBER" -p:BuildAttempt="$GITHUB_RUN_ATTEMPT"
+          -p:BuildCommit="$GITHUB_SHA"
 
       - name: Test domain behavior
         id: tests
@@ -90,18 +109,42 @@ jobs:
       - name: Prepare plugin artifact
         if: runner.os == 'Linux'
         shell: bash
+        env:
+          BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          PLUGIN_VERSION: ${{ steps.identity.outputs.plugin_version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs
           cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
           cp LICENSE artifacts/DungeonGuide/
           cp packaging/README.md artifacts/DungeonGuide/README.md
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = {
+              "version": os.environ["BUILD_VERSION"],
+              "pluginVersion": os.environ["PLUGIN_VERSION"],
+              "commit": os.environ["GITHUB_SHA"],
+              "pullRequest": os.environ.get("PR_NUMBER") or None,
+              "runId": os.environ["GITHUB_RUN_ID"],
+              "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+              "valheimTarget": "1.0.21",
+              "channel": "development",
+          }
+          Path("artifacts/DungeonGuide/build-info.json").write_text(
+              json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
 
       - name: Upload plugin artifact
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: DungeonGuide-${{ github.sha }}
+          name: DungeonGuide-${{ steps.identity.outputs.version }}
           path: artifacts/DungeonGuide/
           if-no-files-found: error
           retention-days: 14
