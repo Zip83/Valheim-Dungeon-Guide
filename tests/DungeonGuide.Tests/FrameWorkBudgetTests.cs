@@ -9,6 +9,43 @@ namespace DungeonGuide.Tests;
 public sealed class FrameWorkBudgetTests
 {
     /// <summary>
+    /// Progress accumulates across frame resets and excludes denied reservations.
+    /// </summary>
+    [Fact]
+    public void CountsAdmittedStepsAcrossFrames()
+    {
+        var budget = new FrameWorkBudget(2, 1, () => 0);
+
+        Assert.True(budget.TryStartWork());
+        Assert.True(budget.TryStartWork());
+        Assert.False(budget.TryStartWork());
+        Assert.Equal(2L, budget.TotalSteps);
+
+        budget.BeginFrame();
+
+        Assert.Equal(2L, budget.TotalSteps);
+        Assert.True(budget.TryStartWork());
+        Assert.Equal(3L, budget.TotalSteps);
+    }
+
+    /// <summary>
+    /// Expired elapsed time cannot inflate diagnostic progress even with a large step ceiling.
+    /// </summary>
+    [Fact]
+    public void DoesNotCountWorkDeniedByTimeLimit()
+    {
+        var now = 0.0;
+        var budget = new FrameWorkBudget(4096, 1, () => now);
+        Assert.True(budget.TryStartWork());
+
+        now = 1;
+
+        Assert.False(budget.TryStartWork());
+        Assert.False(budget.TryStartWork());
+        Assert.Equal(1L, budget.TotalSteps);
+    }
+
+    /// <summary>
     /// Cheap operations still yield at the work limit even when the clock has not advanced.
     /// </summary>
     [Fact]

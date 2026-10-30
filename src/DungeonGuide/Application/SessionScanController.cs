@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using BepInEx.Logging;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ internal sealed class SessionScanController
     private readonly Func<DungeonSession> _current;
     private Coroutine _scanJob;
     private FloorAnalysisJob _floorAnalysis;
+    private float _scanStarted;
+    private float _nextProgress;
 
     /// <summary>Raised after complete geometry and floor assignments replace the active session's scan.</summary>
     public event Action ScanCompleted;
@@ -51,6 +54,8 @@ internal sealed class SessionScanController
         }
 
         session.Scanning = true;
+        _scanStarted = Time.realtimeSinceStartup;
+        _nextProgress = _scanStarted;
         _scanJob = _host.StartCoroutine(Guard(BuildScan(session), session));
     }
 
@@ -95,7 +100,8 @@ internal sealed class SessionScanController
         session.GeometryRevision++;
         session.Scanning = false;
         _log.LogInfo("Scan complete: " + session.Area.Id + ", nodes=" + result.Graph.Nodes.Count
-            + ", floors=" + session.Floors.Count + ", incomplete=" + result.Truncated);
+            + ", floors=" + session.Floors.Count + ", incomplete=" + result.Truncated
+            + ", elapsedSeconds=" + (Time.realtimeSinceStartup - _scanStarted).ToString("F1", CultureInfo.InvariantCulture));
         _log.LogInfo("Floor navigation landings=" + layout.LandingNodes.Count);
         ScanCompleted?.Invoke();
     }
@@ -106,6 +112,7 @@ internal sealed class SessionScanController
         {
             while (MoveNextSafely(task))
             {
+                ReportProgress();
                 yield return task.Current;
             }
         }
@@ -126,7 +133,7 @@ internal sealed class SessionScanController
             session.Area,
             Mathf.Clamp(_settings.Spacing.Value, 0.75f, 3),
             Mathf.Clamp(_settings.Columns.Value, 1000, 120000),
-            Mathf.Clamp(_settings.Budget.Value, 1, 128),
+            Mathf.Clamp(_settings.Budget.Value, 1, 8192),
             Mathf.Clamp(_settings.MillisecondsPerFrame.Value, 0.25f, 4),
             completed);
     }
@@ -175,5 +182,21 @@ internal sealed class SessionScanController
             _log.LogError("Geometry scan failed: " + e);
             return false;
         }
+    }
+
+    private void ReportProgress()
+    {
+        var now = Time.realtimeSinceStartup;
+        if (now < _nextProgress)
+        {
+            return;
+        }
+
+        _nextProgress = now + 5;
+        var phase = _floorAnalysis == null ? _scanner.Phase.ToString() : nameof(FloorAnalysisJob);
+        _log.LogInfo("Scan progress: phase=" + phase
+            + ", columns=" + _scanner.ProcessedColumns + ", nodes=" + _scanner.SampledNodes
+            + ", steps=" + _scanner.WorkSteps
+            + ", elapsedSeconds=" + (now - _scanStarted).ToString("F1", CultureInfo.InvariantCulture));
     }
 }

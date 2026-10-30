@@ -13,6 +13,28 @@ internal sealed class GeometryScanner
     private readonly GeometryPhysics _physics;
     private readonly ScanColumnSampler _sampler;
     private readonly ScanPassageLinker _linker;
+    private FrameWorkBudget _work;
+
+    /// <summary>Current geometry phase, independent of subsequent floor analysis.</summary>
+    public GeometryScanPhase Phase
+    {
+        get; private set;
+    }
+
+    /// <summary>Number of fully sampled columns in the current scan.</summary>
+    public int ProcessedColumns
+    {
+        get; private set;
+    }
+
+    /// <summary>Number of floor nodes recorded through the most recently completed column.</summary>
+    public int SampledNodes
+    {
+        get; private set;
+    }
+
+    /// <summary>Cumulative operations admitted by the current scan's shared work budget.</summary>
+    public long WorkSteps => _work?.TotalSteps ?? 0;
 
     /// <summary>
     /// Composes the sampling and linking phases using shared main-thread physics services.
@@ -43,8 +65,10 @@ internal sealed class GeometryScanner
         float millisecondsPerFrame, Action<ScanResult> complete)
     {
         // StartCoroutine runs until the first yield; do no physics work in the input handler.
+        ResetProgress();
         yield return null;
         var work = new FrameWorkBudget(stepsPerFrame, millisecondsPerFrame);
+        _work = work;
         var overflowRevision = _physics.BufferOverflows;
         var result = new ScanResult { Spacing = spacing };
 
@@ -53,13 +77,23 @@ internal sealed class GeometryScanner
             yield return pause;
         }
 
+        Phase = GeometryScanPhase.Linking;
         foreach (var pause in _linker.Link(result, work))
         {
             yield return pause;
         }
 
         result.Truncated |= _physics.BufferOverflows != overflowRevision;
+        Phase = GeometryScanPhase.Complete;
         complete(result);
+    }
+
+    private void ResetProgress()
+    {
+        Phase = GeometryScanPhase.Sampling;
+        ProcessedColumns = 0;
+        SampledNodes = 0;
+        _work = null;
     }
 
     private IEnumerable<object> SampleColumns(
@@ -78,6 +112,9 @@ internal sealed class GeometryScanner
             {
                 yield return pause;
             }
+
+            ProcessedColumns++;
+            SampledNodes = result.Graph.Nodes.Count;
         }
     }
 
