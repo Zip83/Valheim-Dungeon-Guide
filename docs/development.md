@@ -268,8 +268,8 @@ be revised before reaching that limit. Generated version constants stay under
 
 Successful code builds produce a version-named Actions artifact, including
 `build-info.json` and the Czech satellite. The manifest records both the workflow
-run ID and run number. Run names include the run number and attempt; each platform's
-build summary shows the numeric and development versions, commit, and build/test
+run ID and run number. Run names include the full four-part version and a separate
+attempt; each platform's build summary shows the numeric and development versions, commit, and build/test
 results, including failures. The Linux summary links to the uploaded package.
 Docs-only changes keep the existing skip policy and do not produce a new plugin
 artifact. Manual CI dispatch always builds. No workflow publishes a stable release

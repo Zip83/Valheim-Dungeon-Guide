@@ -1,6 +1,6 @@
 name: CI
 run-name: >-
-  CI build #${{ github.run_number }}.${{ github.run_attempt }} —
+  CI build 0.1.0.${{ github.run_number }} — attempt ${{ github.run_attempt }} —
   ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || github.ref_name }}
 
 on:
