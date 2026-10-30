@@ -11,13 +11,18 @@ internal sealed class MapTextureRenderer : IDisposable
 {
     private const int Size = 768;
     private readonly FloorPlanCache _cache = new();
+    private readonly FloorFogCache _fog = new();
     private readonly MapMarkerRenderer _markers = new();
     private readonly FrameWorkBudget _budget = new(512, 1);
     private readonly Color32[] _pixels = new Color32[Size * Size];
     private readonly MapExtentFitter _extentFitter;
     private IEnumerator<byte> _paint;
     private FloorPlanRaster _painting;
-    private int _revision = -1;
+    private FloorFogMask _paintingFog;
+    private FloorFogMask _publishedFog;
+    private bool _publishedReveal;
+    private readonly Color32[] _cloud = new Color32[Size * Size];
+    private bool _cloudReady;
     private bool _reveal;
     private DungeonSession _session;
 
@@ -87,33 +92,40 @@ internal sealed class MapTextureRenderer : IDisposable
             return;
         }
 
-        PreparePaint(session, ready, view.RevealAll);
+        _fog.Tick(ready, session.Exploration, _budget);
+        var fog = _fog.Ready;
+        if (fog == null || fog.Raster != ready)
+        {
+            return;
+        }
 
-        AdvancePaint(ready);
+        PreparePaint(ready, fog, view.RevealAll);
+
+        AdvancePaint();
     }
 
-    private IEnumerable<byte> Paint(DungeonSession session, FloorPlanRaster raster, bool reveal)
+    private IEnumerable<byte> Paint(FloorPlanRaster raster, FloorFogMask fog, bool reveal)
     {
-        for (var y = 0; y < Size; y++)
+        foreach (var step in PrepareCloud())
         {
-            yield return 0;
-            for (var x = 0; x < Size; x++)
-            {
-                var index = y * Size + x;
-                var owner = raster.Owners[index] - 1;
-                var visible = owner >= 0 && (reveal || session.Exploration.Has(raster.Graph.Nodes[owner]));
-                _pixels[index] = !visible ? MapPalette.TextureBackground
-                    : raster.Boundary[index] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
-            }
+            yield return step;
+        }
+
+        foreach (var step in PaintRows(raster, fog, reveal))
+        {
+            yield return step;
         }
     }
+
+    /// <summary>Matches marker selection to the actually published fog rather than an in-flight mask.</summary>
+    public bool IsVisible(Point position) => Published != null && (_publishedReveal || _publishedFog.Visible(position));
 
     /// <summary>Updates dynamic markers without rebuilding the floor geometry.</summary>
     public void Render(DungeonSession session, MapViewState view, NavigationCoordinator navigator, Player player)
     {
         if (Published != null && _session == session && Published.Graph == session.Scan.Graph)
         {
-            _markers.Render(session, view, navigator, player, Published);
+            _markers.Render(session, view, navigator, player, Published, _publishedFog, _publishedReveal);
         }
     }
 
@@ -123,7 +135,9 @@ internal sealed class MapTextureRenderer : IDisposable
         _paint = null;
         _painting = Published = null;
         _cache.Dispose();
-        _revision = -1;
+        _fog.Dispose();
+        _paintingFog = _publishedFog = null;
+        _publishedReveal = false;
         _markers.Clear();
     }
 
@@ -135,7 +149,7 @@ internal sealed class MapTextureRenderer : IDisposable
         UnityEngine.Object.Destroy(Texture);
     }
 
-    private void AdvancePaint(FloorPlanRaster ready)
+    private void AdvancePaint()
     {
         while (_paint != null && _budget.TryStartWork())
         {
@@ -143,7 +157,9 @@ internal sealed class MapTextureRenderer : IDisposable
             {
                 Texture.SetPixels32(_pixels);
                 Texture.Apply(false);
-                Published = ready;
+                Published = _painting;
+                _publishedFog = _paintingFog;
+                _publishedReveal = _reveal;
                 _paint.Dispose();
                 _paint = null;
             }
@@ -158,15 +174,47 @@ internal sealed class MapTextureRenderer : IDisposable
             UnityPoints.P(session.Area.Bounds.center), span, _budget);
     }
 
-    private void PreparePaint(DungeonSession session, FloorPlanRaster ready, bool reveal)
+    private void PreparePaint(FloorPlanRaster ready, FloorFogMask fog, bool reveal)
     {
-        if (_painting != ready || _reveal != reveal || _paint == null && _revision != session.Exploration.Revision)
+        if (_painting != ready || _reveal != reveal || _paint == null && _paintingFog != fog)
         {
             _paint?.Dispose();
             _painting = ready;
+            _paintingFog = fog;
             _reveal = reveal;
-            _revision = session.Exploration.Revision;
-            _paint = Paint(session, ready, _reveal).GetEnumerator();
+            _paint = Paint(ready, fog, _reveal).GetEnumerator();
+        }
+    }
+
+    private IEnumerable<byte> PrepareCloud()
+    {
+        if (!_cloudReady)
+        {
+            for (var y = 0; y < Size; y++)
+            {
+                yield return 0;
+                for (var x = 0; x < Size; x++)
+                {
+                    _cloud[y * Size + x] = MapPalette.Cloud(x, y);
+                }
+            }
+
+            _cloudReady = true;
+        }
+    }
+
+    private IEnumerable<byte> PaintRows(FloorPlanRaster raster, FloorFogMask fog, bool reveal)
+    {
+        for (var y = 0; y < Size; y++)
+        {
+            yield return 0;
+            for (var x = 0; x < Size; x++)
+            {
+                var index = y * Size + x;
+                var floor = raster.Owners[index] == 0 ? MapPalette.TextureBackground
+                    : raster.Boundary[index] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
+                _pixels[index] = reveal ? floor : Color32.Lerp(floor, _cloud[index], fog.Opacity[index] / 255f);
+            }
         }
     }
 }

@@ -239,7 +239,8 @@ internal sealed class GuideRuntime : IDisposable
             if (Time.unscaledTime >= _nextTrack)
             {
                 _nextTrack = Time.unscaledTime + 0.35f;
-                _exploration.Track(Session.Scan, Session.Exploration, player.transform.position);
+                _exploration.Track(Session.Scan, Session.Exploration, player.transform.position,
+                    Session.Floors.Count == 0 ? -1 : FloorDetector.Nearest(Session.Floors, player.transform.position.y));
             }
 
             // Recording takeoff/landing must run every frame; proof revalidation is throttled separately.
