@@ -198,4 +198,16 @@
     <data name="PreviewSuffix" xml:space="preserve">
         <value> (náhled)</value>
     </data>
+    <data name="Overview" xml:space="preserve">
+        <value>Přehled pater</value>
+    </data>
+    <data name="FloorDetail" xml:space="preserve">
+        <value>Detail patra</value>
+    </data>
+    <data name="NoExploredFloors" xml:space="preserve">
+        <value>Zatím nejsou prozkoumaná žádná patra.</value>
+    </data>
+    <data name="OverviewHint" xml:space="preserve">
+        <value>Kolečkem procházej patra, kliknutím otevři mapu. End: přehled / patro.</value>
+    </data>
 </root>

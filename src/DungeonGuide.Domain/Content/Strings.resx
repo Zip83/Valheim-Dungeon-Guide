@@ -198,4 +198,16 @@
     <data name="PreviewSuffix" xml:space="preserve">
         <value> (preview)</value>
     </data>
+    <data name="Overview" xml:space="preserve">
+        <value>All floors</value>
+    </data>
+    <data name="FloorDetail" xml:space="preserve">
+        <value>Floor detail</value>
+    </data>
+    <data name="NoExploredFloors" xml:space="preserve">
+        <value>No explored floors yet.</value>
+    </data>
+    <data name="OverviewHint" xml:space="preserve">
+        <value>Scroll to browse floors; select one to open it. End: overview / floor.</value>
+    </data>
 </root>

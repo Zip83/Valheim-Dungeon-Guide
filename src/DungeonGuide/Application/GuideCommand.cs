@@ -17,6 +17,8 @@ internal enum GuideCommand
     /// Manually show or hide the standalone map.
     /// </summary>
     ToggleOverlay,
+    /// <summary>Switch the large map between one floor and the dungeon overview.</summary>
+    ToggleOverview,
     /// <summary>
     /// Browse the next higher detected floor.
     /// </summary>

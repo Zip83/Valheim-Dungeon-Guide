@@ -21,9 +21,12 @@ internal sealed class NativeMapPresenter : IDisposable
     private NativeMapLayer _small;
     private NativeMapLayer _large;
     private MapControlsView _controls;
+    private OverviewGridView _overview;
+    private readonly DungeonOverviewRenderer _overviewRenderer = new();
     private Minimap _boundMap;
     private bool _controlsCzech;
     private int _lastFloor = -1;
+    private int _boundFloorCount;
     private readonly FloorNumbering _numbering;
 
     /// <summary>
@@ -87,6 +90,7 @@ internal sealed class NativeMapPresenter : IDisposable
         _small = new NativeMapLayer(sm, _renderer.Texture, _renderer.Markers, bindings.Chrome(false));
         _large = new NativeMapLayer(lg, _renderer.Texture, _renderer.Markers, bindings.Chrome(true));
         _controls = new MapControlsView(root.transform, _numbering, _command, _text, style);
+        _overview = new OverviewGridView(root.transform, style, _text, _numbering, OpenOverviewFloor);
         _controlsCzech = _text.IsCzech;
     }
 
@@ -129,10 +133,42 @@ internal sealed class NativeMapPresenter : IDisposable
             HideDungeon();
         }
 
-        if (ready && Minimap.IsOpen())
+        var overviewVisible = ready && Minimap.IsOpen() && _state.Overview;
+        UpdateOverview(session, overviewVisible);
+        if (ready && Minimap.IsOpen() && !overviewVisible)
         {
             _viewport.Tick(_large, _controls.Root, session, _state, _renderer, _select);
         }
+    }
+
+    private void OpenOverviewFloor(int floor)
+    {
+        if (!_overviewRenderer.CanSelect(floor))
+        {
+            return;
+        }
+
+        _state.OpenFloor(floor, _boundFloorCount);
+        Center();
+    }
+
+    private void UpdateOverview(DungeonSession session, bool visible)
+    {
+        _overview.SetVisible(visible);
+        if (session == null)
+        {
+            _overviewRenderer.Dispose();
+            return;
+        }
+
+        if (!visible)
+        {
+            return;
+        }
+
+        _boundFloorCount = session.Floors.Count;
+        _overviewRenderer.Tick(session, _state.RevealAll);
+        _overview.Refresh(session, _overviewRenderer, _controls.Root.rect.height);
     }
 
     private void Unbind()
@@ -141,6 +177,10 @@ internal sealed class NativeMapPresenter : IDisposable
         _small?.Dispose();
         _large?.Dispose();
         _small = _large = null;
+        _overview?.Dispose();
+        _overview = null;
+        _overviewRenderer.Dispose();
+        _boundFloorCount = 0;
         _controls?.Dispose();
         _controls = null;
         _boundMap = null;
