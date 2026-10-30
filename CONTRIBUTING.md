@@ -103,7 +103,8 @@ packaging or copying the plugin outputs.
 when preparing a release milestone: use a patch increment for fixes and a minor
 increment for added features. Keep the documented release version consistent.
 Do not bump the release prefix merely for another CI run or review edit.
-Keep the literal release prefix in CI's `run-name` synchronized with `Version.props`.
+Keep the literal release prefix in CI's `run-name` synchronized with `Version.props`;
+CI checks this before building.
 
 CI identifies every development build as `<prefix>.<run>-dev.<attempt>` and
 records the exact checkout commit. BepInEx and assembly file metadata receive

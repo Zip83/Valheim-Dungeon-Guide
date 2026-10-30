@@ -45,6 +45,23 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check workflow version prefix
+        shell: pwsh
+        run: |
+          [xml]$versionFile = Get-Content Version.props -Raw
+          $expectedPrefix = [string]$versionFile.Project.PropertyGroup.VersionPrefix
+          $workflow = Get-Content .github/workflows/ci.yml -Raw
+          $match = [regex]::Match($workflow,
+            '(?m)^run-name: >-\r?\n[ \t]+CI build (?<prefix>[0-9]+\.[0-9]+\.[0-9]+)\.\$\{\{\s*github\.run_number\s*\}\}')
+          if (!$match.Success) {
+            throw 'CI run-name must contain a literal major.minor.patch prefix followed by github.run_number.'
+          }
+
+          $actualPrefix = $match.Groups['prefix'].Value
+          if ($actualPrefix -cne $expectedPrefix) {
+            throw "CI run-name prefix '$actualPrefix' does not match Version.props '$expectedPrefix'. Update both."
+          }
+
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
