@@ -81,6 +81,12 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   Handle unsupported versions explicitly; do not silently report success.
 - Keep user-facing text at a presentation/localization boundary, and visual
   constants in a focused style definition rather than scattering them through logic.
+- Store translations in `.resx` catalogs resolved by .NET `ResourceManager`.
+  Keep translated copy out of C# language conditionals. Verify matching resource
+  keys and package the generated language satellite assemblies.
+- Default player-facing text to English. Select Czech only from Valheim's Czech
+  language setting; other languages fall back to English. Do not use OS culture
+  for this decision or translate saved user names and notes in place.
 - Preserve native world-map interaction and multiplayer behavior. Do not add
   network ownership changes or world mutations as a shortcut for inspection.
 

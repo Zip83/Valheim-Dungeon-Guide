@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+    </resheader>
+    <data name="ChestTargetRequired" xml:space="preserve">
+        <value>Zamiř na truhlu s nabídkou otevření, nebo ji otevři.</value>
+    </data>
+    <data name="ChestSaved" xml:space="preserve">
+        <value>Uloženo: </value>
+    </data>
+    <data name="NoKnownChest" xml:space="preserve">
+        <value>Žádná známá neprázdná ani označená truhla.</value>
+    </data>
+    <data name="NoAdjacentFloor" xml:space="preserve">
+        <value>Další patro v tomto směru nebylo nalezeno.</value>
+    </data>
+    <data name="SaveReadFailed" xml:space="preserve">
+        <value>Uložený průzkum nelze načíst. Soubor zůstává beze změny; podrobnosti v logu.</value>
+    </data>
+    <data name="SaveWriteFailed" xml:space="preserve">
+        <value>Průzkum se nepodařilo uložit. Podrobnosti v logu.</value>
+    </data>
+    <data name="ChestNotePrompt" xml:space="preserve">
+        <value>Název / poznámka k truhle</value>
+    </data>
+    <data name="ItemCountSeparator" xml:space="preserve">
+        <value>× </value>
+    </data>
+    <data name="ManualArea" xml:space="preserve">
+        <value>Ruční oblast</value>
+    </data>
+    <data name="OpenDoor" xml:space="preserve">
+        <value>Otevři dveře</value>
+    </data>
+    <data name="BreakObstacle" xml:space="preserve">
+        <value>Rozbij překážku: </value>
+    </data>
+    <data name="RouteBlocked" xml:space="preserve">
+        <value>Průchod blokován — přepočítávám cestu</value>
+    </data>
+    <data name="WorldMap" xml:space="preserve">
+        <value>Svět · Alt+M</value>
+    </data>
+    <data name="FloorDown" xml:space="preserve">
+        <value>− patro</value>
+    </data>
+    <data name="FloorUp" xml:space="preserve">
+        <value>+ patro</value>
+    </data>
+    <data name="FollowFloor" xml:space="preserve">
+        <value>Moje patro</value>
+    </data>
+    <data name="Explored" xml:space="preserve">
+        <value>Prozkoumané</value>
+    </data>
+    <data name="NavigateUp" xml:space="preserve">
+        <value>Vést výš ↑</value>
+    </data>
+    <data name="NavigateDown" xml:space="preserve">
+        <value>Vést níž ↓</value>
+    </data>
+    <data name="Explore" xml:space="preserve">
+        <value>Průzkum</value>
+    </data>
+    <data name="Entrance" xml:space="preserve">
+        <value>Vchod</value>
+    </data>
+    <data name="Stop" xml:space="preserve">
+        <value>Zastavit</value>
+    </data>
+    <data name="Rescan" xml:space="preserve">
+        <value>Obnovit sken</value>
+    </data>
+    <data name="Chests" xml:space="preserve">
+        <value>Truhly · F8</value>
+    </data>
+    <data name="ChestControls" xml:space="preserve">
+        <value>F7 značka · Shift+F7 název · Ctrl+F7 vyzvednuto</value>
+    </data>
+    <data name="DungeonMap" xml:space="preserve">
+        <value>Dungeon · Alt+M</value>
+    </data>
+    <data name="PreparingMap" xml:space="preserve">
+        <value>Připravuji mapu…</value>
+    </data>
+    <data name="FullDungeon" xml:space="preserve">
+        <value>Celý dungeon</value>
+    </data>
+    <data name="BreakablePassages" xml:space="preserve">
+        <value>Rozbitné průchody: </value>
+    </data>
+    <data name="VerifiedJumps" xml:space="preserve">
+        <value>Ověřené skoky: </value>
+    </data>
+    <data name="Yes" xml:space="preserve">
+        <value>ANO</value>
+    </data>
+    <data name="No" xml:space="preserve">
+        <value>NE</value>
+    </data>
+    <data name="MapPanelsUnavailable" xml:space="preserve">
+        <value>Valheim mapové panely nebyly nalezeny.</value>
+    </data>
+    <data name="EntranceRoom" xml:space="preserve">
+        <value>Vstupní místnost</value>
+    </data>
+    <data name="UnknownEntrance" xml:space="preserve">
+        <value>Začátek skenu — vchod neznámý</value>
+    </data>
+    <data name="ApproachPassage" xml:space="preserve">
+        <value>Přibliž se k průchodu nebo obnov sken.</value>
+    </data>
+    <data name="ExplorationExhausted" xml:space="preserve">
+        <value>Dostupné části projity; úplnost dungeonu není potvrzená.</value>
+    </data>
+    <data name="NoVerifiedRoute" xml:space="preserve">
+        <value>Ověřená cesta nenalezena. Otevři průchod nebo obnov sken.</value>
+    </data>
+    <data name="PreparingRoute" xml:space="preserve">
+        <value>Připravuji trasu…</value>
+    </data>
+    <data name="NearDestination" xml:space="preserve">
+        <value>Cíl poblíž</value>
+    </data>
+    <data name="JumpInstruction" xml:space="preserve">
+        <value>Skoč k označenému dopadu</value>
+    </data>
+    <data name="DropInstruction" xml:space="preserve">
+        <value>Jednosměrný seskok — návrat nemusí být možný</value>
+    </data>
+    <data name="Straight" xml:space="preserve">
+        <value>Rovně</value>
+    </data>
+    <data name="TurnAround" xml:space="preserve">
+        <value>Otoč se</value>
+    </data>
+    <data name="Right" xml:space="preserve">
+        <value>Vpravo</value>
+    </data>
+    <data name="Left" xml:space="preserve">
+        <value>Vlevo</value>
+    </data>
+    <data name="UpIndicator" xml:space="preserve">
+        <value> ↑</value>
+    </data>
+    <data name="DownIndicator" xml:space="preserve">
+        <value> ↓</value>
+    </data>
+    <data name="Separator" xml:space="preserve">
+        <value> · </value>
+    </data>
+    <data name="OverlayControls" xml:space="preserve">
+        <value>F6 skrýt · PgUp/PgDn patro · Home moje patro</value>
+    </data>
+    <data name="FloorUnknown" xml:space="preserve">
+        <value>Patro není určeno</value>
+    </data>
+    <data name="EntranceFloor" xml:space="preserve">
+        <value>Vstupní patro 0</value>
+    </data>
+    <data name="FloorNegative" xml:space="preserve">
+        <value>Patro −</value>
+    </data>
+    <data name="FloorPositive" xml:space="preserve">
+        <value>Patro +</value>
+    </data>
+    <data name="FloorPrefix" xml:space="preserve">
+        <value>Patro </value>
+    </data>
+    <data name="BottomUp" xml:space="preserve">
+        <value> (odspodu)</value>
+    </data>
+    <data name="CollectChest" xml:space="preserve">
+        <value>Vyzvednout: </value>
+    </data>
+    <data name="ChestDestination" xml:space="preserve">
+        <value>Truhla: </value>
+    </data>
+    <data name="ChestPrefix" xml:space="preserve">
+        <value>Truhla </value>
+    </data>
+</root>

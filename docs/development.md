@@ -145,3 +145,19 @@ look for `Valheim Dungeon Guide 0.1.0 loaded.` in `BepInEx/LogOutput.log`.
 The bootstrap adds no map, controls, patches, or saved data. Test it in a separate
 profile if a working Dungeon Guide installation already exists; both use the
 same plugin GUID and must not be loaded together.
+
+## Translation catalogs
+
+Player-facing strings use typed `GuideText` keys backed by .NET `ResourceManager`.
+Keep English in `src/DungeonGuide.Domain/Content/Strings.resx` and Czech in
+`Strings.cs.resx`, with matching keys and `xml:space="preserve"` for significant
+whitespace. Do not put translated copy in C# language conditionals.
+
+The injected Valheim language setting selects Czech only for `Czech`; every
+other setting uses English regardless of operating-system culture. Resource
+catalog tests cover key parity, fallback, and live language changes.
+
+The build generates `cs/DungeonGuide.Domain.resources.dll`. Preserve this
+subdirectory alongside the plugin and domain DLLs when copying build outputs;
+CI includes it in the plugin artifact. No additional localization dependency
+or distributed game asset is needed.
