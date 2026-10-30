@@ -112,6 +112,39 @@ game inspection, drawing, and saving when they represent different responsibilit
 An orchestrator delegates those steps; it does not implement all of them inline.
 Introduce interfaces at meaningful boundaries rather than for every class.
 
+### Single responsibility review
+
+Each changed class and method, including private helpers, must have one clear
+responsibility and one reason to change. Identify these before implementation
+and inspect them again before committing or requesting review.
+
+- Separate independently changing policies: discovering objects, filtering
+  candidates, querying geometry, choosing a result, changing a graph, and drawing
+  UI should not accumulate in one method merely because they run in sequence.
+- Keep orchestrators at one level of abstraction. For example, a scan coordinator
+  can delegate sampling, passage linking, and gap evaluation. Each phase owns its
+  algorithm; the coordinator owns sequencing and completion.
+- Use named private methods for distinct steps within one responsibility. Use a
+  separate class when policy, state, or lifecycle has its own reason to change.
+  Wrapping a mixed implementation in a single helper does not satisfy this rule.
+- Inspect long or deeply nested methods for mixed responsibilities; line count
+  alone neither establishes nor disproves SRP. Keep a cohesive algorithm together
+  when splitting it would introduce meaningless wrappers.
+- Preserve observable behavior when extracting phases, including query ordering,
+  coroutine yields, shared frame budgets, cancellation, and resource ownership.
+  Keep Unity API calls on the game thread. Use `AggressiveInlining` only when
+  measurements justify it, never as a substitute for responsibility boundaries.
+
+Before committing, read the complete changed methods and their callers. Check
+their names, contracts, delegation boundaries, control flow, and whitespace.
+Resolve violations before handoff. Passing builds, tests, and formatting checks
+do not prove SRP; the PR template records this separate manual review.
+
+### Control flow and errors
+
+Use structured loops and early returns or `yield break`; do not use `goto`.
+Separate cooperative scan phases instead of jumping between them.
+
 Prefer guard clauses and explicit outcomes. Catch exceptions where recovery or
 useful diagnostics are possible. Avoid empty catches, misleading success messages,
 and repeated error logs every frame. Comments should explain constraints or
