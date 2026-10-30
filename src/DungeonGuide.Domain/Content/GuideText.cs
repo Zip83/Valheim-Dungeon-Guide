@@ -145,6 +145,14 @@ internal sealed class GuideText
 
     internal string Less => Get(nameof(Less));
 
+    internal string Overview => Get(nameof(Overview));
+
+    internal string FloorDetail => Get(nameof(FloorDetail));
+
+    internal string NoExploredFloors => Get(nameof(NoExploredFloors));
+
+    internal string OverviewHint => Get(nameof(OverviewHint));
+
     internal string PreviewSuffix => Get(nameof(PreviewSuffix));
 
     private string Get(string key) =>

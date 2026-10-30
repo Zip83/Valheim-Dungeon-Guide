@@ -95,6 +95,11 @@ internal sealed class InputRouter
 
     private void DispatchFloorShortcuts()
     {
+        if (Minimap.IsOpen() && Input.GetKeyDown(KeyCode.End))
+        {
+            _command(GuideCommand.ToggleOverview);
+        }
+
         if (Input.GetKeyDown(KeyCode.PageUp))
         {
             _command(GuideCommand.FloorUp);

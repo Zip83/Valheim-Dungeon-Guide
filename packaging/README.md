@@ -25,9 +25,11 @@ its numeric equivalent. Include the development version in bug reports.
 - **M** — Open or close the map. Inside a dungeon, it shows the dungeon floor map.
 - **Left Alt + M** — Switch between dungeon and ordinary world maps for pins and pings.
 - **Page Up / Page Down** — Browse higher or lower floors while the dungeon map or overlay is visible.
+- **End / All floors button** — Switch the large dungeon map between a floor
+  detail and a scrolling overview. Click a thumbnail to open that floor.
 - **Home** — Return to your current floor and fit the entire floor into view.
-- **Mouse wheel** — Zoom the full dungeon map in or out.
-- **Hold left mouse button and drag** — Pan the full dungeon map.
+- **Mouse wheel** — Zoom the floor detail, or scroll through floors in the overview.
+- **Hold left mouse button and drag** — Pan the floor detail.
 - **F6** — Show or hide the optional standalone map overlay. It starts hidden.
 - **Insert** — Rescan dungeon geometry.
 
@@ -39,6 +41,12 @@ The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
 controls: rescan, reveal mode, breakable passages, and verified jumps. It starts
 closed whenever the large map opens. Full scanned geometry temporarily removes
 fog on the selected floor without adding exploration to your save.
+
+The overview follows the same reveal mode: explored mode lists only discovered
+floors and keeps unknown portions under fog; full-map mode lists every scanned
+floor. Thumbnails are prepared incrementally. During an initial scan, the
+available preview may cover only part of the dungeon. The minimap and optional
+overlay continue to show a single floor.
 
 ### Navigation
 

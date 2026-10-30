@@ -19,6 +19,7 @@ internal sealed class MapControlsView : IDisposable
     private readonly TMP_Text _breakLabel;
     private readonly TMP_Text _jumpLabel;
     private readonly TMP_Text _moreLabel;
+    private readonly TMP_Text _overviewLabel;
     private readonly UnityEngine.UI.Button _rescanButton;
     private readonly List<(RectTransform Rect, float Weight)> _first = new();
     private readonly List<(RectTransform Rect, float Weight)> _second = new();
@@ -42,12 +43,13 @@ internal sealed class MapControlsView : IDisposable
     {
         _text = text;
         _numbering = numbering;
+
         Root = CreateRoot(parent, style);
         _details = CreateContainer("DungeonControls", Root);
         _worldLabel = NativeUi.Button(Root, style, text.WorldMap, () => command(GuideCommand.ToggleWorld));
         _first.Add(((RectTransform)_worldLabel.transform.parent, 150));
 
-        (_floorLabel, _moreLabel) = CreateFloorControls(command, style);
+        (_floorLabel, _moreLabel, _overviewLabel) = CreateFloorControls(command, style);
         CreateNavigationControls(command, style);
 
         _advanced = CreateContainer("AdvancedControls", _details);
@@ -60,6 +62,7 @@ internal sealed class MapControlsView : IDisposable
     {
         var label = NativeUi.Button(parent, style, caption, command);
         row.Add(((RectTransform)label.transform.parent, weight));
+
         return label;
     }
 
@@ -117,14 +120,31 @@ internal sealed class MapControlsView : IDisposable
     private void RefreshLabels(DungeonSession session, MapViewState view, int displayedFloor)
     {
         _worldLabel.text = view.Dungeon ? _text.WorldMap : _text.DungeonMap;
-        _floorLabel.text = displayedFloor < 0 || displayedFloor != view.SelectedFloor ? _text.PreparingMap
-            : _numbering.Label(session.Floors, displayedFloor, session.Area.Entrance?.y)
-                + (session.HasPartialGeometry ? _text.PreviewSuffix : "");
+        _floorLabel.text = FloorCaption(session, view, displayedFloor);
+        _overviewLabel.text = view.Overview ? _text.FloorDetail : _text.Overview;
+
         _rescanButton.interactable = !session.Scanning;
         _moreLabel.text = _state.Expanded ? _text.Less : _text.More;
+
         _revealLabel.text = view.RevealAll ? _text.FullDungeon : _text.Explored;
         _breakLabel.text = _text.BreakablePassages + (view.AllowBreakables ? _text.Yes : _text.No);
         _jumpLabel.text = _text.VerifiedJumps + (view.AllowJumps ? _text.Yes : _text.No);
+    }
+
+    private string FloorCaption(DungeonSession session, MapViewState view, int displayedFloor)
+    {
+        if (view.Overview)
+        {
+            return _text.Overview + (session.HasPartialGeometry ? _text.PreviewSuffix : "");
+        }
+
+        if (displayedFloor < 0 || displayedFloor != view.SelectedFloor)
+        {
+            return _text.PreparingMap;
+        }
+
+        return _numbering.Label(session.Floors, displayedFloor, session.Area.Entrance?.y)
+            + (session.HasPartialGeometry ? _text.PreviewSuffix : "");
     }
 
     private void LayoutControls(bool dungeon)
@@ -137,6 +157,7 @@ internal sealed class MapControlsView : IDisposable
             Layout(_first, width, -8);
             Layout(_second, width, -44);
             Layout(_extra, width, -80);
+
             _hints.anchoredPosition = new Vector2(8, -116);
             _hints.sizeDelta = new Vector2(width - 16, 28);
         }
@@ -168,16 +189,18 @@ internal sealed class MapControlsView : IDisposable
         return container;
     }
 
-    private (TMP_Text Floor, TMP_Text More) CreateFloorControls(Action<GuideCommand> command, GameUiStyle style)
+    private (TMP_Text Floor, TMP_Text More, TMP_Text Overview) CreateFloorControls(
+        Action<GuideCommand> command, GameUiStyle style)
     {
         Add(_first, _details, style, _text.FloorDown, 80, () => command(GuideCommand.FloorDown));
         var floorLabel = NativeUi.Label(_details, style, "", Vector2.zero, Vector2.zero);
         _first.Add((floorLabel.rectTransform, 250));
         Add(_first, _details, style, _text.FloorUp, 80, () => command(GuideCommand.FloorUp));
         Add(_first, _details, style, _text.FollowFloor, 130, () => command(GuideCommand.Follow));
+        var overviewLabel = Add(_first, _details, style, _text.Overview, 130, () => command(GuideCommand.ToggleOverview));
         var moreLabel = Add(_first, _details, style, _text.More, 100, _state.Toggle);
 
-        return (floorLabel, moreLabel);
+        return (floorLabel, moreLabel, overviewLabel);
     }
 
     private void CreateNavigationControls(Action<GuideCommand> command, GameUiStyle style)

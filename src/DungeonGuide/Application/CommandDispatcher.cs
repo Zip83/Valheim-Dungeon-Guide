@@ -112,6 +112,9 @@ internal sealed class CommandDispatcher
             case GuideCommand.ToggleWorld:
                 _view.Dungeon = !_view.Dungeon;
                 return true;
+            case GuideCommand.ToggleOverview:
+                _view.Overview = !_view.Overview;
+                return true;
             case GuideCommand.ToggleReveal:
                 _view.RevealAll = !_view.RevealAll;
                 _settings.SaveView(_view);
@@ -125,12 +128,15 @@ internal sealed class CommandDispatcher
                 _settings.SaveView(_view);
                 return true;
             case GuideCommand.FloorUp:
+                _view.Overview = false;
                 _view.ChangeFloor(1, session.Floors.Count);
                 return true;
             case GuideCommand.FloorDown:
+                _view.Overview = false;
                 _view.ChangeFloor(-1, session.Floors.Count);
                 return true;
             case GuideCommand.Follow:
+                _view.Overview = false;
                 _view.Follow();
                 FitRequested?.Invoke();
                 return true;
