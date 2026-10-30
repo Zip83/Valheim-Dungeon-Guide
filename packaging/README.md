@@ -22,7 +22,7 @@ copies of this plugin. Disable competing dungeon-map mods in the same profile.
 - **Mouse wheel** — Zoom the full dungeon map in or out.
 - **Hold left mouse button and drag** — Pan the full dungeon map.
 - **F6** — Show or hide the optional standalone map overlay. It starts hidden.
-- **F5** — Rescan dungeon geometry.
+- **Insert** — Rescan dungeon geometry.
 
 The map shows explored areas by default. Use its reveal-mode button to switch
 between explored areas and all scanned geometry on the selected floor.
@@ -53,8 +53,12 @@ Collection markers record your confirmation and do not transfer inventory items.
 - **Saved exploration and chest notes:** `BepInEx/config/DungeonGuide/`
 - **Diagnostic log:** `BepInEx/LogOutput.log`
 
+**Insert** is the default rescan shortcut; **F5** stays available for the Valheim
+console. Existing configurations keep saved shortcuts: under `[Keys]`, change
+`Rescan = F5` to `Rescan = Insert` if upgrading from the old default.
+
 Outdoor bases keep the ordinary world map by default. To map outdoors manually,
-enable `Display.AllowOutdoorMapping` in the configuration, then press **F5**.
+enable `Display.AllowOutdoorMapping` in the configuration, then press **Insert**.
 Enabling this option never starts an outdoor scan automatically.
 
 ## Scanning responsiveness

@@ -56,7 +56,7 @@ must not be copied from the build references into the plugin directory.
 | **Alt+M** | Switch dungeon/world map |
 | **Page Up / Page Down** | Browse floors while the map is open |
 | **Home** | Follow and fit your current floor |
-| **F5** | Rescan geometry; starts a bounded manual scan in an undetected interior |
+| **Insert** | Rescan geometry; starts a bounded manual scan in an undetected interior |
 | **F6** | Toggle the optional standalone overlay |
 | **F7** | Mark the open or directly targeted chest for collection |
 | **Shift+F7** | Name the actual chest or add a note |
@@ -74,11 +74,13 @@ Collection markers record your confirmation; the plugin does not move items.
 ## Settings and saved exploration
 
 The first run creates `BepInEx/config/zip.dungeonguide.cfg`. Shortcuts are
-configurable there; F5 can conflict with an enabled Valheim console.
+configurable there. Insert rescans geometry; F5 remains available for the Valheim console.
+If an existing configuration still has `[Keys] Rescan = F5`, change it to `Insert`;
+saved shortcut overrides are preserved.
 `Display.RevealAll` defaults to `false`. The overlay always starts hidden.
 Breakable and jump routes both default to disabled.
-`Display.AllowOutdoorMapping` defaults to `false`: F5 at an outdoor base leaves
-its ordinary map alone. Enable this option only if you want explicit F5 scans
+`Display.AllowOutdoorMapping` defaults to `false`: Insert at an outdoor base leaves
+its ordinary map alone. Enable this option only if you want manual scans using Insert
 outside dungeon interiors. Enabling it does not start outdoor scans automatically.
 Leaving a dungeon restores the ordinary map, including teleporting outside an
 interior while still within its former scan bounds.
@@ -109,11 +111,6 @@ Ordinary walking routes are preferred. Optional breakable routes require an
 approved exact prefab and geometry checks. Optional jumps and drops require a
 previously observed directional traversal and current geometry/capability checks.
 The guide does not open doors, break objects, jump, or control your character.
-
-Mistlands mines and Deep North fortresses need the
-[in-game checklist](docs/in-game-checklist.md). Automated domain tests and a
-successful build do not establish correct geometry, rendering, or route safety
-in either biome. Unusual layouts may still require manual navigation.
 
 ## Contributing
 
