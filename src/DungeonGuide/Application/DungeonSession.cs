@@ -18,6 +18,11 @@ internal sealed class DungeonSession
     public SavedRun Data;
 
     /// <summary>
+    /// Latest completed navigation scan, or null before the first scan finishes.
+    /// </summary>
+    public ScanResult Scan;
+
+    /// <summary>
     /// Mutable explored sample set reconstructed from persistent keys.
     /// </summary>
     public readonly Exploration Exploration = new();
@@ -38,7 +43,17 @@ internal sealed class DungeonSession
     public FloorLayout Layout = new();
 
     /// <summary>
+    /// Whether a time-sliced scan is currently in progress.
+    /// </summary>
+    public bool Scanning;
+
+    /// <summary>
     /// Whether saving is disabled to protect corrupt or unsupported data.
     /// </summary>
     public bool ReadOnly;
+
+    /// <summary>
+    /// Revision used to invalidate routes and presentation after geometry changes.
+    /// </summary>
+    public int GeometryRevision;
 }

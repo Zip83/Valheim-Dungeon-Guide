@@ -1,0 +1,219 @@
+using System;
+using System.Linq;
+using BepInEx.Configuration;
+using UnityEngine;
+
+namespace DungeonGuide;
+
+/// <summary>
+/// Owns BepInEx configuration bindings and persistence of user display and route preferences.
+/// </summary>
+internal sealed class GuideSettings
+{
+    private readonly ConfigFile _file;
+
+    /// <summary>
+    /// Sampling-grid spacing in world metres.
+    /// </summary>
+    public readonly ConfigEntry<float> Spacing;
+
+    /// <summary>
+    /// Horizontal radius used by manual scans.
+    /// </summary>
+    public readonly ConfigEntry<float> Radius;
+
+    /// <summary>
+    /// Vertical range above and below a manual scan origin.
+    /// </summary>
+    public readonly ConfigEntry<float> Height;
+
+    /// <summary>
+    /// Maximum sampled horizontal columns before reporting an incomplete scan.
+    /// </summary>
+    public readonly ConfigEntry<int> Columns;
+
+    /// <summary>
+    /// Maximum scan work steps per frame, also constrained by elapsed scan time.
+    /// </summary>
+    public readonly ConfigEntry<int> Budget;
+
+    /// <summary>
+    /// Soft main-thread scan budget in milliseconds; a single Unity query cannot be interrupted.
+    /// </summary>
+    public readonly ConfigEntry<float> MillisecondsPerFrame;
+
+    /// <summary>
+    /// Whether explicit manual scans may replace the world map outside dungeon interiors.
+    /// </summary>
+    public readonly ConfigEntry<bool> AllowOutdoorMapping;
+
+    /// <summary>
+    /// Whether all scanned geometry is shown instead of explored floor samples only.
+    /// </summary>
+    public readonly ConfigEntry<bool> RevealAll;
+
+    /// <summary>
+    /// Whether approved breakable passages may be used in routes.
+    /// </summary>
+    public readonly ConfigEntry<bool> Breakables;
+
+    /// <summary>
+    /// Whether previously verified directional jumps and drops may be used in routes.
+    /// </summary>
+    public readonly ConfigEntry<bool> Jumps;
+
+    /// <summary>
+    /// Comma-separated exact prefab identities approved as breakable passages.
+    /// </summary>
+    public readonly ConfigEntry<string> ApprovedPrefabs;
+
+    /// <summary>
+    /// Shortcut for the manually enabled standalone map.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Overlay;
+
+    /// <summary>
+    /// Shortcut requesting a geometry rescan.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Rescan;
+
+    /// <summary>
+    /// Shortcut marking the actual selected chest for collection.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Mark;
+
+    /// <summary>
+    /// Shortcut opening the selected chest's name or note dialog.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Name;
+
+    /// <summary>
+    /// Shortcut confirming collection at the actual selected chest.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Collected;
+
+    /// <summary>
+    /// Shortcut cycling known chest navigation targets.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> NextChest;
+
+    /// <summary>
+    /// Shortcut requesting an unexplored-floor destination.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Explore;
+
+    /// <summary>
+    /// Shortcut requesting the entrance or explicitly labeled scan-origin fallback.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Return;
+
+    /// <summary>
+    /// Shortcut stopping the current navigation request.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> Stop;
+
+    /// <summary>
+    /// Shortcut switching between native world and dungeon maps.
+    /// </summary>
+    public readonly ConfigEntry<KeyboardShortcut> World;
+
+    /// <summary>
+    /// Binds user-configurable scan budgets, display defaults, traversal options, and shortcuts.
+    /// </summary>
+    public GuideSettings(ConfigFile file)
+    {
+        _file = file;
+        Spacing = file.Bind("Scan", "GridSpacing", 1.25f, "Sampling grid, metres.");
+        Radius = file.Bind("Scan", "ManualRadius", 45f, "Manual scan radius.");
+        Height = file.Bind("Scan", "ManualVerticalRange", 120f, "Metres above and below manual scan origin.");
+        Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
+        Budget = file.Bind(
+            "Scan",
+            "ColumnsPerFrame",
+            24,
+            "Maximum scan steps per frame (individual samples/passage pairs), also limited by elapsed time.");
+        MillisecondsPerFrame = file.Bind(
+            "Scan",
+            "MillisecondsPerFrame",
+            1f,
+            "Soft main-thread budget, clamped to 0.25-4 ms. Individual Unity queries cannot be interrupted.");
+        AllowOutdoorMapping = file.Bind(
+            "Display",
+            "AllowOutdoorMapping",
+            false,
+            "Opt in to manual F5 mapping outside dungeon interiors, including player bases. No automatic outdoor scans.");
+        RevealAll = file.Bind(
+            "Display",
+            "RevealAll",
+            false,
+            "False: explored floor only. True: all scanned floor. Applies to all map views.");
+        Breakables = file.Bind(
+            "Routes",
+            "AllowBreakables",
+            false,
+            "Allow only approved, geometrically checked breakable passages.");
+        Jumps = file.Bind(
+            "Routes",
+            "AllowJumps",
+            false,
+            "Allow only previously observed and geometry-checked jump/drop transitions.");
+        ApprovedPrefabs = file.Bind(
+            "Routes",
+            "ApprovedBreakablePrefabs",
+            "",
+            "Comma separated EXACT prefab names verified as breakable passages. Unapproved destructibles remain candidates.");
+        Overlay = Key("ToggleMap", KeyCode.F6, "Optional overlay; always hidden on game startup.");
+        Rescan = Key(
+            "Rescan",
+            KeyCode.F5,
+            "Rebuild dungeon geometry; outdoor scans require Display.AllowOutdoorMapping. May conflict with the console.");
+        Mark = Key("MarkChest", KeyCode.F7, "Mark the actual open or aimed chest.");
+        Name = Key("NameChest", KeyCode.F7, "Name actual chest.", KeyCode.LeftShift);
+        Collected = Key(
+            "Collected",
+            KeyCode.F7,
+            "Confirm collection at actual chest; no F8 selection required.",
+            KeyCode.LeftControl);
+        NextChest = Key("NextChest", KeyCode.F8, "Cycle known chest destinations.");
+        Explore = Key("Explore", KeyCode.F9, "Explore unvisited reachable floor.");
+        Return = Key("Return", KeyCode.F10, "Guide to known entrance, otherwise scan start explicitly labelled.");
+        Stop = Key("Stop", KeyCode.F9, "Stop navigation.", KeyCode.LeftShift);
+        World = Key("WorldMap", KeyCode.M, "Toggle Dungeon / World without closing map.", KeyCode.LeftAlt);
+    }
+
+    private ConfigEntry<KeyboardShortcut> Key(string key, KeyCode code, string help, params KeyCode[] modifiers) =>
+        _file.Bind("Keys", key, new KeyboardShortcut(code, modifiers), help);
+
+    /// <summary>
+    /// Checks whether the exact prefab identity is in the configured approval list.
+    /// </summary>
+    public bool Approved(string prefab) =>
+        ApprovedPrefabs.Value.Split(',').Any(p => string.Equals(p.Trim(), prefab, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Persists a newly observed approved prefab without adding duplicate identities.
+    /// </summary>
+    public void RememberDestroyedPrefab(string prefab)
+    {
+        if (Approved(prefab))
+        {
+            return;
+        }
+
+        ApprovedPrefabs.Value = string.Join(
+            ",",
+            ApprovedPrefabs.Value.Split(',').Where(p => !string.IsNullOrWhiteSpace(p)).Concat(new[] { prefab }));
+        _file.Save();
+    }
+
+    /// <summary>
+    /// Persists shared map reveal and optional traversal preferences.
+    /// </summary>
+    public void SaveView(MapViewState state)
+    {
+        RevealAll.Value = state.RevealAll;
+        Breakables.Value = state.AllowBreakables;
+        Jumps.Value = state.AllowJumps;
+        _file.Save();
+    }
+}
