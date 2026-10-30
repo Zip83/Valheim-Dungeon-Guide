@@ -195,4 +195,7 @@
     <data name="Less" xml:space="preserve">
         <value>Less</value>
     </data>
+    <data name="PreviewSuffix" xml:space="preserve">
+        <value> (preview)</value>
+    </data>
 </root>

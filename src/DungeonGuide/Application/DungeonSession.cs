@@ -47,6 +47,9 @@ internal sealed class DungeonSession
     /// </summary>
     public bool Scanning;
 
+    /// <summary>Whether published geometry covers only the initial neighborhood rather than the complete dungeon.</summary>
+    public bool HasPartialGeometry;
+
     /// <summary>
     /// Whether saving is disabled to protect corrupt or unsupported data.
     /// </summary>

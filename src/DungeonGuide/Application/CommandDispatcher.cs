@@ -89,7 +89,7 @@ internal sealed class CommandDispatcher
         var floor = _floorPolicy.Next(session.Layout, Player.m_localPlayer.transform.position.y, delta);
         if (floor < 0 || floor >= session.Floors.Count)
         {
-            _notice.Show(_text.NoAdjacentFloor);
+            _notice.Show(session.HasPartialGeometry && session.Scanning ? _text.PreparingRoute : _text.NoAdjacentFloor);
             return;
         }
 
