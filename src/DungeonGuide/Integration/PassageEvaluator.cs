@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,59 +24,83 @@ internal sealed class PassageEvaluator
     }
 
     /// <summary>
-    /// Adds verified ordinary or supported special connections between two sampled floor nodes.
+    /// Qualifies endpoints, gathers blockers, then delegates passage-specific connection rules.
     /// </summary>
-    public void Connect(NavGraph graph, int a, int b)
+    public void Connect(NavGraph graph, int from, int to)
     {
-        var from = UnityPoints.V(graph.Nodes[a].Position);
-        var to = UnityPoints.V(graph.Nodes[b].Position);
-        var horizontal = new Vector2(from.x - to.x, from.z - to.z).magnitude;
-        if (Mathf.Abs(from.y - to.y) > horizontal * 0.85f + 0.18f)
+        var start = UnityPoints.V(graph.Nodes[from].Position);
+        var end = UnityPoints.V(graph.Nodes[to].Position);
+        var horizontal = new Vector2(start.x - end.x, start.z - end.z).magnitude;
+        if (!WithinSlopeLimit(start, end, horizontal) || !HasIntermediateSupport(start, end, horizontal))
         {
             return;
         }
 
-        if (horizontal > 1.9f
-            && (!_physics.Supported(Vector3.Lerp(from, to, 0.25f))
-            || !_physics.Supported(Vector3.Lerp(from, to, 0.75f))))
+        if (ReadBlockers(start, end))
         {
-            return;
+            ConnectPassage(graph, from, to, start, end);
         }
+    }
 
+    private static bool WithinSlopeLimit(Vector3 start, Vector3 end, float horizontal)
+    {
+        return Mathf.Abs(start.y - end.y) <= horizontal * 0.85f + 0.18f;
+    }
+
+    private bool HasIntermediateSupport(Vector3 start, Vector3 end, float horizontal)
+    {
+        return horizontal <= 1.9f || _physics.Supported(Vector3.Lerp(start, end, 0.25f))
+            && _physics.Supported(Vector3.Lerp(start, end, 0.75f));
+    }
+
+    private bool ReadBlockers(Vector3 start, Vector3 end)
+    {
         _blockers.Clear();
-        if (!_physics.AddBlockers(from + Vector3.up * 0.6f, to + Vector3.up * 0.6f, 0.18f, _blockers)
-            || !_physics.AddBlockers(from + Vector3.up * 1.25f, to + Vector3.up * 1.25f, 0.18f, _blockers))
-        {
-            return;
-        }
+        return _physics.AddBlockers(start + Vector3.up * 0.6f, end + Vector3.up * 0.6f, 0.18f, _blockers)
+            && _physics.AddBlockers(start + Vector3.up * 1.25f, end + Vector3.up * 1.25f, 0.18f, _blockers);
+    }
 
-        if (_blockers.Count == 0 && _physics.Supported((from + to) * 0.5f))
-        {
-            graph.Connect(a, b, Mathf.Abs(from.y - to.y) > 0.25f ? PassageKind.Stairs : PassageKind.Walk);
-            return;
-        }
-
+    private void ConnectPassage(NavGraph graph, int from, int to, Vector3 start, Vector3 end)
+    {
         if (_blockers.Count == 0)
         {
-            return;
+            ConnectWalk(graph, from, to, start, end);
         }
-
-        if (_doors.Matches(_blockers, out var door))
+        else if (_doors.Matches(_blockers, out var door))
         {
-            // Locked doors require the player's actual key; planning never opens anything.
-            var key = _doors.CanOpen(door);
-            if (_physics.Supported((from + to) * 0.5f))
-            {
-                graph.Connect(a, b, PassageKind.Door, key, true, door.name);
-            }
-
-            return;
+            ConnectDoor(graph, from, to, start, end, door);
         }
+        else
+        {
+            ConnectBreakable(graph, from, to, start, end);
+        }
+    }
 
+    private void ConnectWalk(NavGraph graph, int from, int to, Vector3 start, Vector3 end)
+    {
+        if (_physics.Supported((start + end) * 0.5f))
+        {
+            var kind = Mathf.Abs(start.y - end.y) > 0.25f ? PassageKind.Stairs : PassageKind.Walk;
+            graph.Connect(from, to, kind);
+        }
+    }
+
+    private void ConnectDoor(NavGraph graph, int from, int to, Vector3 start, Vector3 end, Door door)
+    {
+        // Locked doors require the player's actual key; planning never opens anything.
+        var canOpen = _doors.CanOpen(door);
+        if (_physics.Supported((start + end) * 0.5f))
+        {
+            graph.Connect(from, to, PassageKind.Door, canOpen, true, door.name);
+        }
+    }
+
+    private void ConnectBreakable(NavGraph graph, int from, int to, Vector3 start, Vector3 end)
+    {
         if (_breakables.Matches(_blockers, out var prefab, out var verified)
-            && _physics.Supported((from + to) * 0.5f))
+            && _physics.Supported((start + end) * 0.5f))
         {
-            graph.Connect(a, b, PassageKind.Breakable, verified, true, prefab);
+            graph.Connect(from, to, PassageKind.Breakable, verified, true, prefab);
         }
     }
 }

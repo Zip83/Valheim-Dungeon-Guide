@@ -112,6 +112,9 @@ game inspection, drawing, and saving when they represent different responsibilit
 An orchestrator delegates those steps; it does not implement all of them inline.
 Introduce interfaces at meaningful boundaries rather than for every class.
 
+Use structured loops and early returns or `yield break`; do not use `goto`.
+Separate cooperative scan phases instead of jumping between them.
+
 Prefer guard clauses and explicit outcomes. Catch exceptions where recovery or
 useful diagnostics are possible. Avoid empty catches, misleading success messages,
 and repeated error logs every frame. Comments should explain constraints or

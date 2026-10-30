@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
 
 /// <summary>
-/// Snaps a world position to a supported nearby sample in a completed scan.
+/// Snaps a world position to a visible nearby sample in a completed scan.
 /// </summary>
 internal sealed class GraphLocator
 {
@@ -18,7 +19,7 @@ internal sealed class GraphLocator
     }
 
     /// <summary>
-    /// Returns a nearby supported scan node that can be reached from the supplied position, or -1.
+    /// Returns the closest reachable sample within the distance limit, or -1.
     /// </summary>
     public int Snap(ScanResult scan, Vector3 position, float max = 3.2f)
     {
@@ -29,31 +30,44 @@ internal sealed class GraphLocator
 
         var result = -1;
         var best = max;
-        var x = Mathf.RoundToInt(position.x / scan.Spacing);
-        var z = Mathf.RoundToInt(position.z / scan.Spacing);
-        var r = Mathf.CeilToInt(max / scan.Spacing);
-        for (var dx = -r; dx <= r; dx++)
+        foreach (var id in NearbyNodes(scan, position, max))
         {
-            for (var dz = -r; dz <= r; dz++)
+            var point = UnityPoints.V(scan.Graph.Nodes[id].Position);
+            if (TryReachableDistance(position, point, best, out var distance))
             {
-                if (!scan.Columns.TryGetValue((x + dx, z + dz), out var list))
-                {
-                    continue;
-                }
-
-                foreach (var n in list)
-                {
-                    var p = UnityPoints.V(scan.Graph.Nodes[n].Position);
-                    var d = Vector3.Distance(position, p);
-                    if (d < best && Mathf.Abs(position.y - p.y) < 1.8f && _physics.Visible(position, p))
-                    {
-                        best = d;
-                        result = n;
-                    }
-                }
+                best = distance;
+                result = id;
             }
         }
 
         return result;
+    }
+
+    private static IEnumerable<int> NearbyNodes(ScanResult scan, Vector3 position, float distance)
+    {
+        var x = Mathf.RoundToInt(position.x / scan.Spacing);
+        var z = Mathf.RoundToInt(position.z / scan.Spacing);
+        var radius = Mathf.CeilToInt(distance / scan.Spacing);
+        for (var dx = -radius; dx <= radius; dx++)
+        {
+            for (var dz = -radius; dz <= radius; dz++)
+            {
+                if (!scan.Columns.TryGetValue((x + dx, z + dz), out var column))
+                {
+                    continue;
+                }
+
+                foreach (var id in column)
+                {
+                    yield return id;
+                }
+            }
+        }
+    }
+
+    private bool TryReachableDistance(Vector3 origin, Vector3 sample, float limit, out float distance)
+    {
+        distance = Vector3.Distance(origin, sample);
+        return distance < limit && Mathf.Abs(origin.y - sample.y) < 1.8f && _physics.Visible(origin, sample);
     }
 }

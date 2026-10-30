@@ -62,6 +62,7 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   as a guard clause, preparation, processing, and returning the result.
 - Keep tightly related statements together. Do not insert a blank line after
   every statement or use multiple consecutive empty lines.
+- Use structured control flow and early returns or `yield break`; do not use `goto`.
 - Use four spaces, Allman braces, and braces for all control-flow bodies.
 - Expand nontrivial expressions and long conditions instead of compressing code.
 - Review whitespace manually: the standard formatter does not enforce every

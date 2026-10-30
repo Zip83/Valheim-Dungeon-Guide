@@ -20,32 +20,55 @@ internal sealed class JumpEvaluator
     }
 
     /// <summary>
-    /// Checks takeoff/landing geometry, yielding between arc queries without treating an unobserved jump as verified.
+    /// Rejects out-of-range endpoints, then delegates cooperative landing and arc checks.
+    /// Completion is reported exactly once unless enumeration is cancelled.
     /// </summary>
-    public IEnumerable<object> Candidate(Vector3 a, Vector3 b, FrameWorkBudget work, Action<bool> complete)
+    public IEnumerable<object> Candidate(Vector3 start, Vector3 end, FrameWorkBudget work, Action<bool> complete)
     {
-        var h = new Vector2(a.x - b.x, a.z - b.z).magnitude;
-        var dy = b.y - a.y;
-        if (h < 1.5f || h > 2.8f || dy > 0.9f || dy < -2f)
+        if (!WithinRange(start, end))
         {
             complete(false);
             yield break;
         }
 
+        foreach (var pause in CheckLandingAndArc(start, end, work, complete))
+        {
+            yield return pause;
+        }
+    }
+
+    private static bool WithinRange(Vector3 start, Vector3 end)
+    {
+        var horizontal = new Vector2(start.x - end.x, start.z - end.z).magnitude;
+        var rise = end.y - start.y;
+        return JumpCandidateGeometry.WithinRange(horizontal, rise);
+    }
+
+    private IEnumerable<object> CheckLandingAndArc(
+        Vector3 start, Vector3 end, FrameWorkBudget work, Action<bool> complete)
+    {
         while (!work.TryStartWork())
         {
             yield return null;
             work.BeginFrame();
         }
 
-        if (!_physics.Standing(b))
+        if (!_physics.Standing(end))
         {
             complete(false);
             yield break;
         }
 
-        // Candidate only: actual traversal is required before this enters an automatic route.
-        var last = a + Vector3.up * 0.8f;
+        foreach (var pause in TraceArc(start, end, work, complete))
+        {
+            yield return pause;
+        }
+    }
+
+    private IEnumerable<object> TraceArc(Vector3 start, Vector3 end, FrameWorkBudget work, Action<bool> complete)
+    {
+        // Geometry is only a candidate: actual traversal is still required before routing uses it.
+        var previous = start + Vector3.up * 0.8f;
         for (var i = 1; i <= 12; i++)
         {
             while (!work.TryStartWork())
@@ -54,17 +77,22 @@ internal sealed class JumpEvaluator
                 work.BeginFrame();
             }
 
-            var t = i / 12f;
-            var p = Vector3.Lerp(a, b, t) + Vector3.up * (0.8f + 4 * t * (1 - t) * 0.9f);
-            if (!_physics.Clear(last, p, 0.23f))
+            var point = ArcPoint(start, end, i / 12f);
+            if (!_physics.Clear(previous, point, 0.23f))
             {
                 complete(false);
                 yield break;
             }
 
-            last = p;
+            previous = point;
         }
 
         complete(true);
+    }
+
+    private static Vector3 ArcPoint(Vector3 start, Vector3 end, float progress)
+    {
+        return Vector3.Lerp(start, end, progress)
+            + Vector3.up * JumpCandidateGeometry.ArcLift(progress);
     }
 }
