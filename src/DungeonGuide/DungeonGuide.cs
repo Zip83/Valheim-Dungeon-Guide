@@ -25,50 +25,23 @@ public sealed class DungeonGuide : BaseUnityPlugin
         var text = new GuideText(language.Current);
         var settings = new GuideSettings(Config);
         var notice = new UserNotice();
-        var view = new MapViewState
-        {
-            RevealAll = settings.RevealAll.Value,
-            AllowBreakables = settings.Breakables.Value,
-            AllowJumps = settings.Jumps.Value
-        };
+
+        var view = CreateMapState(settings);
         var physics = new GeometryPhysics();
         var locator = new GraphLocator(physics);
-        var scanner = new GeometryScanner(
-            physics,
-            new PassageEvaluator(
-                physics,
-                new DoorPassageVerifier(),
-                new BreakablePassageVerifier(settings.Approved)),
-            new JumpEvaluator(physics));
-        var repository = new JsonRunRepository(Path.Combine(Paths.ConfigPath, "DungeonGuide"), new SaveMigration());
-        var lifecycle = new SessionLifecycle(repository, Logger, notice, text);
-        var runtime = new GuideRuntime(
-            this,
-            settings,
-            new DungeonLocator(text),
-            new DungeonActivationPolicy(),
-            scanner,
-            new FloorDetector(new FloorLandingDetector()),
-            lifecycle,
-            new ExplorationRecorder(physics),
-            new TraversalRecorder(locator, new TraversalProofVerifier()),
-            Logger,
-            notice);
+        var lifecycle = CreateSessionLifecycle(notice, text);
+        var runtime = CreateRuntime(settings, physics, locator, lifecycle, notice, text);
+
         var floorPolicy = new FloorNavigationPolicy();
         var numbering = new FloorNumbering(language.Current);
         var navigator = new NavigationCoordinator(new RoutePlanner(), locator, floorPolicy);
         var cursor = new RouteCursor();
-        var chests = new ChestActions(
-            new ChestSelector(new ChestTargetPolicy()),
-            new ChestSnapshotReader(),
-            new ChestNameDialog(text),
-            locator,
-            lifecycle,
-            notice,
-            text);
+        var chests = CreateChestActions(locator, lifecycle, notice, text);
         chests.DestinationRequested += navigator.ToChest;
+
         var commands = new CommandDispatcher(runtime, view, navigator, chests, settings, notice, floorPolicy, text);
         var input = new InputRouter(settings, commands.Execute);
+
         var texture = new MapTextureRenderer(new MapExtentFitter());
         var maps = new NativeMapPresenter(
             view,
@@ -78,6 +51,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             commands.Execute,
             navigator.ToChest,
             text);
+
         _loop = new GuideGameLoop(
             runtime,
             view,
@@ -89,14 +63,13 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new OverlayPresenter(texture, numbering, text),
             new NavigationHud(notice, new NavigationInstructionFormatter(cursor, numbering, text)),
             new DynamicRouteValidator(physics, cursor, text));
+
         commands.ViewChanged += _loop.RefreshView;
         commands.FitRequested += maps.Center;
-        _hooks = new MapHooks(
-            () => maps.DungeonVisible,
-            () => view.Dungeon = false,
-            () => runtime.Session != null && settings.World.Value.IsDown());
-        var destruction = new DestructionRecorder(settings, () => runtime.Session?.Area, runtime.DoorChanged);
-        _changes = new WorldChangeHooks(runtime.DoorChanged, destruction.Observe, e => Logger.LogError(e));
+
+        InstallMapHooks(maps, view, runtime, settings);
+        InstallWorldChangeHooks(runtime, settings);
+
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded. "
             + "M: map; Alt+M: World/Dungeon; F6: optional overlay. Explored-only by default.");
     }
@@ -148,5 +121,77 @@ public sealed class DungeonGuide : BaseUnityPlugin
         _hooks = null;
         _loop?.Dispose();
         _loop = null;
+    }
+
+    private static MapViewState CreateMapState(GuideSettings settings)
+    {
+        return new MapViewState
+        {
+            RevealAll = settings.RevealAll.Value,
+            AllowBreakables = settings.Breakables.Value,
+            AllowJumps = settings.Jumps.Value
+        };
+    }
+
+    private static GeometryScanner CreateScanner(GeometryPhysics physics, GuideSettings settings)
+    {
+        return new GeometryScanner(
+            physics,
+            new PassageEvaluator(
+                physics,
+                new DoorPassageVerifier(),
+                new BreakablePassageVerifier(settings.Approved)),
+            new JumpEvaluator(physics));
+    }
+
+    private SessionLifecycle CreateSessionLifecycle(UserNotice notice, GuideText text)
+    {
+        var repository = new JsonRunRepository(Path.Combine(Paths.ConfigPath, "DungeonGuide"), new SaveMigration());
+
+        return new SessionLifecycle(repository, Logger, notice, text);
+    }
+
+    private GuideRuntime CreateRuntime(GuideSettings settings, GeometryPhysics physics, GraphLocator locator,
+        SessionLifecycle lifecycle, UserNotice notice, GuideText text)
+    {
+        return new GuideRuntime(
+            this,
+            settings,
+            new DungeonLocator(text),
+            new DungeonActivationPolicy(),
+            CreateScanner(physics, settings),
+            new FloorDetector(new FloorLandingDetector()),
+            lifecycle,
+            new ExplorationRecorder(physics),
+            new TraversalRecorder(locator, new TraversalProofVerifier()),
+            Logger,
+            notice);
+    }
+
+    private static ChestActions CreateChestActions(GraphLocator locator, SessionLifecycle lifecycle,
+        UserNotice notice, GuideText text)
+    {
+        return new ChestActions(
+            new ChestSelector(new ChestTargetPolicy()),
+            new ChestSnapshotReader(),
+            new ChestNameDialog(text),
+            locator,
+            lifecycle,
+            notice,
+            text);
+    }
+
+    private void InstallMapHooks(NativeMapPresenter maps, MapViewState view, GuideRuntime runtime, GuideSettings settings)
+    {
+        _hooks = new MapHooks(
+            () => maps.DungeonVisible,
+            () => view.Dungeon = false,
+            () => runtime.Session != null && settings.World.Value.IsDown());
+    }
+
+    private void InstallWorldChangeHooks(GuideRuntime runtime, GuideSettings settings)
+    {
+        var destruction = new DestructionRecorder(settings, () => runtime.Session?.Area, runtime.DoorChanged);
+        _changes = new WorldChangeHooks(runtime.DoorChanged, destruction.Observe, e => Logger.LogError(e));
     }
 }
