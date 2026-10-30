@@ -127,7 +127,7 @@
         <value>Ověřená cesta nenalezena. Otevři průchod nebo obnov sken.</value>
     </data>
     <data name="PreparingRoute" xml:space="preserve">
-        <value>Připravuji trasu…</value>
+        <value>Čekám na dokončení skenu dungeonu…</value>
     </data>
     <data name="NearDestination" xml:space="preserve">
         <value>Cíl poblíž</value>

@@ -127,7 +127,7 @@
         <value>No verified route found. Open a passage or rescan.</value>
     </data>
     <data name="PreparingRoute" xml:space="preserve">
-        <value>Preparing route…</value>
+        <value>Waiting for dungeon scan…</value>
     </data>
     <data name="NearDestination" xml:space="preserve">
         <value>Destination nearby</value>

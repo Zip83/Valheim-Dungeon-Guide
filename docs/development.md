@@ -145,8 +145,13 @@ ray samples, standing checks, candidate pairs, and individual jump-arc queries,
 including empty-neighbor column overhead;
 a tall column or many stacked floors cannot bypass yielding until the end of
 an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
-0.25–4 ms. The existing `Scan.ColumnsPerFrame` key now caps individual work
-steps instead of whole columns, keeping existing configuration files usable.
+0.25–4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1–8192;
+this is a safety ceiling, while elapsed time normally determines when to yield.
+It replaces the legacy `Scan.ColumnsPerFrame` key, whose default of 24 became
+an excessive throttle after work was split into individual operations. The old
+key is no longer read; existing spacing, time limits, and scan caps are preserved.
+Scan progress is logged every five seconds with phase, completed columns,
+sampled nodes, cumulative work steps, and elapsed time.
 The budget is cooperative: an indivisible Unity query or passage evaluation
 can overrun it, after which the next step yields. Do not promise zero frame-time impact.
 

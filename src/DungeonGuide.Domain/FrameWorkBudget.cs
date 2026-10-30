@@ -14,6 +14,12 @@ internal sealed class FrameWorkBudget
     private double _started;
     private int _steps;
 
+    /// <summary>Number of admitted operations across all frames; denied reservations do not advance it.</summary>
+    public long TotalSteps
+    {
+        get; private set;
+    }
+
     /// <summary>
     /// Creates a per-frame budget with an optional monotonic millisecond clock for deterministic verification.
     /// </summary>
@@ -59,6 +65,7 @@ internal sealed class FrameWorkBudget
         }
 
         _steps++;
+        TotalSteps++;
         return true;
     }
 }

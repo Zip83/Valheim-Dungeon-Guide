@@ -129,9 +129,9 @@ internal sealed class GuideSettings
         Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
         Budget = file.Bind(
             "Scan",
-            "ColumnsPerFrame",
-            24,
-            "Maximum scan steps per frame (individual samples/passage pairs), also limited by elapsed time.");
+            "MaxWorkStepsPerFrame",
+            4096,
+            "Safety ceiling for scan operations per frame, clamped to 1-8192. MillisecondsPerFrame limits elapsed work time.");
         MillisecondsPerFrame = file.Bind(
             "Scan",
             "MillisecondsPerFrame",
