@@ -43,6 +43,7 @@ internal sealed class MapControlsView : IDisposable
     {
         _text = text;
         _numbering = numbering;
+
         Root = CreateRoot(parent, style);
         _details = CreateContainer("DungeonControls", Root);
         _worldLabel = NativeUi.Button(Root, style, text.WorldMap, () => command(GuideCommand.ToggleWorld));
@@ -61,6 +62,7 @@ internal sealed class MapControlsView : IDisposable
     {
         var label = NativeUi.Button(parent, style, caption, command);
         row.Add(((RectTransform)label.transform.parent, weight));
+
         return label;
     }
 
@@ -120,8 +122,10 @@ internal sealed class MapControlsView : IDisposable
         _worldLabel.text = view.Dungeon ? _text.WorldMap : _text.DungeonMap;
         _floorLabel.text = FloorCaption(session, view, displayedFloor);
         _overviewLabel.text = view.Overview ? _text.FloorDetail : _text.Overview;
+
         _rescanButton.interactable = !session.Scanning;
         _moreLabel.text = _state.Expanded ? _text.Less : _text.More;
+
         _revealLabel.text = view.RevealAll ? _text.FullDungeon : _text.Explored;
         _breakLabel.text = _text.BreakablePassages + (view.AllowBreakables ? _text.Yes : _text.No);
         _jumpLabel.text = _text.VerifiedJumps + (view.AllowJumps ? _text.Yes : _text.No);
@@ -153,6 +157,7 @@ internal sealed class MapControlsView : IDisposable
             Layout(_first, width, -8);
             Layout(_second, width, -44);
             Layout(_extra, width, -80);
+
             _hints.anchoredPosition = new Vector2(8, -116);
             _hints.sizeDelta = new Vector2(width - 16, 28);
         }

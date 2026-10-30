@@ -8,9 +8,11 @@ namespace DungeonGuide;
 internal sealed class OverviewThumbnailRenderer : IDisposable
 {
     private const int Size = OverviewStyle.TextureSize;
+
     private readonly FloorPlanCache _plan = new();
     private readonly FloorFogCache _fog = new();
     private readonly Color32[] _pixels = new Color32[Size * Size];
+
     private IEnumerator<byte> _paint;
     private FloorPlanRaster _painting;
     private FloorFogMask _paintingFog;
@@ -28,6 +30,7 @@ internal sealed class OverviewThumbnailRenderer : IDisposable
             (floor.Minimum.z + floor.Maximum.z) / 2);
         var span = Mathf.Max(floor.Maximum.x - floor.Minimum.x, floor.Maximum.z - floor.Minimum.z)
             + session.Scan.Spacing * 3;
+
         _plan.Tick(session.Scan.Graph, floor.Floor, session.Scan.Spacing, Size, center, span, budget);
         var raster = _plan.Ready;
         if (raster == null)
@@ -51,8 +54,10 @@ internal sealed class OverviewThumbnailRenderer : IDisposable
     {
         _paint?.Dispose();
         _paint = null;
+
         _plan.Dispose();
         _fog.Dispose();
+
         if (Texture)
         {
             UnityEngine.Object.Destroy(Texture);
@@ -92,6 +97,7 @@ internal sealed class OverviewThumbnailRenderer : IDisposable
         for (var y = 0; y < Size; y++)
         {
             yield return 0;
+
             for (var x = 0; x < Size; x++)
             {
                 var index = y * Size + x;

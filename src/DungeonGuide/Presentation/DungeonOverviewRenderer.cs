@@ -9,6 +9,7 @@ internal sealed class DungeonOverviewRenderer : IDisposable
 {
     private readonly FrameWorkBudget _budget = new(8192, 1);
     private readonly Dictionary<int, OverviewThumbnailRenderer> _thumbnails = new();
+
     private DungeonSession _session;
     private NavGraph _graph;
     private bool _revealAll;
@@ -76,12 +77,14 @@ internal sealed class DungeonOverviewRenderer : IDisposable
         _catalogJob?.Dispose();
         _catalogJob = null;
         _catalog = null;
+
         foreach (var thumbnail in _thumbnails.Values)
         {
             thumbnail.Dispose();
         }
 
         _thumbnails.Clear();
+
         _session = null;
         _graph = null;
         Floors = Array.Empty<OverviewFloor>();
@@ -93,6 +96,7 @@ internal sealed class DungeonOverviewRenderer : IDisposable
     private void Reset(DungeonSession session, bool revealAll)
     {
         Dispose();
+
         _session = session;
         _graph = session.Scan.Graph;
         _revealAll = revealAll;

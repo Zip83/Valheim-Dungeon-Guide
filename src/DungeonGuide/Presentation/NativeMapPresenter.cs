@@ -89,8 +89,10 @@ internal sealed class NativeMapPresenter : IDisposable
         var style = GameUiStyle.Read();
         _small = new NativeMapLayer(sm, _renderer.Texture, _renderer.Markers, bindings.Chrome(false));
         _large = new NativeMapLayer(lg, _renderer.Texture, _renderer.Markers, bindings.Chrome(true));
+
         _controls = new MapControlsView(root.transform, _numbering, _command, _text, style);
         _overview = new OverviewGridView(root.transform, style, _text, _numbering, OpenOverviewFloor);
+
         _controlsCzech = _text.IsCzech;
     }
 
@@ -177,10 +179,12 @@ internal sealed class NativeMapPresenter : IDisposable
         _small?.Dispose();
         _large?.Dispose();
         _small = _large = null;
+
         _overview?.Dispose();
         _overview = null;
         _overviewRenderer.Dispose();
         _boundFloorCount = 0;
+
         _controls?.Dispose();
         _controls = null;
         _boundMap = null;

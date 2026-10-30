@@ -16,16 +16,19 @@ internal sealed class OverviewFloorCard : IDisposable
     {
         _caption = NativeUi.Button(parent, style, "", select);
         _root = (RectTransform)_caption.transform.parent;
+
         _caption.rectTransform.anchorMin = new Vector2(0, 1);
         _caption.rectTransform.anchorMax = Vector2.one;
         _caption.rectTransform.pivot = new Vector2(0.5f, 1);
         _caption.rectTransform.anchoredPosition = new Vector2(0, -OverviewStyle.CaptionInset);
         _caption.rectTransform.sizeDelta = new Vector2(-OverviewStyle.Gap, OverviewStyle.CaptionHeight);
+
         var image = NativeUi.Rect("FloorThumbnail", _root);
         image.anchorMin = Vector2.zero;
         image.anchorMax = Vector2.one;
         image.offsetMin = new Vector2(OverviewStyle.CardInset, OverviewStyle.CardInset);
         image.offsetMax = new Vector2(-OverviewStyle.CardInset, -OverviewStyle.CardInset - OverviewStyle.CaptionHeight);
+
         _image = image.gameObject.AddComponent<RawImage>();
         _image.raycastTarget = false;
     }
@@ -34,6 +37,7 @@ internal sealed class OverviewFloorCard : IDisposable
     public void Refresh(string caption, Texture texture)
     {
         _caption.text = caption;
+
         _image.texture = texture;
         _image.enabled = texture;
     }
