@@ -2,8 +2,8 @@
 
 ## Compatibility and verification
 
-The current development target was checked against a local Windows installation
-on **2026-10-29**:
+The development target was checked against a local Windows installation on
+**2026-10-29**:
 
 | Component | Recorded version |
 | --- | --- |
@@ -12,152 +12,211 @@ on **2026-10-29**:
 | BepInExPack Valheim | `5.4.2351` |
 | BepInEx loader | `5.4.23.5` |
 | Unity runtime | `6000.0.75.2503836` |
+| Installed Harmony assembly | `2.9.0.0` |
 
-The game, loader, pack, and Unity versions were read from the installed game's
-`BepInEx/LogOutput.log`; the Steam build ID came from `appmanifest_892970.acf`.
-This records the intended runtime environment. The bootstrap has passed CI
-compilation and CodeQL analysis, but has not yet been load-tested in this game.
-Other game versions are unverified.
+Versions were read from `BepInEx/LogOutput.log`, the installed assemblies, and
+`appmanifest_892970.acf`. Compilation and automated domain checks are separate
+from load and gameplay checks. This repository build has not yet been load-tested;
+Mistlands and Deep North gameplay checks are pending. Other game versions are unverified.
 
-The compile-time package references are `BepInEx.BaseLib 5.4.21` and
-`UnityEngine.Modules 2022.3.50`, not copies of the installed game assemblies.
-They provide the small shared API surface used by the bootstrap; they do not
-mean it was built against the exact Unity 6 assemblies above. Revisit the
-reference baseline when introducing game-specific integration APIs.
+Compile-time dependencies are BepInEx.BaseLib **5.4.21**, UnityEngine.Modules
+**6000.0.75**, and HarmonyX **2.9.0**. CI obtains game reference assemblies from
+Digitalroot.Valheim.Common.References **1.0.22**, whose package release notes
+identify Valheim **1.0.21**, and UI references from Digitalroot.References.Unity
+**6000.0.75**. These are compile-time references, not runtime dependencies to ship.
+Publicized reference assemblies do not establish private API stability. The
+optional local game reference mode below checks against the installed game files.
+Both the default reference build and the local Valheim 1.0.21 reference build
+passed on Windows with zero compiler warnings and errors on 2026-10-29.
 
-For each release, record the target Valheim version and the runtime environment
-actually checked, including the date and verification method. Update the README
-target summary together with this table. Report compilation, load checks, and
-gameplay checks separately rather than inferring support from a successful build.
+Update the README and release notes with the target version for each release.
+Record the environment, date, and actual verification method here; never infer
+load or gameplay compatibility from compilation.
 
 ## Build
 
-Install the .NET SDK selected in [`global.json`](../global.json), then run from
-the repository root:
+Install the SDK selected by [`global.json`](../global.json), then run from the
+repository root:
 
 ```sh
 dotnet restore Valheim.DungeonGuide.slnx --locked-mode
 dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
 dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+dotnet test Valheim.DungeonGuide.slnx --configuration Release --no-build --no-restore
 ```
 
-The output is `src/DungeonGuide/bin/Release/netstandard2.1/DungeonGuide.dll`.
-The plugin targets .NET Standard 2.1 and C# 10; the build SDK does not change
-the game's runtime requirements. No local Valheim installation is needed to build.
+The plugin targets **.NET Framework 4.8**, matching the game reference assemblies.
+The independent domain library targets **.NET Standard 2.0**, usable by the game
+and the **.NET 10** test runner. All projects use C# 10 with nullable reference
+types disabled. SDK selection does not change the runtime APIs available in Unity.
 
-`Directory.Build.props` keeps nullable reference types disabled and enables
-build-time style analysis for all projects. Required style rules live in
-`.editorconfig` with error severity: invalid indentation, brace placement,
-missing control-flow braces, and the configured code-style violations fail
-ordinary `dotnet build`. Fix source with your editor or `dotnet format` and rerun
-the build. Builds never auto-format files. Logical blank-line grouping still
-requires review as described in the coding conventions.
+No game installation is needed for the default build. NuGet restores external
+compile-time references and .NET Framework reference assemblies on both Windows
+and Linux. An explicit Microsoft.NETFramework.ReferenceAssemblies 1.0.3 reference
+keeps the dependency graph identical when a Windows runner already has a targeting
+pack installed. Dependencies use source mapping and committed lock files. `PackageDownload`
+acquires exact game/UI references without adding them as runtime assets. To check
+against a local installation instead, run:
 
-`Directory.Build.targets` also runs the read-only style formatter before
-compilation. This covers IDE-only rules such as unnecessary `this.` that are
-not reported by the compiler's build-time analyzers. Design-time builds skip
-the check so the formatter can load projects without recursively invoking itself.
+```powershell
+dotnet build Valheim.DungeonGuide.slnx -c Release --no-restore '-p:GameDir=D:/Games/Steam/steamapps/common/Valheim'
+```
 
-Dependencies are compile-only references from the BepInEx package feed, with
-source mapping and a committed NuGet lock file. `BepInEx.BaseLib` supplies the
-BepInEx 5 plugin API; Harmony is not needed by the bootstrap. Unity reference
-assemblies provide the stable component APIs used here. Neither package is copied
-into the plugin artifact. These references do not establish compatibility with
-every Valheim version or authorize redistribution of game assemblies.
+`VALHEIM_DIR` can supply the same path. Game reference hints use that installation's
+`valheim_Data/Managed`; loader, Harmony, and Unity module references retain their
+pinned compile-time baseline. No local paths or proprietary DLLs belong in Git.
+When changing dependencies, restore with `--force-evaluate` and review each lock file.
 
-When deliberately updating a dependency, change its version, run
-`dotnet restore Valheim.DungeonGuide.slnx --force-evaluate`, and review
-the resulting `packages.lock.json` alongside the code change.
+Deploy **both** `DungeonGuide.dll` and `DungeonGuide.Domain.dll` from
+`src/DungeonGuide/bin/Release/net48/`, including the `cs/` subdirectory containing
+`DungeonGuide.Domain.resources.dll`. Do not deploy third-party reference DLLs,
+test outputs, or framework assemblies. CI packages the two project DLLs and
+the Czech translation satellite in that same directory structure.
 
 ## Structure
 
-[`Valheim.DungeonGuide.slnx`](../Valheim.DungeonGuide.slnx) is the repository's
-solution and the entry point for IDEs, local builds, formatting, and CI. The
-repository's .NET 10 SDK supports this XML solution format. Keep one solution
-and register each new production or test project with
-`dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj` so repository-wide
-checks include it.
+`Valheim.DungeonGuide.slnx` includes all production and test projects. Register new
+projects with `dotnet sln Valheim.DungeonGuide.slnx add path/to/project.csproj`.
 
-`src/DungeonGuide/DungeonGuide.cs` is the BepInEx entry point. It currently only
-logs startup. `PluginInfo.cs` owns the stable identity and version used by the
-plugin attribute. Keep its version aligned with the project version.
+| Location | Responsibility |
+| --- | --- |
+| `src/DungeonGuide/DungeonGuide.cs` | Composition and Unity lifecycle callbacks |
+| `src/DungeonGuide.Domain/` | Geometry graph, route/floor policies, exploration, chest rules, save records |
+| `src/DungeonGuide.Domain/Content/` | English player-facing copy with Czech selected only by the game language |
+| `src/DungeonGuide/Application/` | Session and navigation coordination, commands, scheduling |
+| `src/DungeonGuide/Integration/` | Unity/game inspection, bounded scans, input, Harmony hooks |
+| `src/DungeonGuide/Presentation/` | Native-map integration, texture/UI rendering, instructions, map palette |
+| `src/DungeonGuide/Storage/` | JSON persistence and repository boundary |
+| `tests/DungeonGuide.Tests/` | xUnit regressions against the production domain assembly |
 
-`Awake` is a Unity lifecycle message, not a virtual method overridden from
-`BaseUnityPlugin`. Its XML documentation describes the callback explicitly.
-The build emits `DungeonGuide.xml` alongside the DLL for documentation tools.
+The domain project has no Unity, BepInEx, Harmony, or filesystem references.
+`GuideText` provides typed keys backed by the standard .NET `ResourceManager`.
+Translations live in `Content/Strings.resx` (neutral English) and
+`Content/Strings.cs.resx` (Czech); the SDK builds the Czech satellite assembly.
+Use the same keys in both files, preserve significant whitespace with
+`xml:space="preserve"`, and keep translated copy out of C# language conditionals.
+Tests compare complete resource key sets so English fallback cannot hide a
+missing Czech translation.
 
-XML documentation generation is enabled for all projects in
-`Directory.Build.props`. Missing documentation on externally visible types and
-members fails the build with CS1591. Public members inside internal types are
-also documented by convention; the compiler's CS1591 check only covers the
-externally visible API. Review documentation quality alongside the code.
+The injected game-language accessor selects culture `cs` only for Valheim's
+`Czech` setting, otherwise the invariant English resources. Missing translated
+keys use ResourceManager's neutral-resource fallback. No OS culture is consulted.
+`GameLanguage` reads `Localization.instance.GetSelectedLanguage()` at most once
+per frame. This public instance API was inspected in the installed Valheim 1.0.21
+assembly. Neither OS culture nor a separate mod language option controls the UI.
+The native map recreates its controls when switching between English and Czech;
+other captions use the live catalog. Pure domain formatters receive the language
+accessor without depending on Unity. Tests use independent expected labels and
+cover fallback, live switching, and preservation of saved names. The catalog is
+internal, with friend access for the plugin and its tests. `MapPalette` owns
+visual colors. Configuration keys and engine API identifiers remain at their
+respective integration boundaries.
 
-Add focused domain, application, integration, presentation, and storage units
-when their behavior is introduced. Keep domain rules independent of Unity and
-BepInEx; do not create empty layers or placeholder service implementations.
-Add a separate test project with the first testable behavior.
+`PluginInfo` owns the stable GUID, display name, and version. Keep its version
+aligned with both production projects. `Awake` is a Unity message, not an override
+of `BaseUnityPlugin`; lifecycle callbacks have their own XML documentation.
+
+## Style and compatibility contracts
+
+`Directory.Build.props` enables XML documentation, build-time style analysis, and
+warnings as errors for every project. `.editorconfig` holds required rules.
+`Directory.Build.targets` runs the read-only style formatter before compilation
+to catch IDE-only rules; design-time builds skip it to prevent recursion. Builds
+never rewrite code. Logical grouping and XML documentation quality still need review.
+
+The compiler enforces CS1591 on externally visible API. Public members of internal
+types are documented by convention as well. See the [coding conventions](coding-conventions.md).
+
+Two compatibility exceptions are intentional:
+
+- Legacy serialized fields retain names such as `world`, `dungeon`, `visited`,
+  `chests`, and `position`. Renaming them would break existing JSON. Tests freeze
+  this contract. Save schema 2 migrates version 1, preserves exploration and notes,
+  and rejects unknown future versions. This import does not change the schema.
+- `WorldChangeHooks` preserves Harmony's special parameter names `__result`,
+  `__instance`, and `__0`. Narrow, per-method IDE1006 suppressions document that
+  injection contract; ordinary parameter naming remains enforced everywhere else.
+
+## Cooperative scanning and graph ownership
+
+`GeometryScanner` yields once before performing physics work, then shares one
+`FrameWorkBudget` across sampling and linking. Checks occur before individual
+ray samples, standing checks, candidate pairs, and individual jump-arc queries,
+including empty-neighbor column overhead;
+a tall column or many stacked floors cannot bypass yielding until the end of
+an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
+0.25–4 ms. The existing `Scan.ColumnsPerFrame` key now caps individual work
+steps instead of whole columns, keeping existing configuration files usable.
+The budget is cooperative: an indivisible Unity query or passage evaluation
+can overrun it, after which the next step yields. Do not promise zero frame-time impact.
+
+All collision/game queries remain on Unity's main thread. Reusable NonAlloc
+buffers and a reusable blocker list reduce allocation pressure in passage,
+standing, and clearance checks; a saturated
+buffer rejects clearance conservatively instead of silently dropping blockers.
+
+Only the completed, private new graph is sent to `FloorAnalysisJob`. Its worker
+runs pure floor/landing detection with frequent cancellation checks and never
+calls Unity, BepInEx, UI, inventory, or networking APIs. The game thread polls
+completion without waiting; a task outcome is read only after `IsCompleted`.
+Failures reach the scan error handler, and faults in abandoned jobs are observed.
+Cancellation never joins a worker. Session close cancels the job and stops sampling;
+late results are never published into another session. Iterator disposal propagates
+through the scan guard. Publication of graph/layout and callbacks stays on the game
+thread. Existing navigation/maps continue using the old graph until that publication,
+so traversal observation cannot race with the worker mutating new floor assignments.
+
+Traversal candidates are indexed during cooperative linking. Publication does not
+trigger a full-graph LINQ pass: `TraversalProofVerifier` looks up only recorded
+proofs and revokes its previously verified edges when evidence or capabilities
+change. Replacing a scan does not retain verified references from an old graph.
+
+Unit tests use a fake clock for deterministic count/time limits and controlled
+workers for nonblocking polling, cancellation, shutdown, and error propagation.
+They also compare worker floor results with synchronous reference results and
+keep the existing routing/floor regressions. These checks do not measure engine
+query latency or establish compatibility with every other plugin.
+
+## Automated verification
+
+The xUnit suite covers walk connectivity, directional optional traversals,
+route costs, floor landing and elevation selection, floor labels, viewport fitting,
+map state, chest identity/selection, exploration reload, and save migration.
+Tests reference the production domain library, not copied implementations.
+`DungeonActivationPolicy` separates manual outdoor permission from generated
+interior sessions. Integration uses the installed game's `Character.InInterior`
+API (inspected in Valheim 1.0.21) and room-local bounds rather than proximity to
+a generator's encompassing box. Generated sessions close when room membership
+is lost; outdoor permission applies only to explicitly requested manual scans.
+The default is `Display.AllowOutdoorMapping = false`.
+
+During the initial import, all 58 checks in the earlier standalone regression
+runner also passed against this domain assembly. The repository suite additionally checks outdoor activation permissions, session
+retention across interior exits, and the independent serialized-field contract. Identifiers in
+that check are compared using ordinal ordering, independent of the machine culture.
+
+A failed test requires investigation of the application contract first; do not
+rewrite assertions simply to get a passing result. Game geometry and UI require
+[manual checks](in-game-checklist.md) in addition to these tests.
 
 ## Continuous integration
 
-Pull requests targeting `master` and pushes to `master` first classify changed
-files using the shared `.github/filters.yml`. Changes outside Markdown,
-`docs/`, the license, `.gitignore`, CODEOWNERS, and issue templates require:
+Pull requests to `master` and pushes to `master` classify their changes through
+`.github/filters.yml`. Source, tests, dependencies, build/style configuration,
+workflows, and unclassified files require Linux and Windows locked restore,
+formatting, Release build, and domain tests. Test results are uploaded for each
+OS; the Linux job packages the two project DLLs, Czech translation satellite,
+player instructions, and license.
+CodeQL analyzes the C# solution, including a weekly scheduled scan.
 
-- Locked dependency restore, formatting checks, and Release compilation on Linux
-  and Windows. Compiler warnings fail the build.
-- An artifact containing only the plugin DLL, README, and license. It is a
-  bootstrap build, not a released dungeon mapper.
-- CodeQL analysis of the C# build, with a weekly scheduled scan as well.
+Documentation/metadata-only changes skip heavy jobs. Pull requests are classified
+using their entire diff; a later documentation commit cannot skip checks for code
+already in that PR. Manual workflows and scheduled CodeQL scans always verify.
+Stable **CI result** and **CodeQL result** checks fail if detection or a required
+job fails. Skips are explicit; no empty SARIF or fabricated scan is uploaded.
 
-Documentation/metadata-only changes skip compilation, formatting, artifact
-creation, and CodeQL analysis. Lightweight detection and result jobs still run,
-so required status checks complete instead of staying pending. Any source,
-test, solution, dependency, build configuration, analyzer setting, workflow,
-filter, or otherwise unclassified file keeps verification enabled. Scheduled
-CodeQL scans and manually dispatched workflows always perform verification.
-
-Pull requests are classified using their entire diff against the base branch;
-adding a documentation-only commit to a PR that already changes code still
-requires verification. Pushes to `master` use the changes in that push.
-
-`CI result` and `CodeQL result` fail when detection fails, a required job fails,
-or the expected result is missing. A successful documentation-only result
-explicitly records that the heavy job was skipped. No empty SARIF or fabricated
-analysis result is uploaded.
-
-Workflows use commit-pinned actions. CI does not install into a game, publish a
-release, or test gameplay. Build and formatting checks are not gameplay tests.
-
-After the checks have run, make **CI result** and **CodeQL result** the required
-status checks in the ruleset. Do not require individual matrix job names or the
-tool-generated **CodeQL** status for every PR: those may be absent when work is
-skipped. The separate **Require code scanning results** rule governs real
-CodeQL findings; it is distinct from required status checks.
-CodeQL results are separate from GitHub's Code Quality requirement; if the latter
-is enabled, it also needs to be configured in repository settings. Use either
-the supplied advanced CodeQL workflow or GitHub's default CodeQL setup, not both.
-
-## Manual load check
-
-With Valheim closed, copy the built DLL into
-`BepInEx/plugins/DungeonGuide/` in a BepInEx 5 installation. Start the game and
-look for `Valheim Dungeon Guide 0.1.0 loaded.` in `BepInEx/LogOutput.log`.
-The bootstrap adds no map, controls, patches, or saved data. Test it in a separate
-profile if a working Dungeon Guide installation already exists; both use the
-same plugin GUID and must not be loaded together.
-
-## Translation catalogs
-
-Player-facing strings use typed `GuideText` keys backed by .NET `ResourceManager`.
-Keep English in `src/DungeonGuide.Domain/Content/Strings.resx` and Czech in
-`Strings.cs.resx`, with matching keys and `xml:space="preserve"` for significant
-whitespace. Do not put translated copy in C# language conditionals.
-
-The injected Valheim language setting selects Czech only for `Czech`; every
-other setting uses English regardless of operating-system culture. Resource
-catalog tests cover key parity, fallback, and live language changes.
-
-The build generates `cs/DungeonGuide.Domain.resources.dll`. Preserve this
-subdirectory alongside the plugin and domain DLLs when copying build outputs;
-CI includes it in the plugin artifact. No additional localization dependency
-or distributed game asset is needed.
+Actions are pinned to commits. Require the stable result checks in the ruleset,
+not conditional matrix jobs. GitHub's separate code-scanning rule governs real
+CodeQL findings and differs from required checks and Code Quality. Use advanced
+CodeQL or default setup, not both. CI does not install into a game, merge a PR,
+publish a release, or test gameplay.

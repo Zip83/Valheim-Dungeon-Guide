@@ -91,11 +91,11 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide
-          cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs
+          cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
-          cp LICENSE README.md artifacts/DungeonGuide/
+          cp LICENSE artifacts/DungeonGuide/
+          cp packaging/README.md artifacts/DungeonGuide/README.md
 
       - name: Upload plugin artifact
         if: runner.os == 'Linux'
