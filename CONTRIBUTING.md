@@ -104,12 +104,12 @@ when preparing a release milestone: use a patch increment for fixes and a minor
 increment for added features. Keep the documented release version consistent.
 Do not bump the release prefix merely for another CI run or review edit.
 
-CI identifies every development build as `<prefix>-dev.<run>.<attempt>` and
+CI identifies every development build as `<prefix>.<run>-dev.<attempt>` and
 records the exact checkout commit. BepInEx and assembly file metadata receive
 `<prefix>.<run>` because the loader needs a numeric version. Startup diagnostics
 include the full development version, attempt, and commit. Each artifact includes
 `build-info.json` with the source, PR, workflow run, and target Valheim version.
-Local builds use the `dev.local` suffix unless build identity properties are supplied.
+Local builds use `<prefix>.0-dev.local` unless build identity properties are supplied.
 A CI artifact is a test build, not a published stable release.
 
 After a meaningful change, verify the build and tests, provide the numbered

@@ -1,4 +1,7 @@
 name: CI
+run-name: >-
+  CI build #${{ github.run_number }}.${{ github.run_attempt }} —
+  ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || github.ref_name }}
 
 on:
   pull_request:
@@ -66,9 +69,9 @@ jobs:
           $properties = ($identity | ConvertFrom-Json).Properties
           "version=$($properties.Version)" >> $env:GITHUB_OUTPUT
           "plugin_version=$($properties.PluginVersion)" >> $env:GITHUB_OUTPUT
-          "Development build: $($properties.Version)+$env:GITHUB_SHA" >> $env:GITHUB_STEP_SUMMARY
 
       - name: Build
+        id: compile
         shell: bash
         run: >-
           dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
@@ -130,6 +133,7 @@ jobs:
               "commit": os.environ["GITHUB_SHA"],
               "pullRequest": os.environ.get("PR_NUMBER") or None,
               "runId": os.environ["GITHUB_RUN_ID"],
+              "runNumber": os.environ["GITHUB_RUN_NUMBER"],
               "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
               "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
               "valheimTarget": "1.0.21",
@@ -141,6 +145,7 @@ jobs:
           PY
 
       - name: Upload plugin artifact
+        id: artifact
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -148,6 +153,36 @@ jobs:
           path: artifacts/DungeonGuide/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Summarize build
+        if: ${{ !cancelled() && (steps.compile.outcome == 'success' || steps.compile.outcome == 'failure') }}
+        shell: pwsh
+        env:
+          BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          PLUGIN_VERSION: ${{ steps.identity.outputs.plugin_version }}
+          BUILD_RESULT: ${{ steps.compile.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          ARTIFACT_URL: ${{ steps.artifact.outputs.artifact-url }}
+        run: |
+          $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$env:GITHUB_SHA"
+          @"
+          ## Dungeon Guide $env:PLUGIN_VERSION
+
+          | Build detail | Value |
+          | --- | --- |
+          | Version | $env:PLUGIN_VERSION |
+          | Development version | $env:BUILD_VERSION |
+          | Build number | $env:GITHUB_RUN_NUMBER |
+          | Attempt | $env:GITHUB_RUN_ATTEMPT |
+          | Platform | $env:RUNNER_OS |
+          | Build result | $env:BUILD_RESULT |
+          | Test result | $env:TEST_RESULT |
+          | Commit | [$env:GITHUB_SHA]($commitUrl) |
+          "@ >> $env:GITHUB_STEP_SUMMARY
+
+          if ($env:ARTIFACT_URL) {
+            "`n[Download plugin package]($env:ARTIFACT_URL)" >> $env:GITHUB_STEP_SUMMARY
+          }
 
   result:
     name: CI result
