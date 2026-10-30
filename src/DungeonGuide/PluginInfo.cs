@@ -18,5 +18,10 @@ internal static class PluginInfo
     /// <summary>
     /// Specifies the plugin version reported to BepInEx.
     /// </summary>
-    public const string Version = "0.1.0";
+    public const string Version = PluginBuild.Version;
+
+    /// <summary>
+    /// Identifies the development build and source commit in diagnostics.
+    /// </summary>
+    public const string DisplayVersion = PluginBuild.DisplayVersion;
 }

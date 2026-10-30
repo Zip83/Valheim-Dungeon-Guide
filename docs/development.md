@@ -249,3 +249,28 @@ same native assets and canvas scale, starts hidden, and does not block raycasts.
 Shared game assets are never mutated or destroyed. Missing native templates leave
 the ordinary map available and produce a diagnostic; they do not trigger a search
 through every loaded scene object. All owned UI and textures are disposed on teardown.
+
+## Numbered development builds
+
+The release prefix is defined once in `Version.props`. Ordinary local builds
+use `<prefix>.0-dev.local` and loader version `<prefix>.0`. CI builds use
+`<prefix>.<workflow-run-number>-dev.<attempt>+<checkout-sha>` in diagnostics,
+`<prefix>.<workflow-run-number>` in loader/file metadata, and the release prefix
+with revision zero for assembly binding. Both project DLLs share that identity.
+
+To reproduce a numbered build locally, pass `-p:BuildNumber=42`,
+`-p:BuildAttempt=1`, and `-p:BuildCommit=<full-commit-sha>` to the normal solution
+build. The CI run number is shared across branches of this workflow; reruns
+retain that number and change the attempt. Build numbers above 65534 fail
+explicitly rather than wrap the assembly file version. The current scheme must
+be revised before reaching that limit. Generated version constants stay under
+`obj/` and are not committed.
+
+Successful code builds produce a version-named Actions artifact, including
+`build-info.json` and the Czech satellite. The manifest records both the workflow
+run ID and run number. Run names include the full four-part version. Each platform's
+build summary shows the numeric and development versions, commit, and build/test
+results, including failures. The Linux summary links to the uploaded package.
+Docs-only changes keep the existing skip policy and do not produce a new plugin
+artifact. Manual CI dispatch always builds. No workflow publishes a stable release
+or installs into the game.

@@ -5,7 +5,6 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>DungeonGuide</AssemblyName>
     <RootNamespace>DungeonGuide</RootNamespace>
-    <Version>0.1.0</Version>
     <GameDir Condition="'$(GameDir)' == ''">$(VALHEIM_DIR)</GameDir>
     <GameReferenceSuffix Condition="'$(GameDir)' == ''">-publicized</GameReferenceSuffix>
     <GameReferences Condition="'$(GameDir)' != ''">$(GameDir)/valheim_Data/Managed</GameReferences>

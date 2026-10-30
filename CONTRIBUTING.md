@@ -97,6 +97,28 @@ packaging or copying the plugin outputs.
 - For documentation and repository configuration, check links, formatting,
   ignore patterns, and the diff; a game build is unnecessary.
 
+## Versions and test builds
+
+`Version.props` is the single source of the release version prefix. Change it
+when preparing a release milestone: use a patch increment for fixes and a minor
+increment for added features. Keep the documented release version consistent.
+Do not bump the release prefix merely for another CI run or review edit.
+Keep the literal release prefix in CI's `run-name` synchronized with `Version.props`;
+CI checks this before building.
+
+CI identifies every development build as `<prefix>.<run>-dev.<attempt>` and
+records the exact checkout commit. BepInEx and assembly file metadata receive
+`<prefix>.<run>` because the loader needs a numeric version. Startup diagnostics
+include the full development version, attempt, and commit. Each artifact includes
+`build-info.json` with the source, PR, workflow run, and target Valheim version.
+Local builds use `<prefix>.0-dev.local` unless build identity properties are supplied.
+A CI artifact is a test build, not a published stable release.
+
+After a meaningful change, verify the build and tests, provide the numbered
+artifact for gameplay checks, and record the tested version in bug reports.
+Preserve the satellite translations when installing it. Do not publish releases
+or replace an installed plugin automatically as part of a build.
+
 ## Pull requests
 
 CI reads the XML `.trx` results directly and publishes test counts and failure

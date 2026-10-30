@@ -40,12 +40,19 @@ logs, and repository documentation are English.
 ## Installation
 
 Install BepInExPack Valheim 5 first. From a successful pull request's **CI** run,
-download the `DungeonGuide-<commit>` artifact and extract its `BepInEx` directory
+download the `DungeonGuide-<version>` artifact and extract its `BepInEx` directory
 into the Valheim installation. Alternatively, [build the solution](docs/development.md#build)
 and copy **both** `DungeonGuide.dll` and `DungeonGuide.Domain.dll` from
 `src/DungeonGuide/bin/Release/net48/` to `BepInEx/plugins/DungeonGuide/`.
 Copy the `cs/` subdirectory alongside them as well; it contains
 `DungeonGuide.Domain.resources.dll`, the Czech translation satellite.
+
+Development artifacts are named `DungeonGuide-<major.minor.patch>.<run>-dev.<attempt>`,
+for example `DungeonGuide-0.1.0.83-dev.1`. The CI run name includes the full `0.1.0.83` version;
+its summary shows the assembled version and a package download link.
+Their `build-info.json` records the exact commit, CI run, PR, and Valheim target;
+startup logging reports that same build identity. Include it when reporting an issue.
+These artifacts are test builds rather than stable releases.
 
 Close the game before replacing DLLs. Keep one copy of this plugin installed;
 remove an older copy from another plugin directory. Disable competing dungeon-map

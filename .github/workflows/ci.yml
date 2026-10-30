@@ -1,4 +1,5 @@
 name: CI
+run-name: CI build 0.1.0.${{ github.run_number }}
 
 on:
   pull_request:
@@ -10,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -42,6 +43,23 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check workflow version prefix
+        shell: pwsh
+        run: |
+          [xml]$versionFile = Get-Content Version.props -Raw
+          $expectedPrefix = [string]$versionFile.Project.PropertyGroup.VersionPrefix
+          $workflow = Get-Content .github/workflows/ci.yml -Raw
+          $match = [regex]::Match($workflow,
+            '(?m)^run-name:[ \t]+CI build (?<prefix>[0-9]+\.[0-9]+\.[0-9]+)\.\$\{\{\s*github\.run_number\s*\}\}[ \t]*\r?$')
+          if (!$match.Success) {
+            throw 'CI run-name must contain a literal major.minor.patch prefix followed by github.run_number.'
+          }
+
+          $actualPrefix = $match.Groups['prefix'].Value
+          if ($actualPrefix -cne $expectedPrefix) {
+            throw "CI run-name prefix '$actualPrefix' does not match Version.props '$expectedPrefix'. Update both."
+          }
+
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -53,8 +71,27 @@ jobs:
       - name: Check formatting
         run: dotnet format Valheim.DungeonGuide.slnx --no-restore --verify-no-changes --severity warn
 
+      - name: Identify development build
+        id: identity
+        shell: pwsh
+        run: |
+          $identity = dotnet msbuild src/DungeonGuide/DungeonGuide.csproj -nologo `
+            '-getProperty:Version,PluginVersion' `
+            "-p:BuildNumber=$env:GITHUB_RUN_NUMBER" "-p:BuildAttempt=$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Cannot determine build identity.'
+          }
+          $properties = ($identity | ConvertFrom-Json).Properties
+          "version=$($properties.Version)" >> $env:GITHUB_OUTPUT
+          "plugin_version=$($properties.PluginVersion)" >> $env:GITHUB_OUTPUT
+
       - name: Build
-        run: dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+        id: compile
+        shell: bash
+        run: >-
+          dotnet build Valheim.DungeonGuide.slnx --configuration Release --no-restore
+          -p:BuildNumber="$GITHUB_RUN_NUMBER" -p:BuildAttempt="$GITHUB_RUN_ATTEMPT"
+          -p:BuildCommit="$GITHUB_SHA"
 
       - name: Test domain behavior
         id: tests
@@ -90,21 +127,77 @@ jobs:
       - name: Prepare plugin artifact
         if: runner.os == 'Linux'
         shell: bash
+        env:
+          BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          PLUGIN_VERSION: ${{ steps.identity.outputs.plugin_version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs
           cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
           cp LICENSE artifacts/DungeonGuide/
           cp packaging/README.md artifacts/DungeonGuide/README.md
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = {
+              "version": os.environ["BUILD_VERSION"],
+              "pluginVersion": os.environ["PLUGIN_VERSION"],
+              "commit": os.environ["GITHUB_SHA"],
+              "pullRequest": os.environ.get("PR_NUMBER") or None,
+              "runId": os.environ["GITHUB_RUN_ID"],
+              "runNumber": os.environ["GITHUB_RUN_NUMBER"],
+              "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+              "valheimTarget": "1.0.21",
+              "channel": "development",
+          }
+          Path("artifacts/DungeonGuide/build-info.json").write_text(
+              json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
 
       - name: Upload plugin artifact
+        id: artifact
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: DungeonGuide-${{ github.sha }}
+          name: DungeonGuide-${{ steps.identity.outputs.version }}
           path: artifacts/DungeonGuide/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Summarize build
+        if: ${{ !cancelled() && (steps.compile.outcome == 'success' || steps.compile.outcome == 'failure') }}
+        shell: pwsh
+        env:
+          BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          PLUGIN_VERSION: ${{ steps.identity.outputs.plugin_version }}
+          BUILD_RESULT: ${{ steps.compile.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          ARTIFACT_URL: ${{ steps.artifact.outputs.artifact-url }}
+        run: |
+          $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$env:GITHUB_SHA"
+          @"
+          ## Dungeon Guide $env:PLUGIN_VERSION
+
+          | Build detail | Value |
+          | --- | --- |
+          | Version | $env:PLUGIN_VERSION |
+          | Development version | $env:BUILD_VERSION |
+          | Build number | $env:GITHUB_RUN_NUMBER |
+          | Attempt | $env:GITHUB_RUN_ATTEMPT |
+          | Platform | $env:RUNNER_OS |
+          | Build result | $env:BUILD_RESULT |
+          | Test result | $env:TEST_RESULT |
+          | Commit | [$env:GITHUB_SHA]($commitUrl) |
+          "@ >> $env:GITHUB_STEP_SUMMARY
+
+          if ($env:ARTIFACT_URL) {
+            "`n[Download plugin package]($env:ARTIFACT_URL)" >> $env:GITHUB_STEP_SUMMARY
+          }
 
   result:
     name: CI result

@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <BuildAttempt Condition="'$(BuildAttempt)' == ''">1</BuildAttempt>
+    <VersionSuffix>dev.local</VersionSuffix>
+    <VersionSuffix Condition="'$(BuildNumber)' != '0'">dev.$(BuildAttempt)</VersionSuffix>
+    <PluginVersion>$(VersionPrefix).$(BuildNumber)</PluginVersion>
+    <Version>$(PluginVersion)-$(VersionSuffix)</Version>
+    <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
+    <FileVersion>$(PluginVersion)</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <InformationalVersion Condition="'$(BuildCommit)' != ''">$(Version)+$(BuildCommit)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+</Project>
