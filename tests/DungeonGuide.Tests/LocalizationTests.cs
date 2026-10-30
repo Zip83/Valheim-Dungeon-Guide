@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -8,7 +9,7 @@ using Xunit;
 namespace DungeonGuide.Tests;
 
 /// <summary>
-/// Protects English fallback, Czech selection, live language changes, and complete resource catalogs.
+/// Protects English fallback, Czech selection, live language changes, and user-owned chest names.
 /// </summary>
 public sealed class LocalizationTests
 {
@@ -148,5 +149,25 @@ public sealed class LocalizationTests
         {
             CultureInfo.CurrentUICulture = previous;
         }
+    }
+
+    /// <summary>
+    /// Only new automatic names use the current language; existing saved names remain user-owned text.
+    /// </summary>
+    [Theory]
+    [InlineData("English", "Chest 2")]
+    [InlineData("Czech", "Truhla 2")]
+    [InlineData("German", "Chest 2")]
+    [InlineData(null, "Chest 2")]
+    public void LocalizesNewChestNamesWithoutRewritingNotes(string language, string expected)
+    {
+        var old = new ChestRecord { id = "saved", label = "Moje železo / my iron" };
+        var registry = new ChestRegistry(new List<ChestRecord> { old }, () => language);
+        var created = registry.Observe(new ChestSnapshot { Id = "new", LegacyId = "new" });
+        var observed = registry.Observe(new ChestSnapshot { Id = "saved", LegacyId = "saved" });
+
+        Assert.Equal(expected, created.label);
+        Assert.Same(old, observed);
+        Assert.Equal("Moje železo / my iron", observed.label);
     }
 }
