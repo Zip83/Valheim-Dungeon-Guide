@@ -117,6 +117,7 @@ internal sealed class OverlayPresenter : IDisposable
     {
         _title.text = _renderer.DisplayedFloor < 0 || _renderer.DisplayedFloor != state.SelectedFloor ? _text.PreparingMap
             : _numbering.Label(session.Floors, _renderer.DisplayedFloor, session.Area.Entrance?.y)
+                + (session.HasPartialGeometry ? _text.PreviewSuffix : "")
                 + _text.Separator + (state.RevealAll ? _text.FullDungeon : _text.Explored);
         _footer.text = _text.OverlayControls;
     }

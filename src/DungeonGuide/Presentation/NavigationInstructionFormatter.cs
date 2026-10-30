@@ -86,6 +86,11 @@ internal sealed class NavigationInstructionFormatter
 
     private string StatusInstruction(DungeonSession session, NavigationStatus status)
     {
+        if (session.HasPartialGeometry && session.Scanning)
+        {
+            return _text.PreparingRoute;
+        }
+
         switch (status)
         {
             case NavigationStatus.OffGraph:

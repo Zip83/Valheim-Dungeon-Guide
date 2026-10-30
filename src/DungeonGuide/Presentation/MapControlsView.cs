@@ -118,7 +118,8 @@ internal sealed class MapControlsView : IDisposable
     {
         _worldLabel.text = view.Dungeon ? _text.WorldMap : _text.DungeonMap;
         _floorLabel.text = displayedFloor < 0 || displayedFloor != view.SelectedFloor ? _text.PreparingMap
-            : _numbering.Label(session.Floors, displayedFloor, session.Area.Entrance?.y);
+            : _numbering.Label(session.Floors, displayedFloor, session.Area.Entrance?.y)
+                + (session.HasPartialGeometry ? _text.PreviewSuffix : "");
         _rescanButton.interactable = !session.Scanning;
         _moreLabel.text = _state.Expanded ? _text.Less : _text.More;
         _revealLabel.text = view.RevealAll ? _text.FullDungeon : _text.Explored;

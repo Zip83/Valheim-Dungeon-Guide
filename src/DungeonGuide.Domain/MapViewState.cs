@@ -83,6 +83,25 @@ public sealed class MapViewState
         }
     }
 
+    /// <summary>Preserves physical floor selections when a preview is replaced by a fuller scan.</summary>
+    /// <param name="previous">Elevations used by the previous published scan.</param>
+    /// <param name="replacement">Elevations used by the replacement scan.</param>
+    public void RemapFloors(IReadOnlyList<float> previous, IReadOnlyList<float> replacement)
+    {
+        if (previous.Count == 0 || replacement.Count == 0)
+        {
+            return;
+        }
+
+        var currentHeight = previous[Math.Min(CurrentFloor, previous.Count - 1)];
+        CurrentFloor = FloorDetector.Nearest(replacement, currentHeight);
+        if (_manualFloor.HasValue)
+        {
+            var selectedHeight = previous[Math.Min(_manualFloor.Value, previous.Count - 1)];
+            _manualFloor = FloorDetector.Nearest(replacement, selectedHeight);
+        }
+    }
+
     /// <summary>
     /// Moves the manual browsing selection by a relative offset, clamped to available floors.
     /// </summary>

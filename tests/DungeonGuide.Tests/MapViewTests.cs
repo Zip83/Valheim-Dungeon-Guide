@@ -136,6 +136,46 @@ public sealed class MapViewTests
         Assert.Equal(0, state.SelectedFloor);
     }
 
+    /// <summary>Adding lower floors must preserve the currently tracked physical elevation.</summary>
+    [Fact]
+    public void RemapsCurrentFloorByElevation()
+    {
+        var state = new MapViewState();
+        var preview = new[] { 100f, 106f };
+        state.Track(preview, 106);
+
+        state.RemapFloors(preview, new[] { 88f, 94f, 100f, 106f, 112f });
+
+        Assert.Equal(3, state.CurrentFloor);
+        Assert.Equal(3, state.SelectedFloor);
+    }
+
+    /// <summary>Manual browsing remains independent from the player when replacement indices change.</summary>
+    [Fact]
+    public void RemapsBrowsedFloorSeparatelyFromPlayer()
+    {
+        var state = new MapViewState();
+        var preview = new[] { 100f, 106f };
+        state.ChangeFloor(1, preview.Length);
+
+        state.RemapFloors(preview, new[] { 88f, 94f, 100f, 106f, 112f });
+
+        Assert.Equal(2, state.CurrentFloor);
+        Assert.Equal(3, state.SelectedFloor);
+        state.Follow();
+        Assert.Equal(2, state.SelectedFloor);
+    }
+
+    /// <summary>A refined elevation estimate selects the nearest replacement floor.</summary>
+    [Fact]
+    public void RemapsToRefinedFloorElevation()
+    {
+        var state = new MapViewState();
+        state.RemapFloors(new[] { 100f }, new[] { 94f, 100.4f, 106f });
+
+        Assert.Equal(1, state.SelectedFloor);
+    }
+
     private static List<float> Levels() => new()
     {
         0,

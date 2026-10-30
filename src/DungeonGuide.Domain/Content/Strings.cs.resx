@@ -195,4 +195,7 @@
     <data name="Less" xml:space="preserve">
         <value>Méně</value>
     </data>
+    <data name="PreviewSuffix" xml:space="preserve">
+        <value> (náhled)</value>
+    </data>
 </root>

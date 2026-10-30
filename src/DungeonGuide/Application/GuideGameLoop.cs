@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
@@ -23,6 +24,7 @@ internal sealed class GuideGameLoop : IDisposable
     private bool _disposed;
     private readonly DynamicRouteValidator _validator;
     private string _blockedHint;
+    private IReadOnlyList<float> _knownFloors = Array.Empty<float>();
 
     /// <summary>
     /// Connects independently owned input, session, navigation, map, overlay, and instruction services.
@@ -56,6 +58,7 @@ internal sealed class GuideGameLoop : IDisposable
 
     private void Enter()
     {
+        _knownFloors = Array.Empty<float>();
         _view.Enter();
         _navigator.Stop();
         _maps.Center();
@@ -64,6 +67,9 @@ internal sealed class GuideGameLoop : IDisposable
 
     private void Scanned()
     {
+        var floors = _runtime.Session.Floors;
+        _view.RemapFloors(_knownFloors, floors);
+        _knownFloors = floors;
         _navigator.InvalidateRoute();
         _nextRender = _nextObserve = _nextRoute = 0;
     }

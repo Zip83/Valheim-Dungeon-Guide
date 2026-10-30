@@ -20,8 +20,9 @@ internal sealed class SessionScanController
     private FloorAnalysisJob _floorAnalysis;
     private float _scanStarted;
     private float _nextProgress;
+    private bool _preparingPreview;
 
-    /// <summary>Raised after complete geometry and floor assignments replace the active session's scan.</summary>
+    /// <summary>Raised after a completed preview or full scan replaces the active session's geometry.</summary>
     public event Action ScanCompleted;
 
     /// <summary>Connects sampling, floor analysis, and the active-session publication guard.</summary>
@@ -56,7 +57,8 @@ internal sealed class SessionScanController
         session.Scanning = true;
         _scanStarted = Time.realtimeSinceStartup;
         _nextProgress = _scanStarted;
-        _scanJob = _host.StartCoroutine(Guard(BuildScan(session), session));
+        var preview = ScanPreviewArea.Create(session, _settings.RevealAll.Value);
+        _scanJob = _host.StartCoroutine(Guard(BuildScan(session, preview), session));
     }
 
     /// <summary>Cancels private floor analysis before the runtime saves and closes its session.</summary>
@@ -77,30 +79,65 @@ internal sealed class SessionScanController
         _scanJob = null;
     }
 
-    private IEnumerator BuildScan(DungeonSession session)
+    private IEnumerator BuildScan(DungeonSession session, DungeonArea preview)
     {
-        ScanResult result = null;
-        foreach (var pause in CoroutinePhase.Forward(SampleGeometry(session, completed => result = completed)))
+        if (preview != null)
         {
-            yield return pause;
+            foreach (var pause in CoroutinePhase.Forward(BuildPass(session, preview, true)))
+            {
+                yield return pause;
+            }
         }
 
-        foreach (var pause in CoroutinePhase.Forward(AnalyzeFloors(session, result)))
+        if (Session != session)
+        {
+            yield break;
+        }
+
+        foreach (var pause in CoroutinePhase.Forward(BuildPass(session, session.Area, false)))
         {
             yield return pause;
         }
     }
 
-    private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout)
+    private IEnumerator BuildPass(DungeonSession session, DungeonArea area, bool preview)
     {
-        // Publication and all game-facing callbacks stay on the game thread, after worker completion.
+        _preparingPreview = preview;
+        ScanResult result = null;
+        foreach (var pause in CoroutinePhase.Forward(SampleGeometry(area, completed => result = completed)))
+        {
+            yield return pause;
+        }
+
+        if (Session != session || (preview && result.Graph.Nodes.Count == 0))
+        {
+            yield break;
+        }
+
+        FloorLayout layout = null;
+        foreach (var pause in CoroutinePhase.Forward(AnalyzeFloors(session, result, completed => layout = completed)))
+        {
+            yield return pause;
+        }
+
+        if (Session == session && layout != null)
+        {
+            PublishScan(session, result, layout, preview);
+        }
+    }
+
+    private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout, bool preview)
+    {
+        // Each published graph is complete and no longer owned by a sampling or analysis job.
         session.Scan = result;
         session.Layout = layout;
         session.Floors = layout.Levels;
         session.GeometryRevision++;
-        session.Scanning = false;
-        _log.LogInfo("Scan complete: " + session.Area.Id + ", nodes=" + result.Graph.Nodes.Count
-            + ", floors=" + session.Floors.Count + ", incomplete=" + result.Truncated
+        session.HasPartialGeometry = preview;
+        session.Scanning = preview;
+        _log.LogInfo((preview ? "Scan preview ready: " : "Scan complete: ") + session.Area.Id
+            + ", nodes=" + result.Graph.Nodes.Count + ", floors=" + session.Floors.Count
+            + ", incomplete=" + result.Truncated
             + ", elapsedSeconds=" + (Time.realtimeSinceStartup - _scanStarted).ToString("F1", CultureInfo.InvariantCulture));
         _log.LogInfo("Floor navigation landings=" + layout.LandingNodes.Count);
         ScanCompleted?.Invoke();
@@ -127,10 +164,10 @@ internal sealed class SessionScanController
         }
     }
 
-    private IEnumerator SampleGeometry(DungeonSession session, Action<ScanResult> completed)
+    private IEnumerator SampleGeometry(DungeonArea area, Action<ScanResult> completed)
     {
         return _scanner.Scan(
-            session.Area,
+            area,
             Mathf.Clamp(_settings.Spacing.Value, 0.75f, 3),
             Mathf.Clamp(_settings.Columns.Value, 1000, 120000),
             Mathf.Clamp(_settings.Budget.Value, 1, 8192),
@@ -138,7 +175,7 @@ internal sealed class SessionScanController
             completed);
     }
 
-    private IEnumerator AnalyzeFloors(DungeonSession session, ScanResult result)
+    private IEnumerator AnalyzeFloors(DungeonSession session, ScanResult result, Action<FloorLayout> completed)
     {
         // The new graph is private to this scan. Existing maps/navigation retain their previous graph.
         using (var analysis = new FloorAnalysisJob(_floors, result.Graph, result.Spacing))
@@ -158,7 +195,7 @@ internal sealed class SessionScanController
 
                 if (Session == session)
                 {
-                    PublishScan(session, result, layout);
+                    completed(layout);
                 }
             }
             finally
@@ -194,7 +231,7 @@ internal sealed class SessionScanController
 
         _nextProgress = now + 5;
         var phase = _floorAnalysis == null ? _scanner.Phase.ToString() : nameof(FloorAnalysisJob);
-        _log.LogInfo("Scan progress: phase=" + phase
+        _log.LogInfo("Scan progress: preview=" + _preparingPreview + ", phase=" + phase
             + ", columns=" + _scanner.ProcessedColumns + ", nodes=" + _scanner.SampledNodes
             + ", steps=" + _scanner.WorkSteps
             + ", elapsedSeconds=" + (now - _scanStarted).ToString("F1", CultureInfo.InvariantCulture));
