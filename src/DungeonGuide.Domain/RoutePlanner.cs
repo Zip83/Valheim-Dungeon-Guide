@@ -40,40 +40,56 @@ public sealed class RoutePlanner
             queue.Remove(c);
             if (target(c.Item2))
             {
-                var route = new List<int>();
-                var n = c.Item2;
-                while (n != -1)
-                {
-                    route.Add(n);
-                    n = parent[n];
-                }
-
-                route.Reverse();
-                return route;
+                return ReconstructRoute(parent, c.Item2);
             }
 
-            foreach (var edge in graph.Nodes[c.Item2].Edges)
-            {
-                if (!policy.Allows(edge))
-                {
-                    continue;
-                }
-
-                var next = edge.To;
-                var cost = c.Item1 + Point.Distance(graph.Nodes[c.Item2].Position, graph.Nodes[next].Position)
-                    + policy.Penalty(edge);
-                if (cost >= distance[next])
-                {
-                    continue;
-                }
-
-                queue.Remove((distance[next], next));
-                distance[next] = cost;
-                parent[next] = c.Item2;
-                queue.Add((cost, next));
-            }
+            RelaxEdges(graph, c, policy, distance, parent, queue);
         }
 
         return new List<int>();
+    }
+
+    private static List<int> ReconstructRoute(int[] parent, int destination)
+    {
+        var route = new List<int>();
+        var n = destination;
+        while (n != -1)
+        {
+            route.Add(n);
+            n = parent[n];
+        }
+
+        route.Reverse();
+        return route;
+    }
+
+    private static void RelaxEdges(
+        NavGraph graph,
+        (float, int) c,
+        RoutePolicy policy,
+        float[] distance,
+        int[] parent,
+        SortedSet<(float, int)> queue)
+    {
+        foreach (var edge in graph.Nodes[c.Item2].Edges)
+        {
+            if (!policy.Allows(edge))
+            {
+                continue;
+            }
+
+            var next = edge.To;
+            var cost = c.Item1 + Point.Distance(graph.Nodes[c.Item2].Position, graph.Nodes[next].Position)
+                + policy.Penalty(edge);
+            if (cost >= distance[next])
+            {
+                continue;
+            }
+
+            queue.Remove((distance[next], next));
+            distance[next] = cost;
+            parent[next] = c.Item2;
+            queue.Add((cost, next));
+        }
     }
 }
