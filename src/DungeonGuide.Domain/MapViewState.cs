@@ -18,6 +18,9 @@ public sealed class MapViewState
     /// </summary>
     public bool Overlay;
 
+    /// <summary>Whether the large dungeon map displays floor thumbnails instead of one floor.</summary>
+    public bool Overview;
+
     /// <summary>
     /// Whether the selected floor displays all scanned geometry rather than explored samples only.
     /// </summary>
@@ -54,6 +57,7 @@ public sealed class MapViewState
     public void Enter()
     {
         Dungeon = true;
+        Overview = false;
         _manualFloor = null;
         CurrentFloor = 0;
     }
@@ -113,6 +117,20 @@ public sealed class MapViewState
         {
             _manualFloor = Math.Max(0, Math.Min(count - 1, SelectedFloor + delta));
         }
+    }
+
+    /// <summary>Opens a valid floor from the overview without changing player tracking or reveal mode.</summary>
+    /// <param name="floor">Floor index chosen from a visible thumbnail.</param>
+    /// <param name="count">Number of floors in the active scan.</param>
+    public void OpenFloor(int floor, int count)
+    {
+        if (floor < 0 || floor >= count)
+        {
+            return;
+        }
+
+        _manualFloor = floor;
+        Overview = false;
     }
 
     /// <summary>

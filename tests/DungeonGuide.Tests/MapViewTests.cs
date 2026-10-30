@@ -176,6 +176,49 @@ public sealed class MapViewTests
         Assert.Equal(1, state.SelectedFloor);
     }
 
+    /// <summary>Opening an overview card changes browsing, while keeping physical floor and reveal mode intact.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OpensOverviewFloorWithoutChangingRevealMode(bool revealAll)
+    {
+        var state = new MapViewState { Overview = true, RevealAll = revealAll };
+        state.Track(Levels(), 6);
+
+        state.OpenFloor(2, 3);
+
+        Assert.False(state.Overview);
+        Assert.Equal(2, state.SelectedFloor);
+        Assert.Equal(1, state.CurrentFloor);
+        Assert.Equal(revealAll, state.RevealAll);
+    }
+
+    /// <summary>A stale thumbnail index cannot leave the overview or select a nonexistent floor.</summary>
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(3)]
+    public void RejectsInvalidOverviewFloor(int floor)
+    {
+        var state = new MapViewState { Overview = true };
+
+        state.OpenFloor(floor, 3);
+
+        Assert.True(state.Overview);
+        Assert.Equal(0, state.SelectedFloor);
+    }
+
+    /// <summary>The overview is opt-in for each dungeon, independent of the persisted reveal preference.</summary>
+    [Fact]
+    public void EnterRestoresFloorDetail()
+    {
+        var state = new MapViewState { Overview = true, RevealAll = true };
+
+        state.Enter();
+
+        Assert.False(state.Overview);
+        Assert.True(state.RevealAll);
+    }
+
     private static List<float> Levels() => new()
     {
         0,
