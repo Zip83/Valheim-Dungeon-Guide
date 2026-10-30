@@ -38,6 +38,13 @@ Use strict SRP at class and method level. Keep domain decisions, game API access
 presentation, and persistence separate. Keep the plugin entry point small.
 Use one top-level type per file and meaningful names that match actual behavior.
 
+Before committing or requesting review, manually inspect every changed method,
+including private helpers, and affected class against the
+[single responsibility review](docs/coding-conventions.md#single-responsibility-review).
+State one responsibility and reason to change for each; separate independently
+changing policies and keep orchestrators focused on delegation. Resolve violations
+before handoff. Build, test, and formatter success do not replace this review.
+
 Prefer `var` for local variables when inference preserves the intended static
 type. Keep explicit types when required by inference or intended conversions.
 Follow the configured naming conventions, mark initialization-only private

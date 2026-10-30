@@ -31,6 +31,34 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   scanning, routing, rendering, or persistence implementations.
 - Split by responsibility, not by an arbitrary line count. Avoid generic
   `Utils`, `Helpers`, or manager classes that accumulate unrelated work.
+- Before implementing a method, identify its single responsibility and the
+  independent decisions or phases it delegates. Keep discovery, candidate
+  filtering, geometry queries, selection, graph mutation, and presentation
+  separate when their rules can change independently.
+- Extract a named private method for a distinct step within the same responsibility;
+  extract a focused class when that step owns an independent policy, state, or
+  lifecycle. Moving an entire mixed body into one helper does not resolve SRP.
+- Keep orchestration at one level of abstraction. A method such as `Locate`,
+  `Snap`, `Candidate`, or `Connect` may coordinate steps, but must delegate their
+  algorithms rather than embed every search, filter, query, and mutation inline.
+- Use structured control flow; `goto` is prohibited. Preserve coroutine yields,
+  shared frame budgets, cancellation, and query ordering when separating phases.
+  Performance concerns do not waive SRP. Add `AggressiveInlining` only with
+  measured evidence; it is not a substitute for a clear design.
+
+### Mandatory review before committing code
+
+- Inspect every added or changed method, including private helpers, and each
+  affected class. Be able to state its responsibility and reason to change in
+  one concrete sentence. If that explanation combines independent tasks, split
+  them before committing or presenting the change for review.
+- Read the complete changed methods and their callers, not only added lines.
+  Check delegation boundaries, descriptive names, control flow, XML contracts,
+  and blank lines between members and logical steps.
+- Resolve responsibility and readability violations found in this review before
+  handing off the change. Build, tests, and formatter success do not establish
+  SRP. Complete the code-review checkbox in the PR template only after this
+  manual review; describe any check that could not be completed.
 
 ## C# readability
 
