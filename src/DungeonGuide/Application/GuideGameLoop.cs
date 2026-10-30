@@ -89,6 +89,7 @@ internal sealed class GuideGameLoop : IDisposable
         _runtime.Tick();
         _input.Tick(_view.Dungeon && (_maps.IsLargeOpen || _view.Overlay));
         var session = _runtime.Session;
+        _texture.Tick(session, _view);
         var player = Player.m_localPlayer;
         if (session == null || !player || session.Scan == null)
         {

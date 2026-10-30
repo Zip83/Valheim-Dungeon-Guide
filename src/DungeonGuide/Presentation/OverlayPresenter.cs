@@ -37,17 +37,21 @@ internal sealed class OverlayPresenter
         GUI.Box(new Rect(20, 90, 470, 530), GUIContent.none);
         GUI.Label(
             new Rect(32, 99, 440, 30),
-            session.Scan == null
+            session.Scan == null || _renderer.DisplayedFloor < 0
                 ? _text.PreparingMap
-                : _numbering.Label(session.Floors, state.SelectedFloor, session.Area.Entrance?.y)
+                : _numbering.Label(session.Floors, _renderer.DisplayedFloor, session.Area.Entrance?.y)
                 + _text.Separator
                 + (state.RevealAll ? _text.FullDungeon : _text.Explored));
-        if (session.Scan != null)
+        if (session.Scan != null && _renderer.DisplayedFloor >= 0)
         {
             GUI.DrawTextureWithTexCoords(
                 new Rect(32, 135, 446, 446),
                 _renderer.Texture,
-                _renderer.FitFloor(session, state.SelectedFloor));
+                _renderer.FitFloor(session, _renderer.DisplayedFloor));
+            GUI.DrawTextureWithTexCoords(
+                new Rect(32, 135, 446, 446),
+                _renderer.Markers,
+                _renderer.FitFloor(session, _renderer.DisplayedFloor));
         }
 
         GUI.Label(new Rect(32, 590, 440, 24), _text.OverlayControls);

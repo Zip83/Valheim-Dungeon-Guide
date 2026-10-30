@@ -12,6 +12,7 @@ internal sealed class NativeMapLayer : IDisposable
 {
     private readonly RectTransform _root;
     private readonly RawImage _image;
+    private readonly RawImage _markers;
     private readonly List<(CanvasGroup, float)> _hidden = new();
 
     /// <summary>
@@ -27,7 +28,7 @@ internal sealed class NativeMapLayer : IDisposable
     /// <summary>
     /// Creates a dungeon image layer and remembers the native chrome state to restore later.
     /// </summary>
-    public NativeMapLayer(RawImage original, Texture texture, IEnumerable<GameObject> chrome)
+    public NativeMapLayer(RawImage original, Texture texture, Texture markers, IEnumerable<GameObject> chrome)
     {
         _root = NativeUi.Rect("DungeonGuideLayer", original.transform);
         _root.anchorMin = Vector2.zero;
@@ -41,6 +42,13 @@ internal sealed class NativeMapLayer : IDisposable
         _image = map.gameObject.AddComponent<RawImage>();
         _image.texture = texture;
         _image.raycastTarget = false;
+        var markerRect = NativeUi.Rect("Markers", map);
+        markerRect.anchorMin = Vector2.zero;
+        markerRect.anchorMax = Vector2.one;
+        markerRect.sizeDelta = Vector2.zero;
+        _markers = markerRect.gameObject.AddComponent<RawImage>();
+        _markers.texture = markers;
+        _markers.raycastTarget = false;
         RememberChrome(chrome);
 
         _root.gameObject.SetActive(false);
@@ -58,7 +66,7 @@ internal sealed class NativeMapLayer : IDisposable
 
         _root.gameObject.SetActive(enabled);
         Viewport = viewport;
-        _image.uvRect = viewport;
+        _image.uvRect = _markers.uvRect = viewport;
         foreach (var item in _hidden)
         {
             if (item.Item1)
