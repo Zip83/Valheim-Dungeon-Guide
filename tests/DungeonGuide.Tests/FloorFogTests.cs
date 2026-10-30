@@ -110,6 +110,21 @@ public sealed class FloorFogTests
         Assert.Same(raster, cache.Ready.Raster);
     }
 
+    /// <summary>A partially computed mask cannot become visible before opaque unknown pixels are finalized.</summary>
+    [Fact]
+    public void DoesNotPublishPartialFog()
+    {
+        var raster = Raster();
+        var explored = new Exploration();
+        using var cache = new FloorFogCache();
+        cache.Tick(raster, explored, new FrameWorkBudget(1, 1000));
+        Assert.Null(cache.Ready);
+        cache.Tick(raster, explored, new FrameWorkBudget(100000, 1000));
+
+        Assert.NotNull(cache.Ready);
+        Assert.All(cache.Ready.Opacity, alpha => Assert.Equal(255, alpha));
+    }
+
     private static FloorPlanRaster Raster()
     {
         var graph = new NavGraph();

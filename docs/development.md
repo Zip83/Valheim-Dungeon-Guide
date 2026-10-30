@@ -219,3 +219,33 @@ not conditional matrix jobs. GitHub's separate code-scanning rule governs real
 CodeQL findings and differs from required checks and Code Quality. Use advanced
 CodeQL or default setup, not both. CI does not install into a game, merge a PR,
 publish a release, or test gameplay.
+
+## Floor rendering and native UI
+
+`FloorPlanBuilder` produces conservative coverage from sample footprints and verified
+short cardinal walk connections. It preserves unsampled holes and does not fill doors,
+unverified links, diagonal corners, or other floors. Its published raster owns the
+projection and source graph; `FloorPlanCache` replaces it only after a complete build.
+Floor labels track the published image while a requested floor is still being prepared.
+
+`FloorFogMask` reconstructs opaque unknown space and an inward feather from existing
+visited keys. `FloorFogCache` completes in-flight work even as exploration advances.
+Geometry, masks, cloud preparation, and terrain compositing share a cooperative 1 ms
+soft main-thread budget. The previous complete texture remains usable. Texture upload
+and an individual row are indivisible; actual frame times still require gameplay profiling.
+Dynamic symbols use a separate transparent texture; hidden symbols and chest hit targets
+are clipped to the published mask. The player's own position remains visible.
+
+`GameUiStyle` reads sprites, colour blocks, sprite states, font assets, and shared
+materials from the loaded Valheim menu, with the inventory button as a fallback.
+The `Menu.m_continueButton`, `InventoryGui.m_takeAllButton`, and map image/canvas
+references were inspected in the installed Valheim 1.0.21 assembly on 2026-10-30.
+Game captions use TextMeshPro; its compile-time reference is external like other Unity
+assemblies and is never packaged. New controls contain fresh callbacks rather than
+cloned game behaviours, event listeners, animators, or localization components.
+
+The toolbar's advanced panel resets on map opening. The optional overlay uses the
+same native assets and canvas scale, starts hidden, and does not block raycasts.
+Shared game assets are never mutated or destroyed. Missing native templates leave
+the ordinary map available and produce a diagnostic; they do not trigger a search
+through every loaded scene object. All owned UI and textures are disposed on teardown.

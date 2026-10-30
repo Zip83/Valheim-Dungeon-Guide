@@ -39,6 +39,10 @@
       <HintPath>$(GameReferences)/assembly_guiutils$(GameReferenceSuffix).dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(UiReferences)/Unity.TextMeshPro$(GameReferenceSuffix).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(UiReferences)/UnityEngine.UI$(GameReferenceSuffix).dll</HintPath>
       <Private>false</Private>

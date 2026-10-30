@@ -13,7 +13,7 @@ internal sealed class MapTextureRenderer : IDisposable
     private readonly FloorPlanCache _cache = new();
     private readonly FloorFogCache _fog = new();
     private readonly MapMarkerRenderer _markers = new();
-    private readonly FrameWorkBudget _budget = new(512, 1);
+    private readonly FrameWorkBudget _budget = new(8192, 1);
     private readonly Color32[] _pixels = new Color32[Size * Size];
     private readonly MapExtentFitter _extentFitter;
     private IEnumerator<byte> _paint;
@@ -131,6 +131,7 @@ internal sealed class MapTextureRenderer : IDisposable
 
     private void Reset()
     {
+        _session = null;
         _paint?.Dispose();
         _paint = null;
         _painting = Published = null;

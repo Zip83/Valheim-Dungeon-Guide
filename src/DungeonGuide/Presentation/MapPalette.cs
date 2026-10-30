@@ -7,9 +7,7 @@ namespace DungeonGuide;
 /// </summary>
 internal static class MapPalette
 {
-    internal static readonly Color Panel = new Color(0.06f, 0.08f, 0.1f, 0.97f);
-    internal static readonly Color MapBackground = new Color(0.04f, 0.05f, 0.065f, 1);
-    internal static readonly Color Button = new Color(0.19f, 0.23f, 0.27f, 0.98f);
+    internal static readonly Color MapBackground = new Color(0.13f, 0.11f, 0.08f, 1);
     internal static readonly Color32 TextureBackground = new Color32(17, 22, 27, 255);
     internal static readonly Color32 ExploredFloor = new Color32(159, 139, 99, 255);
     internal static readonly Color32 FloorOutline = new Color32(63, 51, 35, 255);

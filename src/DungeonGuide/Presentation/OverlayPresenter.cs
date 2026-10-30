@@ -1,60 +1,123 @@
+using System;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DungeonGuide;
 
-/// <summary>
-/// Draws the standalone floor map only after the player explicitly enables it.
-/// </summary>
-internal sealed class OverlayPresenter
+/// <summary>Owns a non-interactive native-styled overlay created only after explicit user activation.</summary>
+internal sealed class OverlayPresenter : IDisposable
 {
     private readonly GuideText _text;
     private readonly MapTextureRenderer _renderer;
     private readonly FloorNumbering _numbering;
+    private RectTransform _root;
+    private TMP_Text _title;
+    private TMP_Text _footer;
+    private RawImage _floor;
+    private RawImage _markers;
+    private Minimap _boundMap;
+    private bool _czech;
 
-    /// <summary>
-    /// Uses the shared floor texture and floor-label formatter for a manually enabled map.
-    /// </summary>
+    /// <summary>Shares the published floor/fog/marker layers with the native map without owning their textures.</summary>
     public OverlayPresenter(MapTextureRenderer renderer, FloorNumbering numbering, GuideText text)
     {
-        _text = text;
         _renderer = renderer;
         _numbering = numbering;
+        _text = text;
     }
 
-    /// <summary>
-    /// Draws a floor map only when the player manually enabled the standalone overlay.
-    /// </summary>
-    public void Draw(DungeonSession session, MapViewState state)
+    private void Bind()
     {
-        if (!state.Overlay || session == null || !state.Dungeon || Minimap.IsOpen())
+        if (_root && _boundMap == Minimap.instance && _czech == _text.IsCzech)
         {
             return;
         }
 
-        var old = GUI.matrix;
-        var scale = Mathf.Min(1, Screen.height / 800f);
-        GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
-        GUI.Box(new Rect(20, 90, 470, 530), GUIContent.none);
-        GUI.Label(
-            new Rect(32, 99, 440, 30),
-            session.Scan == null || _renderer.DisplayedFloor < 0
-                ? _text.PreparingMap
-                : _numbering.Label(session.Floors, _renderer.DisplayedFloor, session.Area.Entrance?.y)
-                + _text.Separator
-                + (state.RevealAll ? _text.FullDungeon : _text.Explored));
-        if (session.Scan != null && _renderer.DisplayedFloor >= 0)
+        Dispose();
+        var style = GameUiStyle.Read();
+        _root = NativeUi.Rect("DungeonGuideOverlay", GameUiStyle.MapCanvas());
+        _boundMap = Minimap.instance;
+        _czech = _text.IsCzech;
+        _root.anchorMin = _root.anchorMax = _root.pivot = new Vector2(0, 1);
+        _root.anchoredPosition = new Vector2(20, -90);
+        _root.sizeDelta = new Vector2(470, 530);
+        _root.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = false;
+        NativeUi.Panel(_root, style, false);
+        _title = NativeUi.Label(_root, style, "", new Vector2(12, -8), new Vector2(446, 30));
+        CreateMapLayers();
+
+        _footer = NativeUi.Label(_root, style, "", new Vector2(12, -495), new Vector2(446, 24), 14);
+    }
+
+    /// <summary>Updates the optional panel after game UI logic, without consuming pointer or keyboard input.</summary>
+    public void Tick(DungeonSession session, MapViewState state)
+    {
+        if (!state.Overlay || session == null || !state.Dungeon || Minimap.IsOpen() || !Minimap.instance)
         {
-            GUI.DrawTextureWithTexCoords(
-                new Rect(32, 135, 446, 446),
-                _renderer.Texture,
-                _renderer.FitFloor(session, _renderer.DisplayedFloor));
-            GUI.DrawTextureWithTexCoords(
-                new Rect(32, 135, 446, 446),
-                _renderer.Markers,
-                _renderer.FitFloor(session, _renderer.DisplayedFloor));
+            if (_root)
+            {
+                _root.gameObject.SetActive(false);
+            }
+
+            return;
         }
 
-        GUI.Label(new Rect(32, 590, 440, 24), _text.OverlayControls);
-        GUI.matrix = old;
+        Bind();
+        _root.gameObject.SetActive(true);
+        FitToCanvas();
+        RefreshLabels(session, state);
+
+        var ready = session.Scan != null && _renderer.DisplayedFloor >= 0;
+        _floor.gameObject.SetActive(ready);
+        if (ready)
+        {
+            _floor.uvRect = _markers.uvRect = _renderer.FitFloor(session, _renderer.DisplayedFloor);
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_root)
+        {
+            UnityEngine.Object.Destroy(_root.gameObject);
+        }
+
+        _root = null;
+        _boundMap = null;
+    }
+
+    private void CreateMapLayers()
+    {
+        var rect = NativeUi.Rect("FloorPlan", _root);
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(12, -45);
+        rect.sizeDelta = new Vector2(446, 446);
+        _floor = rect.gameObject.AddComponent<RawImage>();
+        _floor.texture = _renderer.Texture;
+        _floor.raycastTarget = false;
+        var marker = NativeUi.Rect("Markers", rect);
+        marker.anchorMin = Vector2.zero;
+        marker.anchorMax = Vector2.one;
+        marker.sizeDelta = Vector2.zero;
+        _markers = marker.gameObject.AddComponent<RawImage>();
+        _markers.texture = _renderer.Markers;
+        _markers.raycastTarget = false;
+    }
+
+    private void FitToCanvas()
+    {
+        var parent = (RectTransform)_root.parent;
+        var scale = Mathf.Min(1, Mathf.Min(parent.rect.height / 800f, parent.rect.width / 520f));
+        _root.localScale = new Vector3(scale, scale, 1);
+    }
+
+    private void RefreshLabels(DungeonSession session, MapViewState state)
+    {
+        _title.text = _renderer.DisplayedFloor < 0 || _renderer.DisplayedFloor != state.SelectedFloor ? _text.PreparingMap
+            : _numbering.Label(session.Floors, _renderer.DisplayedFloor, session.Area.Entrance?.y)
+                + _text.Separator + (state.RevealAll ? _text.FullDungeon : _text.Explored);
+        _footer.text = _text.OverlayControls;
     }
 }
