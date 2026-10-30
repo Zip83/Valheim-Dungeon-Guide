@@ -8,6 +8,39 @@ namespace DungeonGuide;
 /// <summary>Adapts private Valheim map fields without owning presentation or original game actions.</summary>
 internal sealed class NativeMapBindings
 {
+    // Exact member names form the reflection contract with the loaded Valheim version.
+    private const string MapImageSmallField = "m_mapImageSmall";
+    private const string MapImageLargeField = "m_mapImageLarge";
+    private const string LargeRootField = "m_largeRoot";
+    private const string PinRootLargeField = "m_pinRootLarge";
+    private const string PinNameRootLargeField = "m_pinNameRootLarge";
+    private const string LargeMarkerField = "m_largeMarker";
+    private const string LargeShipMarkerField = "m_largeShipMarker";
+    private const string BiomeNameLargeField = "m_biomeNameLarge";
+    private const string PinRootSmallField = "m_pinRootSmall";
+    private const string PinNameRootSmallField = "m_pinNameRootSmall";
+    private const string SmallMarkerField = "m_smallMarker";
+    private const string SmallShipMarkerField = "m_smallShipMarker";
+    private const string BiomeNameSmallField = "m_biomeNameSmall";
+
+    private static readonly string[] s_largeChrome =
+    {
+        PinRootLargeField,
+        PinNameRootLargeField,
+        LargeMarkerField,
+        LargeShipMarkerField,
+        BiomeNameLargeField
+    };
+
+    private static readonly string[] s_smallChrome =
+    {
+        PinRootSmallField,
+        PinNameRootSmallField,
+        SmallMarkerField,
+        SmallShipMarkerField,
+        BiomeNameSmallField
+    };
+
     private readonly Minimap _boundMap;
 
     /// <summary>Retains the currently loaded map whose UI fields will be inspected.</summary>
@@ -18,31 +51,15 @@ internal sealed class NativeMapBindings
     }
 
     /// <summary>Native small-map image, or null when unavailable on this game version.</summary>
-    public RawImage SmallImage => Field("m_mapImageSmall") as RawImage;
+    public RawImage SmallImage => Field(MapImageSmallField) as RawImage;
 
     /// <summary>Native large-map image, or null when unavailable on this game version.</summary>
-    public RawImage LargeImage => Field("m_mapImageLarge") as RawImage;
+    public RawImage LargeImage => Field(MapImageLargeField) as RawImage;
 
     /// <summary>Native large-map panel, or null when unavailable on this game version.</summary>
-    public GameObject LargeRoot => Object("m_largeRoot");
+    public GameObject LargeRoot => Object(LargeRootField);
 
-    private static readonly string[] s_largeChrome =
-    {
-        "m_pinRootLarge",
-        "m_pinNameRootLarge",
-        "m_largeMarker",
-        "m_largeShipMarker",
-        "m_biomeNameLarge"
-    };
-
-    private static readonly string[] s_smallChrome =
-    {
-        "m_pinRootSmall",
-        "m_pinNameRootSmall",
-        "m_smallMarker",
-        "m_smallShipMarker",
-        "m_biomeNameSmall"
-    }; private object Field(string name) => _boundMap.GetType()
+    private object Field(string name) => _boundMap.GetType()
         .GetField(
             name,
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(_boundMap);
