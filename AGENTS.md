@@ -106,6 +106,10 @@ and `docs/coding-conventions.md` before making changes. Read any more specific
   owned resources during teardown.
 - Access Unity objects on the game thread. Bound scanning work per frame and
   avoid expensive scene searches or repeated allocations in hot paths.
+- Keep scan work cooperative across every expensive phase. Never synchronously
+  wait for workers on the game thread. Background analysis may access only an
+  unpublished, exclusively owned graph; cancel it on session close and publish
+  results on the game thread. A time budget cannot preempt a Unity engine call.
 - Inspect actual referenced game APIs before relying on private members.
   Handle unsupported versions explicitly; do not silently report success.
 - Keep user-facing text at a presentation/localization boundary, and visual

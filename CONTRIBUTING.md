@@ -99,6 +99,27 @@ AI assistance is welcome. Review generated changes yourself, verify referenced
 APIs, and explain the result. Remove fabricated claims, unnecessary scaffolding,
 and unrelated edits before submitting.
 
+## Stacked pull requests
+
+Split large changes into focused, buildable pull requests. Target each child PR
+at its immediate predecessor so Files changed shows only that step. Keep
+feature logic and its regression tests together where dependencies allow it.
+CI and CodeQL run for pull requests targeting any branch.
+
+This repository uses squash merges. Review and merge from the bottom of the
+stack upward. After merging a parent, retarget its immediate child to `master`
+and merge the updated `origin/master` into that child. Then merge each updated
+parent into its next remaining child, in dependency order, and push normally.
+This updates the whole remaining stack without rewriting shared history;
+merge commits stay on feature branches while `master` continues to use squash
+merges. Check that each PR still shows only its own changes and rerun checks.
+
+Retargeting alone after a squash merge can bring the parent's diff back into the
+child PR. If rebasing instead of merging the updated bases, restack every
+remaining descendant and obtain explicit authorization before rewriting shared
+branches. Do not merge a child PR into an unmerged feature branch or delete a
+parent branch before its child is retargeted.
+
 ## Bug reports
 
 Include reproduction steps, expected and actual behavior, game and mod versions,
