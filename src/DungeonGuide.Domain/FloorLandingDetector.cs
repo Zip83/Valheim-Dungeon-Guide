@@ -26,43 +26,77 @@ public sealed class FloorLandingDetector
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var cells = new Dictionary<(int, int), int>();
+        var cells = IndexSurface(graph, surface, spacing, cancellationToken);
+
+        return SelectLandings(graph, surface, cells, spacing, cancellationToken);
+    }
+
+    private static HashSet<(int x, int z)> IndexSurface(
+        NavGraph graph,
+        IReadOnlyList<int> surface,
+        float spacing,
+        CancellationToken cancellationToken)
+    {
+        var cells = new HashSet<(int x, int z)>();
         foreach (var id in surface)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var p = graph.Nodes[id].Position;
-            cells[((int)Math.Round(p.x / spacing), (int)Math.Round(p.z / spacing))] = id;
+            cells.Add(CellAt(graph.Nodes[id].Position, spacing));
         }
 
+        return cells;
+    }
+
+    private static List<int> SelectLandings(
+        NavGraph graph,
+        IReadOnlyList<int> surface,
+        HashSet<(int x, int z)> cells,
+        float spacing,
+        CancellationToken cancellationToken)
+    {
         var result = new List<int>();
         foreach (var id in surface)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var p = graph.Nodes[id].Position;
-            var x = (int)Math.Round(p.x / spacing);
-            var z = (int)Math.Round(p.z / spacing);
-            var supported = 0;
-            // A broad two-dimensional landing, not a long narrow bridge or a ring balcony.
-            // The disk has 21 grid cells. A 3-cell-wide bridge cannot satisfy this coverage.
-            for (var dx = -2; dx <= 2; dx++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                for (var dz = -2; dz <= 2; dz++)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (dx * dx + dz * dz <= 5 && cells.ContainsKey((x + dx, z + dz)))
-                    {
-                        supported++;
-                    }
-                }
-            }
-
-            if (supported >= 15)
+            var cell = CellAt(graph.Nodes[id].Position, spacing);
+            if (HasBroadSupport(cells, cell, cancellationToken))
             {
                 result.Add(id);
             }
         }
 
         return result;
+    }
+
+    private static (int x, int z) CellAt(Point position, float spacing)
+    {
+        return ((int)Math.Round(position.x / spacing), (int)Math.Round(position.z / spacing));
+    }
+
+    private static bool HasBroadSupport(
+        HashSet<(int x, int z)> cells,
+        (int x, int z) center,
+        CancellationToken cancellationToken)
+    {
+        var supported = 0;
+        // The disk has 21 cells; a three-cell-wide bridge cannot reach the required coverage.
+        for (var dx = -2; dx <= 2; dx++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            for (var dz = -2; dz <= 2; dz++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (dx * dx + dz * dz <= 5 && cells.Contains((center.x + dx, center.z + dz)))
+                {
+                    supported++;
+                    if (supported >= 16)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }

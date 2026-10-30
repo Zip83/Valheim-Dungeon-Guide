@@ -1,12 +1,17 @@
 using System;
+using System.Globalization;
+using System.Resources;
 
 namespace DungeonGuide;
 
 /// <summary>
-/// Selects Czech player-facing copy only for Valheim's Czech language, with English as the fallback.
+/// Resolves typed text keys through .NET resources using Valheim's language and an English fallback.
 /// </summary>
 internal sealed class GuideText
 {
+    private static readonly ResourceManager s_resources =
+        new("DungeonGuide.Domain.Content.Strings", typeof(GuideText).Assembly);
+    private static readonly CultureInfo s_czech = CultureInfo.GetCultureInfo("cs");
     private readonly Func<string> _selectedLanguage;
 
     internal GuideText(Func<string> selectedLanguage = null)
@@ -18,147 +23,125 @@ internal sealed class GuideText
 
     internal bool IsCzech => string.Equals(SelectedLanguage, "Czech", StringComparison.OrdinalIgnoreCase);
 
-    internal string ChestTargetRequired => IsCzech
-        ? "Zamiř na truhlu s nabídkou otevření, nebo ji otevři."
-        : "Aim at a chest with an interaction prompt, or open it.";
+    internal string ChestTargetRequired => Get(nameof(ChestTargetRequired));
 
-    internal string ChestSaved => IsCzech ? "Uloženo: " : "Saved: ";
+    internal string ChestSaved => Get(nameof(ChestSaved));
 
-    internal string NoKnownChest => IsCzech
-        ? "Žádná známá neprázdná ani označená truhla."
-        : "No known non-empty or marked chest.";
+    internal string NoKnownChest => Get(nameof(NoKnownChest));
 
-    internal string NoAdjacentFloor => IsCzech
-        ? "Další patro v tomto směru nebylo nalezeno."
-        : "No next floor found in this direction.";
+    internal string NoAdjacentFloor => Get(nameof(NoAdjacentFloor));
 
-    internal string SaveReadFailed => IsCzech
-        ? "Uložený průzkum nelze načíst. Soubor zůstává beze změny; podrobnosti v logu."
-        : "Cannot load exploration. The file is unchanged; see the log.";
+    internal string SaveReadFailed => Get(nameof(SaveReadFailed));
 
-    internal string SaveWriteFailed => IsCzech
-        ? "Průzkum se nepodařilo uložit. Podrobnosti v logu."
-        : "Cannot save exploration. See the log.";
+    internal string SaveWriteFailed => Get(nameof(SaveWriteFailed));
 
-    internal string ChestNotePrompt => IsCzech ? "Název / poznámka k truhle" : "Chest name / note";
+    internal string ChestNotePrompt => Get(nameof(ChestNotePrompt));
 
-    internal string ItemCountSeparator => "× ";
+    internal string ItemCountSeparator => Get(nameof(ItemCountSeparator));
 
-    internal string ManualArea => IsCzech ? "Ruční oblast" : "Manual area";
+    internal string ManualArea => Get(nameof(ManualArea));
 
-    internal string OpenDoor => IsCzech ? "Otevři dveře" : "Open the door";
+    internal string OpenDoor => Get(nameof(OpenDoor));
 
-    internal string BreakObstacle => IsCzech ? "Rozbij překážku: " : "Break the obstacle: ";
+    internal string BreakObstacle => Get(nameof(BreakObstacle));
 
-    internal string RouteBlocked => IsCzech
-        ? "Průchod blokován — přepočítávám cestu"
-        : "Passage blocked — recalculating route";
+    internal string RouteBlocked => Get(nameof(RouteBlocked));
 
-    internal string WorldMap => IsCzech ? "Svět · Alt+M" : "World · Alt+M";
+    internal string WorldMap => Get(nameof(WorldMap));
 
-    internal string FloorDown => IsCzech ? "− patro" : "− floor";
+    internal string FloorDown => Get(nameof(FloorDown));
 
-    internal string FloorUp => IsCzech ? "+ patro" : "+ floor";
+    internal string FloorUp => Get(nameof(FloorUp));
 
-    internal string FollowFloor => IsCzech ? "Moje patro" : "My floor";
+    internal string FollowFloor => Get(nameof(FollowFloor));
 
-    internal string Explored => IsCzech ? "Prozkoumané" : "Explored";
+    internal string Explored => Get(nameof(Explored));
 
-    internal string NavigateUp => IsCzech ? "Vést výš ↑" : "Go up ↑";
+    internal string NavigateUp => Get(nameof(NavigateUp));
 
-    internal string NavigateDown => IsCzech ? "Vést níž ↓" : "Go down ↓";
+    internal string NavigateDown => Get(nameof(NavigateDown));
 
-    internal string Explore => IsCzech ? "Průzkum" : "Explore";
+    internal string Explore => Get(nameof(Explore));
 
-    internal string Entrance => IsCzech ? "Vchod" : "Entrance";
+    internal string Entrance => Get(nameof(Entrance));
 
-    internal string Stop => IsCzech ? "Zastavit" : "Stop";
+    internal string Stop => Get(nameof(Stop));
 
-    internal string Rescan => IsCzech ? "Obnovit sken" : "Rescan";
+    internal string Rescan => Get(nameof(Rescan));
 
-    internal string Chests => IsCzech ? "Truhly · F8" : "Chests · F8";
+    internal string Chests => Get(nameof(Chests));
 
-    internal string ChestControls => IsCzech
-        ? "F7 značka · Shift+F7 název · Ctrl+F7 vyzvednuto"
-        : "F7 mark · Shift+F7 name · Ctrl+F7 collected";
+    internal string ChestControls => Get(nameof(ChestControls));
 
-    internal string DungeonMap => "Dungeon · Alt+M";
+    internal string DungeonMap => Get(nameof(DungeonMap));
 
-    internal string PreparingMap => IsCzech ? "Připravuji mapu…" : "Preparing map…";
+    internal string PreparingMap => Get(nameof(PreparingMap));
 
-    internal string FullDungeon => IsCzech ? "Celý dungeon" : "Full dungeon";
+    internal string FullDungeon => Get(nameof(FullDungeon));
 
-    internal string BreakablePassages => IsCzech ? "Rozbitné průchody: " : "Breakable passages: ";
+    internal string BreakablePassages => Get(nameof(BreakablePassages));
 
-    internal string VerifiedJumps => IsCzech ? "Ověřené skoky: " : "Verified jumps: ";
+    internal string VerifiedJumps => Get(nameof(VerifiedJumps));
 
-    internal string Yes => IsCzech ? "ANO" : "YES";
+    internal string Yes => Get(nameof(Yes));
 
-    internal string No => IsCzech ? "NE" : "NO";
+    internal string No => Get(nameof(No));
 
-    internal string MapPanelsUnavailable => IsCzech
-        ? "Valheim mapové panely nebyly nalezeny."
-        : "Valheim map panels were not found.";
+    internal string MapPanelsUnavailable => Get(nameof(MapPanelsUnavailable));
 
-    internal string EntranceRoom => IsCzech ? "Vstupní místnost" : "Entrance room";
+    internal string EntranceRoom => Get(nameof(EntranceRoom));
 
-    internal string UnknownEntrance => IsCzech ? "Začátek skenu — vchod neznámý" : "Scan origin — entrance unknown";
+    internal string UnknownEntrance => Get(nameof(UnknownEntrance));
 
-    internal string ApproachPassage => IsCzech
-        ? "Přibliž se k průchodu nebo obnov sken."
-        : "Approach a passage or rescan.";
+    internal string ApproachPassage => Get(nameof(ApproachPassage));
 
-    internal string ExplorationExhausted => IsCzech
-        ? "Dostupné části projity; úplnost dungeonu není potvrzená."
-        : "Reachable areas explored; dungeon completeness is unconfirmed.";
+    internal string ExplorationExhausted => Get(nameof(ExplorationExhausted));
 
-    internal string NoVerifiedRoute => IsCzech
-        ? "Ověřená cesta nenalezena. Otevři průchod nebo obnov sken."
-        : "No verified route found. Open a passage or rescan.";
+    internal string NoVerifiedRoute => Get(nameof(NoVerifiedRoute));
 
-    internal string PreparingRoute => IsCzech ? "Připravuji trasu…" : "Preparing route…";
+    internal string PreparingRoute => Get(nameof(PreparingRoute));
 
-    internal string NearDestination => IsCzech ? "Cíl poblíž" : "Destination nearby";
+    internal string NearDestination => Get(nameof(NearDestination));
 
-    internal string JumpInstruction => IsCzech ? "Skoč k označenému dopadu" : "Jump to the marked landing";
+    internal string JumpInstruction => Get(nameof(JumpInstruction));
 
-    internal string DropInstruction => IsCzech
-        ? "Jednosměrný seskok — návrat nemusí být možný"
-        : "One-way drop — a return route may not exist";
+    internal string DropInstruction => Get(nameof(DropInstruction));
 
-    internal string Straight => IsCzech ? "Rovně" : "Straight ahead";
+    internal string Straight => Get(nameof(Straight));
 
-    internal string TurnAround => IsCzech ? "Otoč se" : "Turn around";
+    internal string TurnAround => Get(nameof(TurnAround));
 
-    internal string Right => IsCzech ? "Vpravo" : "Right";
+    internal string Right => Get(nameof(Right));
 
-    internal string Left => IsCzech ? "Vlevo" : "Left";
+    internal string Left => Get(nameof(Left));
 
-    internal string UpIndicator => " ↑";
+    internal string UpIndicator => Get(nameof(UpIndicator));
 
-    internal string DownIndicator => " ↓";
+    internal string DownIndicator => Get(nameof(DownIndicator));
 
-    internal string Separator => " · ";
+    internal string Separator => Get(nameof(Separator));
 
-    internal string OverlayControls => IsCzech
-        ? "F6 skrýt · PgUp/PgDn patro · Home moje patro"
-        : "F6 hide · PgUp/PgDn floor · Home my floor";
+    internal string OverlayControls => Get(nameof(OverlayControls));
 
-    internal string FloorUnknown => IsCzech ? "Patro není určeno" : "Floor unknown";
+    internal string FloorUnknown => Get(nameof(FloorUnknown));
 
-    internal string EntranceFloor => IsCzech ? "Vstupní patro 0" : "Entrance floor 0";
+    internal string EntranceFloor => Get(nameof(EntranceFloor));
 
-    internal string FloorNegative => IsCzech ? "Patro −" : "Floor −";
+    internal string FloorNegative => Get(nameof(FloorNegative));
 
-    internal string FloorPositive => IsCzech ? "Patro +" : "Floor +";
+    internal string FloorPositive => Get(nameof(FloorPositive));
 
-    internal string FloorPrefix => IsCzech ? "Patro " : "Floor ";
+    internal string FloorPrefix => Get(nameof(FloorPrefix));
 
-    internal string BottomUp => IsCzech ? " (odspodu)" : " (from bottom)";
+    internal string BottomUp => Get(nameof(BottomUp));
 
-    internal string CollectChest => IsCzech ? "Vyzvednout: " : "Collect: ";
+    internal string CollectChest => Get(nameof(CollectChest));
 
-    internal string ChestDestination => IsCzech ? "Truhla: " : "Chest: ";
+    internal string ChestDestination => Get(nameof(ChestDestination));
 
-    internal string ChestPrefix => IsCzech ? "Truhla " : "Chest ";
+    internal string ChestPrefix => Get(nameof(ChestPrefix));
+
+    private string Get(string key) =>
+        s_resources.GetString(key, IsCzech ? s_czech : CultureInfo.InvariantCulture)
+        ?? throw new MissingManifestResourceException($"Missing localized text: {key}");
 }

@@ -23,6 +23,17 @@ public sealed class MapExtentFitter
             return new MapViewport(0, 0, 1);
         }
 
+        var bounds = FindBounds(graph, floor);
+        if (bounds.minX == float.MaxValue)
+        {
+            return new MapViewport(0, 0, 1);
+        }
+
+        return ProjectBounds(bounds, center, span);
+    }
+
+    private static (float minX, float maxX, float minZ, float maxZ) FindBounds(NavGraph graph, int floor)
+    {
         var minX = float.MaxValue;
         var maxX = float.MinValue;
         var minZ = float.MaxValue;
@@ -40,11 +51,15 @@ public sealed class MapExtentFitter
             maxZ = Math.Max(maxZ, node.Position.z);
         }
 
-        if (minX == float.MaxValue)
-        {
-            return new MapViewport(0, 0, 1);
-        }
+        return (minX, maxX, minZ, maxZ);
+    }
 
+    private static MapViewport ProjectBounds(
+        (float minX, float maxX, float minZ, float maxZ) bounds,
+        Point center,
+        float span)
+    {
+        var (minX, maxX, minZ, maxZ) = bounds;
         var size = Math.Max(0.12f, Math.Min(1, (Math.Max(maxX - minX, maxZ - minZ) + 4) / span));
         var x = ((minX + maxX) * 0.5f - center.x) / span + 0.5f - size * 0.5f;
         var y = ((minZ + maxZ) * 0.5f - center.z) / span + 0.5f - size * 0.5f;
