@@ -13,6 +13,7 @@ internal sealed class GraphLocator
     /// <summary>
     /// Uses solid-geometry checks while snapping a player or chest to sampled floor geometry.
     /// </summary>
+    /// <param name="physics">Main-thread visibility queries for candidate samples.</param>
     public GraphLocator(GeometryPhysics physics)
     {
         _physics = physics;
@@ -21,6 +22,10 @@ internal sealed class GraphLocator
     /// <summary>
     /// Returns the closest reachable sample within the distance limit, or -1.
     /// </summary>
+    /// <param name="scan">Completed scan to search, or null when no graph is available.</param>
+    /// <param name="position">World-space position of the player or chest.</param>
+    /// <param name="max">Exclusive three-dimensional search radius in metres.</param>
+    /// <returns>Closest visible node within the vertical tolerance and radius, or -1 when none qualifies.</returns>
     public int Snap(ScanResult scan, Vector3 position, float max = 3.2f)
     {
         if (scan == null)

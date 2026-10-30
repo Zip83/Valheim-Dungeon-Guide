@@ -11,6 +11,9 @@ public sealed class JumpCandidateGeometryTests
     /// <summary>
     /// Takeoff distance and landing elevation retain their inclusive candidate limits.
     /// </summary>
+    /// <param name="distance">Horizontal gap distance in metres.</param>
+    /// <param name="rise">Landing elevation relative to takeoff in metres.</param>
+    /// <param name="expected">Whether the measurements qualify as a geometric candidate.</param>
     [Theory]
     [InlineData(1.49f, 0f, false)]
     [InlineData(1.5f, 0f, true)]
@@ -28,6 +31,8 @@ public sealed class JumpCandidateGeometryTests
     /// <summary>
     /// The curve retains endpoint clearance and its raised midpoint above the interpolated floor heights.
     /// </summary>
+    /// <param name="progress">Normalized position on the sampled arc.</param>
+    /// <param name="expected">Expected clearance above the interpolated floor heights in metres.</param>
     [Theory]
     [InlineData(0f, 0.8f)]
     [InlineData(0.5f, 1.7f)]

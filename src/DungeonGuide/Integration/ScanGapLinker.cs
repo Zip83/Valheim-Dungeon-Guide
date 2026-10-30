@@ -16,6 +16,9 @@ internal sealed class ScanGapLinker
     /// <summary>
     /// Keeps supported-door checks ahead of airborne candidate evaluation.
     /// </summary>
+    /// <param name="physics">Shared main-thread support and clearance queries.</param>
+    /// <param name="passages">Supported-passage evaluator used before considering an airborne gap.</param>
+    /// <param name="jumps">Cooperative jump-arc evaluator.</param>
     public ScanGapLinker(GeometryPhysics physics, PassageEvaluator passages, JumpEvaluator jumps)
     {
         _physics = physics;
@@ -26,6 +29,10 @@ internal sealed class ScanGapLinker
     /// <summary>
     /// Evaluates stacked-height pairs lazily using the scan's shared per-frame budget.
     /// </summary>
+    /// <param name="result">Private sampled graph receiving unverified directed candidates.</param>
+    /// <param name="column">Existing source column in the horizontal grid index.</param>
+    /// <param name="work">Budget shared with all other scan phases.</param>
+    /// <returns>Frame pauses while candidate pairs and their required physics queries are evaluated.</returns>
     public IEnumerable<object> LinkColumn(ScanResult result, (int x, int z) column, FrameWorkBudget work)
     {
         foreach (var pair in NeighborColumnPairs.Enumerate(result.Columns, column, s_gapOffsets))

@@ -14,6 +14,7 @@ internal sealed class ScanColumnSampler
     /// <summary>
     /// Uses the shared physics filters, buffers, and overflow accounting.
     /// </summary>
+    /// <param name="physics">Shared collision queries and geometry filters.</param>
     public ScanColumnSampler(GeometryPhysics physics)
     {
         _physics = physics;
@@ -22,6 +23,12 @@ internal sealed class ScanColumnSampler
     /// <summary>
     /// Filters ray hits and records supported floor points, yielding before each expensive query.
     /// </summary>
+    /// <param name="area">Scan bounds and optional loaded-room constraints.</param>
+    /// <param name="result">Private graph and column index receiving accepted samples.</param>
+    /// <param name="x">Horizontal X grid coordinate, multiplied by the sample spacing.</param>
+    /// <param name="z">Horizontal Z grid coordinate, multiplied by the sample spacing.</param>
+    /// <param name="work">Budget shared with the other scan phases.</param>
+    /// <returns>Frame pauses while the vertical column is sampled and checked for standing clearance.</returns>
     public IEnumerable<object> Sample(
         DungeonArea area, ScanResult result, int x, int z, FrameWorkBudget work)
     {

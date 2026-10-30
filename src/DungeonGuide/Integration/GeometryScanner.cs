@@ -17,6 +17,9 @@ internal sealed class GeometryScanner
     /// <summary>
     /// Composes the sampling and linking phases using shared main-thread physics services.
     /// </summary>
+    /// <param name="physics">Shared main-thread collision queries and overflow counter.</param>
+    /// <param name="passages">Evaluator for supported ordinary and obstructed passages.</param>
+    /// <param name="jumps">Evaluator for unverified airborne gap candidates.</param>
     public GeometryScanner(GeometryPhysics physics, PassageEvaluator passages, JumpEvaluator jumps)
     {
         _physics = physics;
@@ -27,6 +30,14 @@ internal sealed class GeometryScanner
     /// <summary>
     /// Defers physics until a later frame, then publishes the completed graph and completeness metadata.
     /// </summary>
+    /// <param name="area">Loaded or explicitly requested region to sample.</param>
+    /// <param name="spacing">Horizontal distance between sampling columns in metres.</param>
+    /// <param name="limit">Maximum number of columns to sample before marking the result truncated.</param>
+    /// <param name="stepsPerFrame">Maximum indivisible work steps between frame yields.</param>
+    /// <param name="millisecondsPerFrame">Soft elapsed-time budget per frame in milliseconds.</param>
+    /// <param name="complete">Callback receiving the graph after all sampled columns have been linked.</param>
+    /// <returns>Coroutine yielding frames before physics work and whenever the shared work budget is
+    /// exhausted.</returns>
     public IEnumerator Scan(
         DungeonArea area, float spacing, int limit, int stepsPerFrame,
         float millisecondsPerFrame, Action<ScanResult> complete)

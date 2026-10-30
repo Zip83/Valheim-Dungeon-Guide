@@ -12,6 +12,7 @@ internal sealed class DungeonLocator
     /// <summary>
     /// Uses the selected-language catalog when delegating manual scan-area creation.
     /// </summary>
+    /// <param name="text">Selected-language catalog used for manual scan labels.</param>
     public DungeonLocator(GuideText text)
     {
         _areas = new DungeonAreaFactory(text);
@@ -20,6 +21,9 @@ internal sealed class DungeonLocator
     /// <summary>
     /// Returns the nearest containing generated dungeon, or null outside an interior.
     /// </summary>
+    /// <param name="position">Player position in world metres.</param>
+    /// <returns>Closest containing dungeon descriptor, or null when no generated interior contains the
+    /// position.</returns>
     public DungeonArea Locate(Vector3 position)
     {
         return Character.InInterior(position) ? FindClosestArea(position) : null;
@@ -28,6 +32,10 @@ internal sealed class DungeonLocator
     /// <summary>
     /// Delegates explicit manual scan-area creation without claiming a known entrance.
     /// </summary>
+    /// <param name="position">Centre of the requested world-space scan volume.</param>
+    /// <param name="radius">Horizontal half-extent in metres.</param>
+    /// <param name="height">Vertical half-extent in metres.</param>
+    /// <returns>Manual area descriptor with no assumed entrance.</returns>
     public DungeonArea Manual(Vector3 position, float radius, float height)
     {
         return _areas.Manual(position, radius, height);

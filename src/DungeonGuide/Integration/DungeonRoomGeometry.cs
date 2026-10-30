@@ -10,6 +10,9 @@ internal static class DungeonRoomGeometry
     /// <summary>
     /// Tests room-local extents with the existing half-metre membership tolerance.
     /// </summary>
+    /// <param name="room">Loaded room providing its local size and transform.</param>
+    /// <param name="position">World-space point to test.</param>
+    /// <returns>True when the point lies within the room-local extents and membership tolerance.</returns>
     public static bool Contains(Room room, Vector3 position)
     {
         var local = room.transform.InverseTransformPoint(position);
@@ -24,6 +27,8 @@ internal static class DungeonRoomGeometry
     /// <summary>
     /// Encloses all transformed corners, including rotated rooms.
     /// </summary>
+    /// <param name="room">Loaded room whose eight corners define its extent.</param>
+    /// <returns>Axis-aligned world bounds enclosing the transformed room corners.</returns>
     public static Bounds WorldBounds(Room room)
     {
         var size = room.m_size;
@@ -46,6 +51,8 @@ internal static class DungeonRoomGeometry
     /// <summary>
     /// Encloses a non-empty room-bounds collection with the existing six-metre scan padding.
     /// </summary>
+    /// <param name="rooms">Non-empty collection of world-space room bounds.</param>
+    /// <returns>Combined bounds expanded by the existing scan padding.</returns>
     public static Bounds Enclose(Bounds[] rooms)
     {
         var bounds = rooms[0];

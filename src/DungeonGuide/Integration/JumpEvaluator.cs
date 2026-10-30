@@ -14,6 +14,7 @@ internal sealed class JumpEvaluator
     /// <summary>
     /// Uses solid-geometry queries to check candidate jump arcs and supported landings.
     /// </summary>
+    /// <param name="physics">Shared main-thread standing and arc-clearance queries.</param>
     public JumpEvaluator(GeometryPhysics physics)
     {
         _physics = physics;
@@ -23,6 +24,12 @@ internal sealed class JumpEvaluator
     /// Rejects out-of-range endpoints, then delegates cooperative landing and arc checks.
     /// Completion is reported exactly once unless enumeration is cancelled.
     /// </summary>
+    /// <param name="start">World-space takeoff floor point.</param>
+    /// <param name="end">World-space landing floor point.</param>
+    /// <param name="work">Budget shared with the other scan phases.</param>
+    /// <param name="complete">Receives whether the endpoints and sampled arc form an unverified candidate.</param>
+    /// <returns>Frame pauses before budgeted landing and arc queries; enumeration does not verify player
+    /// traversal.</returns>
     public IEnumerable<object> Candidate(Vector3 start, Vector3 end, FrameWorkBudget work, Action<bool> complete)
     {
         if (!WithinRange(start, end))

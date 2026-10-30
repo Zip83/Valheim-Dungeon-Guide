@@ -14,6 +14,8 @@ internal sealed class ScanPassageLinker
     /// <summary>
     /// Separates ordinary passage evaluation from cooperative gap evaluation.
     /// </summary>
+    /// <param name="passages">Evaluator for ordinary and obstructed supported connections.</param>
+    /// <param name="gaps">Cooperative evaluator for unverified airborne candidates.</param>
     public ScanPassageLinker(PassageEvaluator passages, ScanGapLinker gaps)
     {
         _passages = passages;
@@ -23,6 +25,9 @@ internal sealed class ScanPassageLinker
     /// <summary>
     /// Accounts for empty-neighbor columns and preserves ordinary-then-gap ordering within each column.
     /// </summary>
+    /// <param name="result">Private sampled graph and its completed horizontal column index.</param>
+    /// <param name="work">Budget shared with column sampling and gap checks.</param>
+    /// <returns>Frame pauses between budgeted column, ordinary-pair, and gap work.</returns>
     public IEnumerable<object> Link(ScanResult result, FrameWorkBudget work)
     {
         foreach (var column in result.Columns.Keys)

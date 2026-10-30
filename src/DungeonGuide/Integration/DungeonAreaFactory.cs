@@ -14,6 +14,7 @@ internal sealed class DungeonAreaFactory
     /// <summary>
     /// Uses localized copy only for automatically supplied manual-area labels.
     /// </summary>
+    /// <param name="text">Selected-language catalog for generated manual-area labels.</param>
     public DungeonAreaFactory(GuideText text)
     {
         _text = text;
@@ -22,6 +23,9 @@ internal sealed class DungeonAreaFactory
     /// <summary>
     /// Describes a generator only when one of its loaded rooms contains the position.
     /// </summary>
+    /// <param name="generator">Loaded generator whose child rooms define the dungeon.</param>
+    /// <param name="position">World-space position that must belong to one of the rooms.</param>
+    /// <returns>Room-constrained scan descriptor, or null when the position is outside every room.</returns>
     public DungeonArea Generated(DungeonGenerator generator, Vector3 position)
     {
         var rooms = generator.GetComponentsInChildren<Room>(true);
@@ -44,6 +48,10 @@ internal sealed class DungeonAreaFactory
     /// <summary>
     /// Creates a bounded manual region with its existing persistent identity and no inferred entrance.
     /// </summary>
+    /// <param name="position">World-space centre used for the volume and persistent area identity.</param>
+    /// <param name="radius">Horizontal half-extent in metres.</param>
+    /// <param name="height">Vertical half-extent in metres.</param>
+    /// <returns>Explicit manual area, with empty room constraints and no inferred entrance.</returns>
     public DungeonArea Manual(Vector3 position, float radius, float height) => new()
     {
         Id = "fortress_" + Mathf.FloorToInt(position.x / 128) + "_" + Mathf.FloorToInt(position.y / 1000) + "_"

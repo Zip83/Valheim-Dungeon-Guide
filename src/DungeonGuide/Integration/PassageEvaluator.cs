@@ -16,6 +16,9 @@ internal sealed class PassageEvaluator
     /// <summary>
     /// Connects collision, door, and approved-breakable checks without approving unknown traversal.
     /// </summary>
+    /// <param name="physics">Shared support checks and reusable collision-query buffers.</param>
+    /// <param name="doors">Door recognition and actual player-key checks.</param>
+    /// <param name="breakables">Recognition and approval of breakable blockers.</param>
     public PassageEvaluator(GeometryPhysics physics, DoorPassageVerifier doors, BreakablePassageVerifier breakables)
     {
         _physics = physics;
@@ -26,6 +29,9 @@ internal sealed class PassageEvaluator
     /// <summary>
     /// Qualifies endpoints, gathers blockers, then delegates passage-specific connection rules.
     /// </summary>
+    /// <param name="graph">Private navigation graph receiving supported connections.</param>
+    /// <param name="from">Source node index in the graph.</param>
+    /// <param name="to">Destination node index in the graph.</param>
     public void Connect(NavGraph graph, int from, int to)
     {
         var start = UnityPoints.V(graph.Nodes[from].Position);
