@@ -15,7 +15,23 @@ internal sealed class ChestSnapshotReader
     /// </summary>
     public ChestSnapshot Read(Container chest, bool discovered)
     {
-        var transformPosition = chest.transform.position;
+        var position = chest.transform.position;
+        var floorPosition = FloorPosition(chest, position);
+        var legacy = UnityPoints.PositionId(position);
+        var identity = Identity(chest, legacy);
+        var contents = Contents(chest);
+        return new ChestSnapshot
+        {
+            Id = identity,
+            LegacyId = legacy,
+            Position = UnityPoints.P(floorPosition),
+            Contents = contents,
+            Discovered = discovered
+        };
+    }
+
+    private static Vector3 FloorPosition(Container chest, Vector3 transformPosition)
+    {
         var p = transformPosition;
         var box = chest.GetComponentsInChildren<Collider>().FirstOrDefault(c => c.enabled && !c.isTrigger);
         if (box)
@@ -23,10 +39,18 @@ internal sealed class ChestSnapshotReader
             p = new Vector3(box.bounds.center.x, box.bounds.min.y, box.bounds.center.z);
         }
 
+        return p;
+    }
+
+    private static string Identity(Container chest, string legacy)
+    {
         var view = chest.GetComponent<ZNetView>();
         var zdo = view ? view.GetZDO() : null;
-        var legacy = UnityPoints.PositionId(transformPosition);
-        var id = zdo != null && !zdo.m_uid.Equals(ZDOID.None) ? "zdo_" + zdo.m_uid : legacy;
+        return zdo != null && !zdo.m_uid.Equals(ZDOID.None) ? "zdo_" + zdo.m_uid : legacy;
+    }
+
+    private static string Contents(Container chest)
+    {
         string contents = null;
         var inventory = chest.GetInventory();
         if (inventory != null)
@@ -40,13 +64,6 @@ internal sealed class ChestSnapshotReader
                         : i.m_shared.m_name)));
         }
 
-        return new ChestSnapshot
-        {
-            Id = id,
-            LegacyId = legacy,
-            Position = UnityPoints.P(p),
-            Contents = contents,
-            Discovered = discovered
-        };
+        return contents;
     }
 }
