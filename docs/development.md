@@ -196,8 +196,7 @@ retention across interior exits, and the independent serialized-field contract. 
 that check are compared using ordinal ordering, independent of the machine culture.
 
 A failed test requires investigation of the application contract first; do not
-rewrite assertions simply to get a passing result. Game geometry and UI require
-[manual checks](in-game-checklist.md) in addition to these tests.
+rewrite assertions simply to get a passing result.
 
 ## Continuous integration
 

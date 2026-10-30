@@ -141,7 +141,7 @@ internal sealed class GuideSettings
             "Display",
             "AllowOutdoorMapping",
             false,
-            "Opt in to manual F5 mapping outside dungeon interiors, including player bases. No automatic outdoor scans.");
+            "Allow manual Rescan outside dungeon interiors, including player bases. No automatic outdoor scans.");
         RevealAll = file.Bind(
             "Display",
             "RevealAll",
@@ -165,8 +165,8 @@ internal sealed class GuideSettings
         Overlay = Key("ToggleMap", KeyCode.F6, "Optional overlay; always hidden on game startup.");
         Rescan = Key(
             "Rescan",
-            KeyCode.F5,
-            "Rebuild dungeon geometry; outdoor scans require Display.AllowOutdoorMapping. May conflict with the console.");
+            KeyCode.Insert,
+            "Rebuild dungeon geometry; outdoor scans require Display.AllowOutdoorMapping.");
         Mark = Key("MarkChest", KeyCode.F7, "Mark the actual open or aimed chest.");
         Name = Key("NameChest", KeyCode.F7, "Name actual chest.", KeyCode.LeftShift);
         Collected = Key(
