@@ -59,6 +59,22 @@ Use the language and runtime versions declared by the projects. Reference game
 and BepInEx assemblies from a local installation; do not upload those assemblies.
 Avoid unrelated dependency upgrades or broad formatting changes in behavior PRs.
 
+## Player-facing translations
+
+Add text as a typed `GuideText` key with matching entries in the neutral English
+`Content/Strings.resx` and Czech `Content/Strings.cs.resx` catalogs in the domain
+project. Preserve meaningful whitespace with `xml:space="preserve"`. Keep
+translated copy out of C# language conditionals; use .NET `ResourceManager`.
+
+Select Czech only from Valheim's `Czech` setting, with English as the fallback
+for every other setting. Operating-system culture must not select the UI language.
+Preserve saved player names and notes when the language changes.
+
+Run the localization tests after changing catalog keys, fallback, or language
+selection. Check both exact key sets so English fallback cannot hide a missing
+Czech translation. Preserve the generated `cs/` satellite subdirectory when
+packaging or copying the plugin outputs.
+
 ## Verification
 
 - Test behavior where coverage provides value: domain decisions, invariants,
