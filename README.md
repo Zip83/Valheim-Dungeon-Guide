@@ -14,7 +14,12 @@ this repository build is still pending.
 - Floor plans in the native **M** map and minimap, showing explored areas by default.
   Automatic activation requires a dungeon interior and membership in a generated room;
   outdoor bases keep the ordinary Valheim map.
-- A toggle for all scanned geometry on the selected floor.
+- Continuous sampled floor coverage with dark outlines and muted map colours.
+- Opaque cloud fog hides unvisited rooms. Exploration reveals a three-metre circle
+  clipped by walls and the player's physical floor, with a soft edge inside explored areas.
+- A toggle for all scanned geometry on the selected floor; it never marks unseen areas explored.
+- A compact two-row toolbar uses loaded Valheim button sprites, fonts, and selectable
+  states. **More** opens scan/reveal/special-passage options and starts closed on each opening.
 - Automatic current-floor selection, with higher and lower floors available to browse.
 - A view fitted to the entire selected floor on first opening and when changing floors.
   Reopening preserves manual zoom and position; **Home** fits your current floor again.

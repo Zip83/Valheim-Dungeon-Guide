@@ -189,4 +189,10 @@
     <data name="ChestPrefix" xml:space="preserve">
         <value>Truhla </value>
     </data>
+    <data name="More" xml:space="preserve">
+        <value>Více…</value>
+    </data>
+    <data name="Less" xml:space="preserve">
+        <value>Méně</value>
+    </data>
 </root>

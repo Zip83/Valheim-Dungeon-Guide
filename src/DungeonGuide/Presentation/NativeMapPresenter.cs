@@ -83,9 +83,10 @@ internal sealed class NativeMapPresenter : IDisposable
             throw new InvalidOperationException(_text.MapPanelsUnavailable);
         }
 
+        var style = GameUiStyle.Read();
         _small = new NativeMapLayer(sm, _renderer.Texture, _renderer.Markers, bindings.Chrome(false));
         _large = new NativeMapLayer(lg, _renderer.Texture, _renderer.Markers, bindings.Chrome(true));
-        _controls = new MapControlsView(root.transform, _numbering, _command, _text);
+        _controls = new MapControlsView(root.transform, _numbering, _command, _text, style);
         _controlsCzech = _text.IsCzech;
     }
 
@@ -116,7 +117,7 @@ internal sealed class NativeMapPresenter : IDisposable
             return;
         }
 
-        _controls.Refresh(session, _state, _renderer.DisplayedFloor);
+        _controls.Refresh(session, _state, _renderer.DisplayedFloor, Minimap.IsOpen());
         var ready = session?.Scan != null && _renderer.DisplayedFloor >= 0 && session.Floors.Count > 0 && _state.Dungeon;
         DungeonVisible = ready;
         if (ready && Player.m_localPlayer)

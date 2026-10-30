@@ -24,8 +24,14 @@ copies of this plugin. Disable competing dungeon-map mods in the same profile.
 - **F6** — Show or hide the optional standalone map overlay. It starts hidden.
 - **Insert** — Rescan dungeon geometry.
 
-The map shows explored areas by default. Use its reveal-mode button to switch
-between explored areas and all scanned geometry on the selected floor.
+The map shows explored areas by default. Cloud fog completely hides unknown rooms;
+exploration reveals nearby visible floor within three metres, stopping at walls
+and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
+
+The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
+controls: rescan, reveal mode, breakable passages, and verified jumps. It starts
+closed whenever the large map opens. Full scanned geometry temporarily removes
+fog on the selected floor without adding exploration to your save.
 
 ### Navigation
 

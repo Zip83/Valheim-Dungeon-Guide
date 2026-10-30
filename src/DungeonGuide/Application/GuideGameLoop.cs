@@ -111,6 +111,7 @@ internal sealed class GuideGameLoop : IDisposable
         if (!_disposed)
         {
             _maps.Tick(_runtime.Session);
+            _overlay.Tick(_runtime.Session, _view);
         }
     }
 
@@ -121,7 +122,6 @@ internal sealed class GuideGameLoop : IDisposable
     {
         if (!_disposed)
         {
-            _overlay.Draw(_runtime.Session, _view);
             _hud.Draw(_runtime.Session, _view, _navigator, _blockedHint);
         }
     }
@@ -140,6 +140,7 @@ internal sealed class GuideGameLoop : IDisposable
         _runtime.Left -= _navigator.Stop;
         _runtime.ScanCompleted -= Scanned;
         _maps.Dispose();
+        _overlay.Dispose();
         _texture.Dispose();
     }
 

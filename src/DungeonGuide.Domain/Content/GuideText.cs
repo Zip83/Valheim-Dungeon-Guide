@@ -141,6 +141,10 @@ internal sealed class GuideText
 
     internal string ChestPrefix => Get(nameof(ChestPrefix));
 
+    internal string More => Get(nameof(More));
+
+    internal string Less => Get(nameof(Less));
+
     private string Get(string key) =>
         s_resources.GetString(key, IsCzech ? s_czech : CultureInfo.InvariantCulture)
         ?? throw new MissingManifestResourceException($"Missing localized text: {key}");
