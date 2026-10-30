@@ -50,7 +50,7 @@ internal sealed class MapControlsView : IDisposable
     /// <summary>
     /// Updates visibility and labels from the active floor, map mode, and route preferences.
     /// </summary>
-    public void Refresh(DungeonSession session, MapViewState state)
+    public void Refresh(DungeonSession session, MapViewState state, int displayedFloor)
     {
         if (!Root)
         {
@@ -65,9 +65,9 @@ internal sealed class MapControlsView : IDisposable
 
         _worldLabel.text = state.Dungeon ? _text.WorldMap : _text.DungeonMap;
         _details.gameObject.SetActive(state.Dungeon);
-        _floorLabel.text = session.Scan == null
+        _floorLabel.text = session.Scan == null || displayedFloor < 0
             ? _text.PreparingMap
-            : _numbering.Label(session.Floors, state.SelectedFloor, session.Area.Entrance?.y);
+            : _numbering.Label(session.Floors, displayedFloor, session.Area.Entrance?.y);
         _revealLabel.text = state.RevealAll ? _text.FullDungeon : _text.Explored;
         _breakLabel.text = _text.BreakablePassages + (state.AllowBreakables ? _text.Yes : _text.No);
         _jumpLabel.text = _text.VerifiedJumps + (state.AllowJumps ? _text.Yes : _text.No);

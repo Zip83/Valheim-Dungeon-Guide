@@ -83,8 +83,8 @@ internal sealed class NativeMapPresenter : IDisposable
             throw new InvalidOperationException(_text.MapPanelsUnavailable);
         }
 
-        _small = new NativeMapLayer(sm, _renderer.Texture, bindings.Chrome(false));
-        _large = new NativeMapLayer(lg, _renderer.Texture, bindings.Chrome(true));
+        _small = new NativeMapLayer(sm, _renderer.Texture, _renderer.Markers, bindings.Chrome(false));
+        _large = new NativeMapLayer(lg, _renderer.Texture, _renderer.Markers, bindings.Chrome(true));
         _controls = new MapControlsView(root.transform, _numbering, _command, _text);
         _controlsCzech = _text.IsCzech;
     }
@@ -116,8 +116,8 @@ internal sealed class NativeMapPresenter : IDisposable
             return;
         }
 
-        _controls.Refresh(session, _state);
-        var ready = session?.Scan != null && session.Floors.Count > 0 && _state.Dungeon;
+        _controls.Refresh(session, _state, _renderer.DisplayedFloor);
+        var ready = session?.Scan != null && _renderer.DisplayedFloor >= 0 && session.Floors.Count > 0 && _state.Dungeon;
         DungeonVisible = ready;
         if (ready && Player.m_localPlayer)
         {
@@ -151,13 +151,13 @@ internal sealed class NativeMapPresenter : IDisposable
     private void ShowDungeon(DungeonSession session)
     {
         var uv = _renderer.UV(UnityPoints.P(Player.m_localPlayer.transform.position));
-        if (_lastFloor != _state.SelectedFloor)
+        if (_lastFloor != _renderer.DisplayedFloor)
         {
-            _lastFloor = _state.SelectedFloor;
+            _lastFloor = _renderer.DisplayedFloor;
             _viewport.Center();
         }
 
-        _viewport.FollowOpening(() => _renderer.FitFloor(session, _state.SelectedFloor), Minimap.IsOpen());
+        _viewport.FollowOpening(() => _renderer.FitFloor(session, _renderer.DisplayedFloor), Minimap.IsOpen());
         var span = Mathf.Clamp(40 / Mathf.Max(1, _renderer.Span), 0.12f, 1);
         _small.Show(true, new Rect(uv.x - span / 2, uv.y - span / 2, span, span));
         _large.Show(true, _viewport.Viewport);
