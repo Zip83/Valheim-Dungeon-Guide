@@ -64,8 +64,7 @@ internal sealed class GrappleFallbackSearch
             Reset();
         }
 
-        if (_scan == scan && _start == start && _breakables == policy.Breakables && _hook?.Item == hook.Item
-            && (Pending || Route.Count > 0 || Time.unscaledTime < _retry))
+        if (TryRetain(scan, start, target, policy, hook))
         {
             return;
         }
@@ -78,6 +77,23 @@ internal sealed class GrappleFallbackSearch
         _target = target;
         _policy = policy;
         _job = _probe.Find(scan, start, target, policy, hook).GetEnumerator();
+    }
+
+    private bool TryRetain(ScanResult scan, int start, Predicate<int> target, RoutePolicy policy, GrappleEquipment hook)
+    {
+        if (_scan == scan && _breakables == policy.Breakables && _hook?.Item == hook.Item)
+        {
+            if (Pending || Route.Count > 0 && _probe.Rebase(scan.Graph, start, policy)
+                || Route.Count == 0 && _start == start && Time.unscaledTime < _retry)
+            {
+                _start = start;
+                _target = target;
+                _policy = policy;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Advances one cooperative slice and rejects results from a replaced scan or missing hook.</summary>
@@ -106,7 +122,8 @@ internal sealed class GrappleFallbackSearch
 
         AdvanceJob();
         if (!Pending && Route.Count > 0
-            && (!_target(Route[Route.Count - 1]) || !_probe.OrdinarySegmentsValid(_scan.Graph, _policy)))
+            && (!_target(Route[Route.Count - 1]) || !_probe.OrdinarySegmentsValid(_scan.Graph, _policy)
+                || !_probe.Rebase(_scan.Graph, _start, _policy)))
         {
             Reset();
         }

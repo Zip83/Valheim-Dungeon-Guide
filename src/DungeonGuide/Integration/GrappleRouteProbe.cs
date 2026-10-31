@@ -47,6 +47,31 @@ internal sealed class GrappleRouteProbe
         return true;
     }
 
+    /// <summary>Rebuilds only the ordinary approach after player movement, preserving a checked crossing.</summary>
+    public bool Rebase(NavGraph graph, int start, RoutePolicy policy)
+    {
+        if (Route.Count == 0)
+        {
+            return false;
+        }
+
+        if (Route[0] == start)
+        {
+            return true;
+        }
+
+        var approach = new RoutePlanner().Find(graph, start, node => node == _launch, policy);
+        if (approach.Count == 0)
+        {
+            return false;
+        }
+
+        var landing = Route.IndexOf(_landing);
+        approach.AddRange(Route.GetRange(landing, Route.Count - landing));
+        Route = approach;
+        return true;
+    }
+
     /// <summary>Rechecks the selected crossing against doors, destroyed surfaces, and current landing clearance.</summary>
     public IEnumerable<object> Recheck(ScanResult scan, GrappleEquipment hook)
     {
@@ -82,17 +107,25 @@ internal sealed class GrappleRouteProbe
             yield break;
         }
 
-        foreach (var pause in FindCrossing(scan, topology, hook))
+        var candidates = new GrappleCandidateIndex();
+        var range = hook.Range + hook.ShotOrigin(Vector3.zero, Vector3.forward).magnitude;
+        foreach (var pause in candidates.Build(scan.Graph, topology, scan.Spacing, range, policy, _physics.Work))
+        {
+            yield return pause;
+        }
+
+        foreach (var pause in FindCrossing(scan, topology, candidates, hook))
         {
             yield return pause;
         }
     }
 
-    private IEnumerable<object> FindCrossing(ScanResult scan, GrappleRouteTopology topology, GrappleEquipment hook)
+    private IEnumerable<object> FindCrossing(ScanResult scan, GrappleRouteTopology topology, GrappleCandidateIndex candidates,
+        GrappleEquipment hook)
     {
-        foreach (var source in topology.Sources)
+        foreach (var source in candidates.Sources)
         {
-            foreach (var pause in SearchLandings(scan, topology, source, hook))
+            foreach (var pause in SearchLandings(scan, topology, candidates, source, hook))
             {
                 yield return pause;
             }
@@ -104,13 +137,13 @@ internal sealed class GrappleRouteProbe
         }
     }
 
-    private IEnumerable<object> SearchLandings(ScanResult scan, GrappleRouteTopology topology, int source,
-        GrappleEquipment hook)
+    private IEnumerable<object> SearchLandings(ScanResult scan, GrappleRouteTopology topology, GrappleCandidateIndex candidates,
+        int source, GrappleEquipment hook)
     {
         var from = UnityPoints.V(scan.Graph.Nodes[source].Position);
         foreach (var column in GrappleLandingColumns.Nearby(from, hook.Range, scan.Spacing))
         {
-            foreach (var pause in SearchColumn(scan, topology, source, column, hook))
+            foreach (var pause in SearchColumn(scan, topology, candidates, source, column, hook))
             {
                 yield return pause;
             }
@@ -122,7 +155,7 @@ internal sealed class GrappleRouteProbe
         }
     }
 
-    private IEnumerable<object> SearchColumn(ScanResult scan, GrappleRouteTopology topology, int source,
+    private IEnumerable<object> SearchColumn(ScanResult scan, GrappleRouteTopology topology, GrappleCandidateIndex candidates, int source,
         (int, int) column, GrappleEquipment hook)
     {
         while (!_physics.Work.TryStartWork())
@@ -131,7 +164,7 @@ internal sealed class GrappleRouteProbe
             _physics.Work.BeginFrame();
         }
 
-        if (!scan.Columns.TryGetValue(column, out var nodes))
+        if (!candidates.Columns.TryGetValue(column, out var nodes))
         {
             yield break;
         }

@@ -16,6 +16,17 @@ Native spawn offsets, launch speed, gravity, lifetime, and collision radius defi
 the low ballistic arc, which is checked for intervening geometry.
 Doors, moving bodies, characters, and `GrapplingBlocker` surfaces are rejected.
 
+The search works backward from the requested destination over directed ordinary
+passages and forward from the player. Only edge samples of those two regions become
+launches and landings; interior room tiles are excluded. Landing columns are indexed
+separately, launches outside their range envelope are skipped, and reachable edges
+nearest the goal are tried first. For entrance navigation, the exit-reaching region
+therefore defines the landing side. This does not assume a drop or hook is reversible.
+
+Player movement preserves equivalent in-flight work. Before publishing a result,
+the ordinary approach is rebuilt from the latest player sample; disconnected movement
+cannot publish an obsolete approach. A changed goal, scan, or route policy cancels work.
+
 The shared scan/exploration frame budget bounds connectivity indexing, candidate
 columns, and physics checks. Changing the goal, scan, or session cancels pending
 work. The search does not add hook edges to the published floor graph or save them
