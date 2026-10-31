@@ -7,11 +7,12 @@ namespace DungeonGuide.Tests;
 /// <summary>Protects circular exploration, physical floors, opaque unknown space, and saved fog restoration.</summary>
 public sealed class FloorFogTests
 {
-    /// <summary>Revealing has a thirty-metre horizontal radius on the physical floor.</summary>
+    /// <summary>Revealing has a twenty-five-metre horizontal radius on the physical floor.</summary>
     [Theory]
-    [InlineData(30, 0, 0, true)]
+    [InlineData(25, 0, 0, true)]
+    [InlineData(17, 0, 17, true)]
     [InlineData(22, 0, 22, false)]
-    [InlineData(30.01f, 0, 0, false)]
+    [InlineData(25.01f, 0, 0, false)]
     [InlineData(0, 0.91f, 0, true)]
     public void RestrictsRevealToCircularRange(float x, float y, float z, bool expected)
     {
@@ -21,6 +22,16 @@ public sealed class FloorFogTests
         Assert.Equal(expected, ExplorationRevealPolicy.TryReveal(explored, sample, new Point(0, 0, 0), 0,
             (_, _) => true));
         Assert.Equal(expected, explored.Has(sample));
+    }
+
+    /// <summary>A smaller default does not override an explicitly configured discovery radius.</summary>
+    [Fact]
+    public void PreservesExplicitRadiusOverride()
+    {
+        var explored = new Exploration();
+        var sample = new NavNode(new Point(30, 0, 0));
+
+        Assert.True(ExplorationRevealPolicy.TryReveal(explored, sample, new Point(), 0, (_, _) => true, 30));
     }
 
     /// <summary>A wall blocks exploration even when a same-floor sample is near the player.</summary>

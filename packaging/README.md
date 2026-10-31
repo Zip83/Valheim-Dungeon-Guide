@@ -34,7 +34,7 @@ its numeric equivalent. Include the development version in bug reports.
 - **Insert** — Rescan dungeon geometry.
 
 The map shows explored areas by default. Cloud fog completely hides unknown rooms;
-exploration reveals nearby visible floor within the configured radius (30 metres by default), stopping at walls
+exploration reveals nearby visible floor within the configured radius (25 metres by default), stopping at walls
 and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
 
 The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
@@ -107,7 +107,7 @@ License: MIT; see LICENSE.
 
 ## Responsive maps and GPU compositing
 
-The first local map does not wait for navigation linking. Discovery defaults to 30 m and is blocked
+The first local map does not wait for navigation linking. Discovery defaults to 25 m and is blocked
 by walls and physical floors. All floors colors entered room layers green. Save schema 3 preserves
 old fog and notes while tracking room entries separately. Keep a pre-upgrade backup for rollback.
 

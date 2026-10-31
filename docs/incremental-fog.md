@@ -1,6 +1,6 @@
 # Incremental fog updates (Valheim 1.0.21)
 
-Discovery defaults to 30 horizontal metres (Exploration.Radius, bounded to 1-100), blocked by walls
+Discovery defaults to 25 horizontal metres (Exploration.Radius, bounded to 1-100), blocked by walls
 and the player's physical floor. Near-first indexed candidates advance every frame under the same
 active physics budget as scanning. Blocked samples are retried while stationary. No Unity physics
 is run on a worker. Each map consumes a monotonic addition journal independently.
@@ -15,3 +15,7 @@ Published physical elevation preserves manual zoom/pan when provisional floor nu
 This step uses CPU compositing. The surface/material boundary supports subsequent room masks
 and the optional shader without altering native game materials. Actual nearest-fog latency,
 door interactions, UI rendering and frame timings require in-game measurement.
+
+Existing BepInEx settings are preserved. To adopt the 25 m default in an existing installation,
+set `Radius = 25` under `[Exploration]` in `BepInEx/config/zip.dungeonguide.cfg` while the game is closed.
+This radius does not change scan coverage, sampling precision or navigation limits.
