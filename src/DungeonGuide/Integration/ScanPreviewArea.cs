@@ -34,7 +34,8 @@ internal static class ScanPreviewArea
             Bounds = bounds,
             Rooms = area.Rooms,
             RoomVolumes = area.RoomVolumes,
-            Entrance = area.Entrance
+            Entrance = area.Entrance,
+            ObservedEntrance = area.ObservedEntrance
         };
     }
 }

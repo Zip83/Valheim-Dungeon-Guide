@@ -256,6 +256,34 @@ Shared game assets are never mutated or destroyed. Missing native templates leav
 the ordinary map available and produce a diagnostic; they do not trigger a search
 through every loaded scene object. All owned UI and textures are disposed on teardown.
 
+## Persistent geometry and return trips
+
+Derived geometry has a separate bounded binary cache; existing versioned JSON
+saves remain authoritative for exploration, visits, chest notes, waypoints and
+traversal evidence. See [the cache format](geometry-cache-format.md) for identity,
+versioning, atomic replacement and damaged/newer-file protection.
+
+Recent sessions use a three-entry memory cache. The last dungeon's prepared
+detail/minimap textures survive an outdoor trip and are released on world
+change or plugin disposal. Disk load, private spatial indexing and sealed-byte
+I/O run on an ordered worker. Full-scan encoding follows floor analysis on the
+same exclusively owned graph before publication. Preview copying stays on the
+game thread in cooperative 0.5 ms slices. Unity references and collision queries
+never move to that worker.
+
+Door and breakable permissions are revalidated under the shared physics budget,
+independently of terrain rendering. Actual structural mutation revokes pending
+cache publication and marks the stored geometry stale before automatic repair.
+Cancellation on exit prevents an abandoned restore from publishing into a new
+session. A completed map is offered to atomic storage before full publication;
+storage failure still permits the live map and reports a diagnostic.
+
+Verified locally on 2026-10-31 against installed Valheim 1.0.21 references:
+Release build, solution tests, formatting, and Unity 6000.0.75 fixtures covering
+warm session/texture reuse, independent-process restore, abandoned loads and
+storage integrity/version protection. Fixtures use stand-in game components;
+these checks do not establish gameplay timings or compatibility with other mods.
+
 ## Numbered development builds
 
 The release prefix is defined once in `Version.props`. Ordinary local builds

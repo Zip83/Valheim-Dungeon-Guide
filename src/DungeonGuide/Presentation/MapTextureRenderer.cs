@@ -80,7 +80,7 @@ internal sealed class MapTextureRenderer : IDisposable
 
     private void EnsureSession(DungeonSession session)
     {
-        if (_session != session)
+        if (session != null && _session != session)
         {
             Reset();
             _session = session;
@@ -184,6 +184,9 @@ internal sealed class MapTextureRenderer : IDisposable
             _markers.Render(session, view, navigator, player, Published, _published.Fog, _reveal);
         }
     }
+
+    /// <summary>Releases retained floor textures on actual world changes while ordinary dungeon exits keep them warm.</summary>
+    public void ClearWorld() => Reset();
 
     private void Reset()
     {
