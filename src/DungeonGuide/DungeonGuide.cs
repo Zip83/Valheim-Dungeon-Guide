@@ -174,7 +174,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
         return new ChestActions(
             new ChestSelector(new ChestTargetPolicy()),
             new ChestSnapshotReader(),
-            new ChestNameDialog(text),
+            new NoteDialog(),
             locator,
             lifecycle,
             notice,

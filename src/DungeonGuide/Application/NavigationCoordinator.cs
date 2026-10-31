@@ -13,6 +13,12 @@ internal sealed class NavigationCoordinator
     private readonly FloorNavigationPolicy _floorPolicy;
     private float _destinationHeight;
 
+    /// <summary>Selected personal location when return-location navigation is active.</summary>
+    public WaypointRecord Waypoint
+    {
+        get; private set;
+    }
+
     /// <summary>
     /// Kind of navigation destination currently requested by the player.
     /// </summary>
@@ -67,6 +73,7 @@ internal sealed class NavigationCoordinator
     {
         Goal = NavigationGoal.None;
         Chest = null;
+        Waypoint = null;
         Route.Clear();
         Status = NavigationStatus.None;
     }
@@ -79,6 +86,7 @@ internal sealed class NavigationCoordinator
         InvalidateRoute();
         Goal = NavigationGoal.Explore;
         Chest = null;
+        Waypoint = null;
     }
 
     /// <summary>
@@ -89,6 +97,16 @@ internal sealed class NavigationCoordinator
         InvalidateRoute();
         Goal = NavigationGoal.Chest;
         Chest = chest;
+        Waypoint = null;
+    }
+
+    /// <summary>Requests a saved physical location, retaining it while navigation is preparing.</summary>
+    public void ToWaypoint(WaypointRecord waypoint)
+    {
+        InvalidateRoute();
+        Goal = NavigationGoal.Waypoint;
+        Chest = null;
+        Waypoint = waypoint;
     }
 
     /// <summary>
@@ -99,6 +117,7 @@ internal sealed class NavigationCoordinator
         InvalidateRoute();
         Goal = NavigationGoal.Entrance;
         Chest = null;
+        Waypoint = null;
     }
 
     /// <summary>
@@ -111,6 +130,7 @@ internal sealed class NavigationCoordinator
         DestinationFloor = floor;
         _destinationHeight = height;
         Chest = null;
+        Waypoint = null;
     }
 
     /// <summary>
@@ -180,6 +200,12 @@ internal sealed class NavigationCoordinator
         if (Goal == NavigationGoal.Chest)
         {
             destination = _locator.Snap(session.Scan, UnityPoints.V(Chest.position), 4.5f);
+        }
+
+        if (Goal == NavigationGoal.Waypoint)
+        {
+            var floor = FloorDetector.Nearest(session.Floors, Waypoint.position.y);
+            destination = _locator.Snap(session.Scan, UnityPoints.V(Waypoint.position), 4.5f, floor);
         }
 
         if (Goal == NavigationGoal.Entrance)
