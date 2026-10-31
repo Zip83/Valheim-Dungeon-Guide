@@ -76,6 +76,9 @@ internal sealed class CachedFloorSurface : IDisposable
         }
     }
 
+    /// <summary>Changes the displayed variant while preserving ready geometry, masks and images.</summary>
+    public void SetMode(bool reveal) => _surface?.SetMode(reveal);
+
     /// <summary>Discards old visibility-mode pixels while retaining the completed static floor raster.</summary>
     public void InvalidateSurface()
     {

@@ -21,9 +21,9 @@ until replacement publication. New sessions release every entry. Graph identity 
 floor-number collisions from reusing the wrong geometry, and cached physical heights preserve the
 existing viewport behavior. The player-floor tracking step runs before texture selection.
 
-Switching full/explored visibility modes immediately discards every cached composited image and marker
-layer, while keeping static raster work. This prevents full-map pixels appearing through explored-mode
-fog. Physics scan limits, navigation readiness, discovery radius, saved data and sample accuracy are
+Switching full/explored visibility selects the maintained color-image variant without rebuilding. Cached geometry, masks and pending tile work survive the switch. CPU fog images
+are updated even while Full is displayed, preventing full-map pixels appearing through explored fog.
+The marker layer is refreshed for the selected visibility policy. Physics scan limits, navigation readiness, discovery radius, saved data and sample accuracy are
 unchanged. The presentation time limit remains soft: Unity allocation/upload calls cannot be preempted.
 
 Regression coverage checks boundary indices, manual selection, foreground priority, exhausted budgets,
