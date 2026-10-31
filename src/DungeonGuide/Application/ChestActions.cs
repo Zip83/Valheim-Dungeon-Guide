@@ -15,7 +15,7 @@ internal sealed class ChestActions
     private readonly GraphLocator _locator;
     private readonly SessionLifecycle _lifecycle;
     private readonly UserNotice _notice;
-    private readonly ChestNameDialog _nameDialog;
+    private readonly NoteDialog _nameDialog;
 
     /// <summary>
     /// Raised when a chest action selects a navigation destination.
@@ -28,7 +28,7 @@ internal sealed class ChestActions
     public ChestActions(
         ChestSelector selector,
         ChestSnapshotReader reader,
-        ChestNameDialog nameDialog,
+        NoteDialog nameDialog,
         GraphLocator locator,
         SessionLifecycle lifecycle,
         UserNotice notice,
@@ -122,6 +122,7 @@ internal sealed class ChestActions
 
         _nameDialog.Request(
             chest.label,
+            _text.ChestNotePrompt,
             value =>
         {
             if (!stillActive() || string.IsNullOrWhiteSpace(value))

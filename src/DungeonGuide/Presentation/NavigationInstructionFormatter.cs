@@ -35,6 +35,8 @@ internal sealed class NavigationInstructionFormatter
             case NavigationGoal.Chest:
                 return (navigation.Chest.collect ? _text.CollectChest : _text.ChestDestination)
                 + navigation.Chest.label;
+            case NavigationGoal.Waypoint:
+                return navigation.Waypoint.label;
             case NavigationGoal.Entrance:
                 return session.Area.Entrance.HasValue ? _text.EntranceRoom : _text.UnknownEntrance;
             case NavigationGoal.Floor:

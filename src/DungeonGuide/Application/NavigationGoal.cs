@@ -27,5 +27,7 @@ internal enum NavigationGoal
     /// <summary>
     /// Reach a remembered higher or lower architectural level.
     /// </summary>
-    Floor
+    Floor,
+    /// <summary>Return to a personally saved location.</summary>
+    Waypoint
 }

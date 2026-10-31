@@ -59,22 +59,25 @@ internal sealed class SessionLifecycle
     /// <summary>
     /// Persists exploration and chest state only when the session is writable.
     /// </summary>
-    public void Save(DungeonSession session)
+    /// <returns>Whether the complete state was saved; failures retain the existing diagnostic notice.</returns>
+    public bool Save(DungeonSession session)
     {
         if (session == null || session.ReadOnly)
         {
-            return;
+            return false;
         }
 
         session.Data.visited = session.Exploration.Export();
         try
         {
             _repository.Save(session.Data);
+            return true;
         }
         catch (Exception e)
         {
             _log.LogError("Cannot save guide run: " + e);
             _notice.Show(_text.SaveWriteFailed);
+            return false;
         }
     }
 }

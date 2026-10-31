@@ -3,22 +3,12 @@ using System;
 namespace DungeonGuide;
 
 /// <summary>
-/// Adapts chest note editing to the native game text-input dialog.
+/// Adapts note editing to the native game text-input dialog.
 /// </summary>
-internal sealed class ChestNameDialog
+internal sealed class NoteDialog
 {
-    private readonly GuideText _text;
-
     /// <summary>
-    /// Uses the shared player-facing text catalog for the game's selected language.
-    /// </summary>
-    public ChestNameDialog(GuideText text)
-    {
-        _text = text;
-    }
-
-    /// <summary>
-    /// Adapts the native text-input receiver contract to a pending chest-note update.
+    /// Adapts the native text-input receiver contract to a pending note update.
     /// </summary>
     private sealed class Receiver : TextReceiver
     {
@@ -26,7 +16,7 @@ internal sealed class ChestNameDialog
         private readonly Action<string> _accept;
 
         /// <summary>
-        /// Retains initial dialog text and the callback that accepts the edited chest note.
+        /// Retains initial dialog text and the callback that accepts the edited note.
         /// </summary>
         public Receiver(string text, Action<string> accept)
         {
@@ -44,11 +34,11 @@ internal sealed class ChestNameDialog
     /// <summary>
     /// Shows the native text dialog with existing text and forwards the accepted note.
     /// </summary>
-    public void Request(string text, Action<string> accept)
+    public void Request(string text, string prompt, Action<string> accept)
     {
         if (TextInput.instance)
         {
-            TextInput.instance.RequestText(new Receiver(text, accept), _text.ChestNotePrompt, 80);
+            TextInput.instance.RequestText(new Receiver(text, accept), prompt, 80);
         }
     }
 }
