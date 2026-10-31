@@ -46,10 +46,11 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# Optional Unity UI shader build
+# Unity UI shader temporary build output
+# The verified runtime bundle in plugin Content is intentionally versioned.
 assets/map-shader/Library/
 assets/map-shader/Temp/
 assets/map-shader/Logs/
 assets/map-shader/UserSettings/
 assets/map-shader/BundleOutput/
-src/DungeonGuide/Content/dungeonguide-ui
+__pycache__/

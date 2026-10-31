@@ -20,8 +20,18 @@ Windows Direct3D 11 and Vulkan variants. A forced rebuild prevents stale module/
 ```
 
 The script copies `dungeonguide-ui` into plugin content, and the .NET build copies it beside the DLLs.
-Include that bundle in the test package. Generated bundles/editor caches are not source-controlled.
-Normal CI builds can use the CPU fallback when the optional bundle has not been built in that job.
+The verified runtime bundle `src/DungeonGuide/Content/dungeonguide-ui` is intentionally versioned
+alongside `map-shader-bundle.json`, as explicitly requested for CI without Unity account setup.
+This small first-party runtime asset is an exception to the general generated-output rule; editor
+caches and other build output remain excluded. CI builds the C# plugin, validates the bundle header,
+SHA-256 and source hashes, and requires that exact bundle in the downloadable plugin artifact.
+`build-info.json` records its identity. GitHub runners do not install or activate Unity and need no
+Unity secrets. Runtime CPU fallback remains available on unsupported hardware.
+
+When changing shader/build inputs, rebuild locally and refresh the manifest after verification.
+CI rejects stale sources, modified bundles and missing files instead of publishing a CPU-only package.
+Source hashes normalize line endings and trailing whitespace, including Unity-rewritten metadata.
+Compiling a changed shader requires a locally activated Unity Editor; normal C# changes do not.
 
 ## Graphics checks
 

@@ -9,4 +9,6 @@ if (!(Test-Path -LiteralPath $bundle)) { throw 'Unity produced no shader bundle.
 $destination = Join-Path $repository 'src/DungeonGuide/Content'
 New-Item -ItemType Directory -Force -Path $destination | Out-Null
 Copy-Item -LiteralPath $bundle -Destination (Join-Path $destination 'dungeonguide-ui')
+python (Join-Path $PSScriptRoot 'record_shader_bundle.py')
+if ($LASTEXITCODE -ne 0) { throw 'Cannot record shader bundle identity.' }
 Write-Output 'Built the optional UI shader; package dungeonguide-ui beside DungeonGuide.dll.'
