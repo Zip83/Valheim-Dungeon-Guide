@@ -8,6 +8,7 @@ namespace DungeonGuide;
 internal sealed class MapTextureRenderer : IDisposable
 {
     private const int Size = 768;
+    private const double PrefetchShare = 0.35;
     private readonly FloorResourceCache<CachedFloorSurface> _floors = new();
     private readonly List<int> _wanted = new();
     private readonly Func<int, bool> _isReady;
@@ -23,6 +24,10 @@ internal sealed class MapTextureRenderer : IDisposable
     private int _physicalFloor = -1;
     private int _selectedFloor = -1;
     private int _priorityCount;
+    private NavGraph _requestedGraph;
+    private float _requestedAt;
+    private bool _requestedWarm;
+    private int _requestedFloor = -1;
 
     /// <summary>Uses a shared floor-fitting policy for the map and overlay.</summary>
     public MapTextureRenderer(MapExtentFitter extentFitter)
@@ -61,7 +66,7 @@ internal sealed class MapTextureRenderer : IDisposable
         return new Rect(fit.X, fit.Y, fit.Size, fit.Size);
     }
 
-    /// <summary>Prioritizes the selected floor and uses only remaining presentation budget for preloading.</summary>
+    /// <summary>Publishes cached floors immediately and reserves bounded neighbor progress before ongoing foreground updates.</summary>
     public void Tick(DungeonSession session, MapViewState view)
     {
         EnsureSession(session);
@@ -72,9 +77,9 @@ internal sealed class MapTextureRenderer : IDisposable
 
         SetMode(view.RevealAll);
         _budget.BeginFrame();
+        TrackFloorRequest(session, view.SelectedFloor);
         UpdatePreloadOrder(session, view);
-        var selected = AdvanceSelected(session);
-        AdvanceBackground(session, selected);
+        AdvanceFloors(session);
         _floors.Retain(session.Scan.Graph, _wanted, _published);
     }
 
@@ -104,6 +109,17 @@ internal sealed class MapTextureRenderer : IDisposable
         _markers.Clear();
     }
 
+    private void TrackFloorRequest(DungeonSession session, int floor)
+    {
+        if (_requestedGraph != session.Scan.Graph || _requestedFloor != floor)
+        {
+            _requestedGraph = session.Scan.Graph;
+            _requestedFloor = floor;
+            _requestedAt = Time.realtimeSinceStartup;
+            _requestedWarm = IsFloorReady(floor);
+        }
+    }
+
     private void UpdatePreloadOrder(DungeonSession session, MapViewState view)
     {
         if (_physicalFloor != view.CurrentFloor || _selectedFloor != view.SelectedFloor
@@ -127,17 +143,23 @@ internal sealed class MapTextureRenderer : IDisposable
         return surface;
     }
 
-    private CachedFloorSurface AdvanceSelected(DungeonSession session)
+    private void AdvanceFloors(DungeonSession session)
     {
         if (_wanted.Count == 0)
         {
-            return null;
+            return;
         }
 
         var selected = GetFloor(session, _wanted[0]);
+        PublishIfReady(selected, session.NavigationReady);
+        if (selected.Ready)
+        {
+            AdvanceBackground(session, selected, _budget.CreateSlice(PrefetchShare));
+        }
+
         selected.Tick(session, _reveal, _budget);
         PublishIfReady(selected, session.NavigationReady);
-        return selected;
+        AdvanceBackground(session, selected, _budget);
     }
 
     private void PublishIfReady(CachedFloorSurface selected, bool navigationReady)
@@ -148,6 +170,7 @@ internal sealed class MapTextureRenderer : IDisposable
         }
 
         _published = selected;
+        LogFloorPublication(selected);
         if (!_hasPublishedImage)
         {
             _hasPublishedImage = true;
@@ -155,11 +178,11 @@ internal sealed class MapTextureRenderer : IDisposable
         }
     }
 
-    private void AdvanceBackground(DungeonSession session, CachedFloorSurface selected)
+    private void AdvanceBackground(DungeonSession session, CachedFloorSurface selected, FrameWorkBudget budget)
     {
-        if (_prefetch.TrySelect(_wanted, _priorityCount, selected?.Ready == true, _isReady, _budget, out var floor))
+        if (_prefetch.TrySelect(_wanted, _priorityCount, selected.Ready, _isReady, budget, out var floor))
         {
-            GetFloor(session, floor).Tick(session, _reveal, _budget);
+            GetFloor(session, floor).Tick(session, _reveal, budget);
         }
     }
 
@@ -171,6 +194,14 @@ internal sealed class MapTextureRenderer : IDisposable
         Debug.Log("DungeonGuide first floor image: elapsedSeconds="
             + (Time.realtimeSinceStartup - _firstStarted).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
             + ", navigationReady=" + navigationReady);
+    }
+
+    /// <summary>Records cache reuse and elapsed wait only when another completed image becomes visible.</summary>
+    private void LogFloorPublication(CachedFloorSurface selected)
+    {
+        Debug.Log("DungeonGuide floor image published: floor=" + selected.Floor + ", preloaded=" + _requestedWarm
+            + ", waitMilliseconds=" + ((Time.realtimeSinceStartup - _requestedAt) * 1000)
+                .ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
     }
 
     /// <summary>Uses current displayed fog for pointer selection.</summary>
@@ -195,6 +226,9 @@ internal sealed class MapTextureRenderer : IDisposable
         _session = null;
         _wanted.Clear();
         _physicalFloor = _selectedFloor = -1;
+        _requestedGraph = null;
+        _requestedFloor = -1;
+        _requestedWarm = false;
         _priorityCount = 0;
         _prefetch.Reset();
         _hasPublishedImage = false;

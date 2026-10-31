@@ -24,6 +24,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
     private long _oldestChange;
     private float _nextDiagnostic;
     private bool _uploaded;
+    private bool _initialTilesComplete;
 
     /// <summary>Allocates owned textures; first publication waits for all initial tiles.</summary>
     public FloorSurfaceRenderer(FloorPlanRaster raster)
@@ -117,14 +118,15 @@ internal sealed class FloorSurfaceRenderer : IDisposable
 
     private void PublishChanges()
     {
-        if (!_uploaded)
+        if (!_uploaded || !_initialTilesComplete)
         {
             return;
         }
 
         _images.ApplyChanges();
+        Ready = true;
         _uploaded = false;
-        if (Ready && _job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
+        if (_job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
         {
             LogLatency();
         }
@@ -246,7 +248,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         PublishFog(region);
         _uploaded = true;
         _completed.Add(tile);
-        Ready |= _completed.Count >= region.TotalTiles;
+        _initialTilesComplete |= _completed.Count >= region.TotalTiles;
     }
 
     private void PublishFog(FogTileRegion region)

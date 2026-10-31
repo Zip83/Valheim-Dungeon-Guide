@@ -12,6 +12,7 @@ internal sealed class FrameWorkBudget
     private readonly double _maximumMilliseconds;
     private readonly Func<double> _clock;
     private readonly Func<int> _frame;
+    private readonly FrameWorkBudget _parent;
     private int _lastFrame = -1;
     private double _started;
     private double _elapsed;
@@ -33,6 +34,12 @@ internal sealed class FrameWorkBudget
     /// <param name="frame">Optional frame identity preventing multiple consumers from resetting the same frame.</param>
     /// <exception cref="ArgumentOutOfRangeException">A work or time limit is invalid.</exception>
     public FrameWorkBudget(int maximumSteps, double maximumMilliseconds, Func<double> clock = null, Func<int> frame = null)
+        : this(maximumSteps, maximumMilliseconds, clock, frame, null)
+    {
+    }
+
+    private FrameWorkBudget(int maximumSteps, double maximumMilliseconds, Func<double> clock, Func<int> frame,
+        FrameWorkBudget parent)
     {
         if (maximumSteps < 1)
         {
@@ -45,10 +52,26 @@ internal sealed class FrameWorkBudget
         }
 
         _frame = frame;
+        _parent = parent;
         _maximumSteps = maximumSteps;
         _maximumMilliseconds = maximumMilliseconds;
         _clock = clock ?? (() => Stopwatch.GetTimestamp() * (1000.0 / Stopwatch.Frequency));
         BeginFrame();
+    }
+
+    /// <summary>Limits a consumer to a fraction of both limits while charging its admitted steps to this parent.</summary>
+    /// <param name="fraction">Positive share no greater than one; the parent still bounds total frame work.</param>
+    /// <returns>A temporary view; creating or resetting it never replenishes the parent's allowance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The fraction is outside the interval (0, 1].</exception>
+    public FrameWorkBudget CreateSlice(double fraction)
+    {
+        if (!(fraction > 0 && fraction <= 1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fraction));
+        }
+
+        return new FrameWorkBudget(Math.Max(1, (int)(_maximumSteps * fraction)),
+            _maximumMilliseconds * fraction, _clock, null, this);
     }
 
     /// <summary>
@@ -98,6 +121,11 @@ internal sealed class FrameWorkBudget
     public bool TryStartWork()
     {
         if (_steps >= _maximumSteps || _elapsed + (_running ? _clock() - _started : 0) >= _maximumMilliseconds)
+        {
+            return false;
+        }
+
+        if (_parent != null && !_parent.TryStartWork())
         {
             return false;
         }

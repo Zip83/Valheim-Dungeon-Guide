@@ -11,7 +11,9 @@ internal sealed class CachedFloorSurface : IDisposable
     private readonly float _spacing;
     private readonly Point _center;
     private readonly float _span;
+    private readonly float _started = Time.realtimeSinceStartup;
     private FloorSurfaceRenderer _surface;
+    private bool _reportedReady;
 
     /// <summary>Captures immutable geometry, projection and physical height on the game thread.</summary>
     public CachedFloorSurface(DungeonSession session, int floor, int size)
@@ -66,6 +68,18 @@ internal sealed class CachedFloorSurface : IDisposable
         _plan.Tick(Graph, Floor, _spacing, _size, _center, _span, budget);
         EnsureSurface(budget);
         _surface?.Tick(session.Exploration, session.VisitedRoomCoverage, reveal, budget);
+        ReportReadiness();
+    }
+
+    private void ReportReadiness()
+    {
+        if (!_reportedReady && Ready)
+        {
+            _reportedReady = true;
+            Debug.Log("DungeonGuide floor image cached: floor=" + Floor + ", height=" + Height
+                + ", elapsedSeconds=" + (Time.realtimeSinceStartup - _started)
+                    .ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+        }
     }
 
     private void EnsureSurface(FrameWorkBudget budget)
@@ -86,7 +100,7 @@ internal sealed class CachedFloorSurface : IDisposable
         _surface = null;
     }
 
-    /// <summary>Cancels pending raster/mask work and releases this floor's textures and material.</summary>
+    /// <summary>Cancels pending raster/mask work and releases this floor's owned textures.</summary>
     public void Dispose()
     {
         _plan.Dispose();

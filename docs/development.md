@@ -242,6 +242,20 @@ and an individual row are indivisible; actual frame times still require gameplay
 Dynamic symbols use a separate transparent texture; hidden symbols and chest hit targets
 are clipped to the published mask. The player's own position remains visible.
 
+After the first displayed image, neighbor warmup receives a bounded 35% slice of
+the existing presentation time and step limits before foreground fog maintenance.
+Every sliced operation also charges the unchanged parent budget; remaining time
+after foreground work can prepare additional floors. The physical floor above and
+below take priority over distant floors, and every prepared floor stays resident
+for that graph. A ready target is published before background work or dirty-mask
+updates, so a stair transition reuses its prepared image immediately.
+
+Initial Full/FOG textures are uploaded only after every initial tile is complete;
+unfinished, invisible images do not cause repeated whole-texture GPU uploads.
+Later visible fog changes retain incremental publication. Cache-completion and
+floor-publication diagnostics record readiness, cache reuse and elapsed wait.
+The 1 ms soft limit, geometry sampling precision and physics budget are unchanged.
+
 `GameUiStyle` reads sprites, colour blocks, sprite states, font assets, and shared
 materials from the loaded Valheim menu, with the inventory button as a fallback.
 The `Menu.m_continueButton`, `InventoryGui.m_takeAllButton`, and map image/canvas
