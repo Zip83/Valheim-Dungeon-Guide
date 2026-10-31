@@ -145,7 +145,7 @@ ray samples, standing checks, candidate pairs, and individual jump-arc queries,
 including empty-neighbor column overhead;
 a tall column or many stacked floors cannot bypass yielding until the end of
 an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
-0.25ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“8192;
+0.25–4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1–8192;
 this is a safety ceiling, while elapsed time normally determines when to yield.
 It replaces the legacy `Scan.ColumnsPerFrame` key, whose default of 24 became
 an excessive throttle after work was split into individual operations. The old
