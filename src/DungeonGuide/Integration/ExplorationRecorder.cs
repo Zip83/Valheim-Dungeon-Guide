@@ -13,7 +13,8 @@ internal sealed class ExplorationRecorder
     private ScanResult _scan;
     private Vector3 _origin;
     private int _floor = -1;
-    private IEnumerator<NavNode> _candidates;
+    private readonly ExplorationSweep _sweep = new();
+    private Vector3 _eyes;
     private float _retry;
 
     /// <summary>Uses the scanner's physics scheduler instead of issuing unbounded reveal queries.</summary>
@@ -25,17 +26,11 @@ internal sealed class ExplorationRecorder
     }
 
     /// <summary>Advances the latest player neighborhood and retries blocked samples even while stationary.</summary>
-    public void Track(ScanResult scan, Exploration exploration, Vector3 player, int physicalFloor)
+    public void Track(ScanResult scan, Exploration exploration, Vector3 player, Vector3 eyes, int physicalFloor)
     {
-        if (_scan != scan || _floor != physicalFloor || (player - _origin).sqrMagnitude > 0.25f
-            || _candidates == null && Time.unscaledTime >= _retry)
-        {
-            _candidates?.Dispose();
-            _scan = scan;
-            _origin = player;
-            _floor = physicalFloor;
-            _candidates = Candidates(scan, player, Mathf.Clamp(_settings.ExploreRadius.Value, 1, 100)).GetEnumerator();
-        }
+        _eyes = eyes;
+        ObservePosition(scan, player, physicalFloor);
+        RefreshDistantSweep(scan, player);
 
         var work = _physics.Work;
         work.BeginFrame();
@@ -50,38 +45,75 @@ internal sealed class ExplorationRecorder
         }
     }
 
+    private void ObservePosition(ScanResult scan, Vector3 player, int physicalFloor)
+    {
+        var changed = _scan != scan || _floor != physicalFloor;
+        if (changed)
+        {
+            _sweep.Reset();
+            _scan = scan;
+            _floor = physicalFloor;
+            _retry = 0;
+        }
+
+        if (changed || (player - _origin).sqrMagnitude > 0.25f)
+        {
+            _origin = player;
+            _sweep.RefreshNearby(Candidates(scan, player, Mathf.Min(3, Radius)));
+        }
+    }
+
+    private float Radius => Mathf.Clamp(_settings.ExploreRadius.Value, 1, 100);
+
+    private void RefreshDistantSweep(ScanResult scan, Vector3 player)
+    {
+        if (!_sweep.HasDistant && Time.unscaledTime >= _retry)
+        {
+            _sweep.RefreshDistant(Candidates(scan, player, Radius));
+            _retry = Time.unscaledTime + 0.25f;
+        }
+    }
+
     private void Advance(Exploration exploration, Vector3 player, int physicalFloor, FrameWorkBudget work)
     {
-        while (_candidates != null && work.TryStartWork())
+        while (work.TryStartWork())
         {
-            if (!_candidates.MoveNext())
+            if (!TryTakeCandidate(out var node))
             {
-                _candidates.Dispose();
-                _candidates = null;
-                _retry = Time.unscaledTime + 0.25f;
                 break;
             }
 
-            var node = _candidates.Current;
             if (node != null)
             {
                 ExplorationRevealPolicy.TryReveal(exploration, node, UnityPoints.P(player), physicalFloor,
-                    _visible, Mathf.Clamp(_settings.ExploreRadius.Value, 1, 100));
+                    _visible, Radius);
             }
         }
+    }
+
+    private bool TryTakeCandidate(out NavNode node)
+    {
+        var hadDistant = _sweep.HasDistant;
+        var available = _sweep.TryTake(out node);
+        if (hadDistant && !_sweep.HasDistant)
+        {
+            _retry = Time.unscaledTime + 0.25f;
+        }
+
+        return available;
     }
 
     /// <summary>Releases pending candidates and the previous session's graph.</summary>
     public void Reset()
     {
-        _candidates?.Dispose();
-        _candidates = null;
+        _sweep.Reset();
         _scan = null;
         _floor = -1;
         _retry = 0;
     }
 
-    private bool Visible(Point a, Point b) => _physics.Visible(UnityPoints.V(a), UnityPoints.V(b));
+    private bool Visible(Point a, Point b) =>
+        _physics.Clear(_eyes, UnityPoints.V(b) + Vector3.up * 0.65f, 0.1f);
 
     private static IEnumerable<NavNode> Candidates(ScanResult scan, Vector3 player, float range)
     {
@@ -90,34 +122,31 @@ internal sealed class ExplorationRecorder
         var radius = Mathf.CeilToInt(range / scan.Spacing);
         for (var ring = 0; ring <= radius; ring++)
         {
-            for (var dx = -ring; dx <= ring; dx++)
+            foreach (var column in Ring(cx, cz, ring))
             {
-                foreach (var node in Column(scan, cx + dx, cz - ring))
-                {
-                    yield return node;
-                }
-
-                if (ring > 0)
-                {
-                    foreach (var node in Column(scan, cx + dx, cz + ring))
-                    {
-                        yield return node;
-                    }
-                }
-            }
-
-            for (var dz = -ring + 1; dz < ring; dz++)
-            {
-                foreach (var node in Column(scan, cx - ring, cz + dz))
-                {
-                    yield return node;
-                }
-
-                foreach (var node in Column(scan, cx + ring, cz + dz))
+                foreach (var node in Column(scan, column.x, column.z))
                 {
                     yield return node;
                 }
             }
+        }
+    }
+
+    private static IEnumerable<(int x, int z)> Ring(int cx, int cz, int radius)
+    {
+        for (var dx = -radius; dx <= radius; dx++)
+        {
+            yield return (cx + dx, cz - radius);
+            if (radius > 0)
+            {
+                yield return (cx + dx, cz + radius);
+            }
+        }
+
+        for (var dz = -radius + 1; dz < radius; dz++)
+        {
+            yield return (cx - radius, cz + dz);
+            yield return (cx + radius, cz + dz);
         }
     }
 
