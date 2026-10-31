@@ -1,31 +1,35 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
 
 /// <summary>
-/// Checks thin, supported destructible passages against explicitly approved prefab identities.
+/// Recognizes thin destructible barriers and delegates damage feasibility to the native game rules.
 /// </summary>
 internal sealed class BreakablePassageVerifier
 {
-    private readonly Func<string, bool> _approved;
+    private readonly DestructibleDamageProbe _damage;
 
     /// <summary>
-    /// Uses the configured prefab approval predicate to validate destructible blockers.
+    /// Uses a read-only equipment and resistance probe rather than a prefab approval list.
     /// </summary>
-    public BreakablePassageVerifier(Func<string, bool> approved)
+    public BreakablePassageVerifier(DestructibleDamageProbe damage)
     {
-        _approved = approved;
+        _damage = damage;
     }
 
     /// <summary>
-    /// Identifies a thin supported destructible obstacle and reports whether its prefab is approved.
+    /// Identifies one thin barrier and reports whether current carried equipment can damage it.
     /// </summary>
     public bool Matches(IReadOnlyList<Collider> blockers, out string prefab, out bool verified)
     {
         prefab = null;
         verified = false;
+        if (blockers.Count == 0)
+        {
+            return false;
+        }
+
         var d = blockers[0].GetComponentInParent<Destructible>();
         if (!d || d.GetComponentInParent<Piece>())
         {
@@ -42,7 +46,7 @@ internal sealed class BreakablePassageVerifier
         }
 
         prefab = d.gameObject.name.Replace("(Clone)", "").Trim();
-        verified = d.m_health > 0 && _approved(prefab);
+        verified = _damage.CanBreak(d);
         return true;
     }
 }

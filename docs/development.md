@@ -284,6 +284,30 @@ warm session/texture reuse, independent-process restore, abandoned loads and
 storage integrity/version protection. Fixtures use stand-in game components;
 these checks do not establish gameplay timings or compatibility with other mods.
 
+## Automatic passage permissions
+
+`DestructibleDamageProbe` follows the installed Valheim 1.0.21 damage boundary:
+valid networked destructible, positive health, usable carried weapon/tool attacks,
+compatible ammunition, `HitData.CheckToolTier`, resistance application and positive
+remaining damage. It constructs private hit data only; it never attacks, equips,
+opens doors, damages an object or changes network ownership. Unknown damage
+implementations and player construction remain excluded from breakable routing.
+Prefab approval lists and learning from a previous kill are no longer used.
+
+An inventory capability watcher refreshes door/breakable permissions after item,
+key, ammunition, tool-tier, quality, world-level or usable/broken changes. Ordinary
+positive durability loss and stack consumption do not trigger repeated refreshes.
+Native door-state observation includes replicated changes. Already-open keyed
+doors remain usable after key consumption; closed doors check native world-level
+key matching. Known non-supporting barrier destruction refreshes passages only;
+unknown structural or sampled-floor support destruction invalidates geometry.
+
+Native API inspection and the Release build used installed Valheim 1.0.21.
+Local Unity/Harmony fixtures exercise damage-probe decisions, equipment refresh,
+native-state callback filtering/teardown and destruction classification with
+stand-in game components. Real damage responses, traversal and multiplayer
+gameplay still need an in-game check; fixtures do not establish those outcomes.
+
 ## Numbered development builds
 
 The release prefix is defined once in `Version.props`. Ordinary local builds

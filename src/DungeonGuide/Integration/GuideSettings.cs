@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 
@@ -56,14 +54,9 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<bool> RevealAll;
 
     /// <summary>
-    /// Whether approved breakable passages may be used in routes.
+    /// Whether natively verified breakable passages may be used in routes.
     /// </summary>
     public readonly ConfigEntry<bool> Breakables;
-
-    /// <summary>
-    /// Comma-separated exact prefab identities approved as breakable passages.
-    /// </summary>
-    public readonly ConfigEntry<string> ApprovedPrefabs;
 
     /// <summary>
     /// Shortcut for the manually enabled standalone map.
@@ -163,12 +156,7 @@ internal sealed class GuideSettings
             "Routes",
             "AllowBreakables",
             false,
-            "Allow only approved, geometrically checked breakable passages.");
-        ApprovedPrefabs = file.Bind(
-            "Routes",
-            "ApprovedBreakablePrefabs",
-            "",
-            "Comma separated EXACT prefab names verified as breakable passages. Unapproved destructibles remain candidates.");
+            "Allow only natively verified, geometrically checked breakable passages.");
         Overlay = Key("ToggleMap", KeyCode.F6, "Optional overlay; always hidden on game startup.");
         Rescan = Key(
             "Rescan",
@@ -194,28 +182,6 @@ internal sealed class GuideSettings
 
     private ConfigEntry<KeyboardShortcut> Key(string key, KeyCode code, string help, params KeyCode[] modifiers) =>
         _file.Bind("Keys", key, new KeyboardShortcut(code, modifiers), help);
-
-    /// <summary>
-    /// Checks whether the exact prefab identity is in the configured approval list.
-    /// </summary>
-    public bool Approved(string prefab) =>
-        ApprovedPrefabs.Value.Split(',').Any(p => string.Equals(p.Trim(), prefab, StringComparison.Ordinal));
-
-    /// <summary>
-    /// Persists a newly observed approved prefab without adding duplicate identities.
-    /// </summary>
-    public void RememberDestroyedPrefab(string prefab)
-    {
-        if (Approved(prefab))
-        {
-            return;
-        }
-
-        ApprovedPrefabs.Value = string.Join(
-            ",",
-            ApprovedPrefabs.Value.Split(',').Where(p => !string.IsNullOrWhiteSpace(p)).Concat(new[] { prefab }));
-        _file.Save();
-    }
 
     /// <summary>
     /// Persists shared map reveal and optional traversal preferences.
