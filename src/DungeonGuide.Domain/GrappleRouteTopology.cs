@@ -9,11 +9,32 @@ internal sealed class GrappleRouteTopology
     private readonly Dictionary<int, int> _fromStart = new();
     private readonly Dictionary<int, int> _towardGoal = new();
 
+    /// <summary>Requested goal nodes used to prioritize promising launch positions.</summary>
+    public List<int> Goals { get; } = new();
+
     /// <summary>Launch nodes connected to the player by currently permitted ordinary passages.</summary>
     public IEnumerable<int> Sources => _fromStart.Keys;
 
+    /// <summary>Whether a node belongs to the currently permitted ordinary approach component.</summary>
+    public bool IsSource(int node) => _fromStart.ContainsKey(node);
+
     /// <summary>Whether a landing has an ordinary route to a requested goal outside the reachable component.</summary>
     public bool IsLanding(int node) => !_fromStart.ContainsKey(node) && _towardGoal.ContainsKey(node);
+
+    /// <summary>Nodes with a permitted ordinary suffix to the goal, excluding the reachable launch component.</summary>
+    public IEnumerable<int> Landings
+    {
+        get
+        {
+            foreach (var node in _towardGoal.Keys)
+            {
+                if (IsLanding(node))
+                {
+                    yield return node;
+                }
+            }
+        }
+    }
 
     /// <summary>Whether at least one requested goal lies outside the ordinarily reachable component.</summary>
     public bool HasLandings
@@ -36,7 +57,7 @@ internal sealed class GrappleRouteTopology
             yield return pause;
         }
 
-        var goals = new List<int>();
+        var goals = Goals;
         foreach (var pause in CollectGoals(graph.Nodes.Count, target, goals, work))
         {
             yield return pause;
