@@ -28,8 +28,14 @@ through the configured radius instead of restarting after every 0.5 m of movemen
 two streams gives both nearby and distant candidates a bounded share of the existing physics budget.
 Geometry/session/floor changes discard both streams; completed sweeps retry blocked samples while
 stationary. Distance and physical-floor filters use the current player position, including for older
-candidates. Discovery rays originate at the player's actual eye position instead of a fixed 0.65 m
-above the floor, while retaining solid collision checks and the same-floor restriction.
+candidates. Discovery rays normally originate at the player's actual eye position. If that view is blocked,
+a sample within 3 m may use the same 0.65 m floor-level visibility check as navigation snapping.
+This prevents a nearby reachable floor sample from remaining an Explore destination solely because
+an overhang blocks the eye ray. The extra query reserves another operation from the shared physics
+budget; if unavailable, discovery waits for a later sweep. Both views respect solid collision,
+the 10 m circular radius and the player's physical floor. A nearby sample behind a solid wall
+is not marked explored merely because the player approaches it. Already saved discovery remains known.
+Actual overhang collision behavior and stuck-goal gameplay verification remain required.
 
 The CPU renderer consumes the exploration mask directly. Unknown pixels
 must remain fully opaque, and visible distant samples must not require stepping onto each tile.
