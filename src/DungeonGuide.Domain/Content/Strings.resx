@@ -18,6 +18,9 @@
     <data name="ChestSaved" xml:space="preserve">
         <value>Saved: </value>
     </data>
+    <data name="ChestCollected" xml:space="preserve">
+        <value>Collected: </value>
+    </data>
     <data name="NoKnownChest" xml:space="preserve">
         <value>No known non-empty or marked chest.</value>
     </data>

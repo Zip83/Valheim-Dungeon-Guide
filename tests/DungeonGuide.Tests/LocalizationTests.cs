@@ -40,6 +40,7 @@ public sealed class LocalizationTests
         Assert.Equal("Explore", text.Explore);
         Assert.Equal("Open the door", text.OpenDoor);
         Assert.Equal("Chest name / note", text.ChestNotePrompt);
+        Assert.Equal("Collected: ", text.ChestCollected);
     }
 
     /// <summary>
@@ -55,6 +56,7 @@ public sealed class LocalizationTests
         Assert.Equal("Průzkum", text.Explore);
         Assert.Equal("Otevři dveře", text.OpenDoor);
         Assert.Equal("Název / poznámka k truhle", text.ChestNotePrompt);
+        Assert.Equal("Vyzvednuto: ", text.ChestCollected);
     }
 
     /// <summary>

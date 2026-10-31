@@ -61,7 +61,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             texture,
             maps,
             new OverlayPresenter(texture, numbering, text),
-            new NavigationHud(notice, new NavigationInstructionFormatter(cursor, numbering, text)),
+            new NavigationHud(new NavigationInstructionFormatter(cursor, numbering, text)),
             new DynamicRouteValidator(physics, cursor, text));
 
         commands.ViewChanged += _loop.RefreshView;

@@ -3,24 +3,22 @@ using UnityEngine;
 namespace DungeonGuide;
 
 /// <summary>
-/// Draws navigation instructions and short notices only when their associated activity is enabled.
+/// Draws navigation instructions only while navigation is active.
 /// </summary>
 internal sealed class NavigationHud
 {
-    private readonly UserNotice _notice;
     private readonly NavigationInstructionFormatter _formatter;
 
     /// <summary>
-    /// Uses transient notices and destination/direction formatting for the navigation panel.
+    /// Uses destination/direction formatting for the navigation panel.
     /// </summary>
-    public NavigationHud(UserNotice notice, NavigationInstructionFormatter formatter)
+    public NavigationHud(NavigationInstructionFormatter formatter)
     {
-        _notice = notice;
         _formatter = formatter;
     }
 
     /// <summary>
-    /// Displays active navigation guidance and transient notices without opening an unsolicited map window.
+    /// Displays active navigation guidance without opening an unsolicited map window.
     /// </summary>
     public void Draw(DungeonSession session, MapViewState view, NavigationCoordinator navigator, string blockedHint)
     {
@@ -40,11 +38,6 @@ internal sealed class NavigationHud
                 new Rect(x + 8, y + 35, 484, 38),
                 _formatter.Instruction(session, navigator, Player.m_localPlayer, blockedHint),
                 style);
-        }
-
-        if (Time.unscaledTime < _notice.Until)
-        {
-            GUI.Label(new Rect(Screen.width / 2f - 300, Screen.height - 235, 600, 55), _notice.Text, style);
         }
     }
 }
