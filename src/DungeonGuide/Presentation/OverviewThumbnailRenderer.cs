@@ -3,55 +3,91 @@ using UnityEngine;
 
 namespace DungeonGuide;
 
-/// <summary>Owns cached overview terrain and incremental exploration and visit masks.</summary>
+/// <summary>Keeps a mode-independent full-floor image and an optional sharper discovered-area projection.</summary>
 internal sealed class OverviewThumbnailRenderer : IDisposable
 {
-    private readonly FloorPlanCache _plan = new();
-    private FloorPlanRaster _raster;
-    private FloorSurfaceRenderer _surface;
-    private FloorSurfaceRenderer _pending;
+    private readonly ProjectedOverviewSurface _full = new();
+    private readonly ProjectedOverviewSurface _known = new();
+    private OverviewFrame _knownFrame;
+    private bool _hasKnown;
+    private bool _reveal;
 
-    /// <summary>Completed surface retained while a replacement is prepared.</summary>
-    public Texture2D Texture => _surface?.Texture;
+    private bool UsesKnown => !_reveal && _hasKnown && !_knownFrame.Matches(_full.Raster)
+        && _knownFrame.Matches(_known.Raster);
 
-    /// <summary>Advances only dirty mask tiles after initial terrain construction.</summary>
-    public void Tick(DungeonSession session, OverviewFloor floor, bool revealAll, FrameWorkBudget budget)
+    private ProjectedOverviewSurface Selected => UsesKnown ? _known : _full;
+
+    /// <summary>Completed image selected without recreating resources on a mode change.</summary>
+    public Texture2D Texture => Selected.Texture;
+
+    /// <summary>Conservative crop of the known extent while the full-floor fallback is displayed.</summary>
+    public Rect Viewport
     {
-        var center = new Point((floor.Minimum.x + floor.Maximum.x) / 2, 0,
-            (floor.Minimum.z + floor.Maximum.z) / 2);
-        var span = Mathf.Max(floor.Maximum.x - floor.Minimum.x, floor.Maximum.z - floor.Minimum.z)
-            + session.Scan.Spacing * 3;
-        _plan.Tick(session.Scan.Graph, floor.Floor, session.Scan.Spacing, OverviewStyle.TextureSize, center, span, budget);
-        var raster = _plan.Ready;
-        if (raster == null)
+        get
+        {
+            if (_reveal || !_hasKnown || Selected.Raster == null)
+            {
+                return new Rect(0, 0, 1, 1);
+            }
+
+            var crop = _knownFrame.Crop(Selected.Raster);
+            return new Rect(crop.X, crop.Y, crop.Size, crop.Size);
+        }
+    }
+
+    /// <summary>Changes ready image selection and preserves the discovered-only projection.</summary>
+    public void SetMode(bool reveal)
+    {
+        _reveal = reveal;
+        _full.SetMode(reveal);
+        _known.SetMode(false);
+    }
+
+    /// <summary>Updates framing metadata without starting geometry or texture work.</summary>
+    public void SetKnownFrame(OverviewFloor known, float spacing)
+    {
+        _hasKnown = known != null;
+        if (_hasKnown)
+        {
+            _knownFrame = new OverviewFrame(known, spacing);
+        }
+    }
+
+    /// <summary>Prioritizes the displayed projection and uses spare budget for the other prepared view.</summary>
+    public void Tick(DungeonSession session, OverviewFloor full, OverviewFloor known,
+        bool reveal, FrameWorkBudget budget)
+    {
+        SetMode(reveal);
+        SetKnownFrame(known, session.Scan.Spacing);
+        var fullFrame = new OverviewFrame(full, session.Scan.Spacing);
+        var primaryKnown = UsesKnown;
+        var primary = primaryKnown ? _known : _full;
+        primary.Tick(session, primaryKnown ? _knownFrame : fullFrame, reveal && !primaryKnown, budget);
+        AdvanceSecondary(session, fullFrame, primaryKnown, budget);
+    }
+
+    private void AdvanceSecondary(DungeonSession session, OverviewFrame fullFrame,
+        bool primaryKnown, FrameWorkBudget budget)
+    {
+        if (!_full.Ready || !_hasKnown || _knownFrame.Matches(_full.Raster) || !budget.TryStartWork())
         {
             return;
         }
 
-        if (_raster != raster)
+        if (primaryKnown)
         {
-            _pending?.Dispose();
-            _raster = raster;
-            _pending = new FloorSurfaceRenderer(raster);
+            _full.Tick(session, fullFrame, false, budget);
         }
-
-        var next = _pending ?? _surface;
-        next.Tick(session.OverviewExploration, session.VisitedRoomCoverage, revealAll, budget);
-        if (_pending?.Ready == true)
+        else
         {
-            _surface?.Dispose();
-            _surface = _pending;
-            _pending = null;
+            _known.Tick(session, _knownFrame, false, budget);
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>Releases both projections and any unfinished replacements.</summary>
     public void Dispose()
     {
-        _surface?.Dispose();
-        _pending?.Dispose();
-        _surface = _pending = null;
-        _raster = null;
-        _plan.Dispose();
+        _full.Dispose();
+        _known.Dispose();
     }
 }

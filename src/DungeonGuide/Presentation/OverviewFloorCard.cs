@@ -34,13 +34,17 @@ internal sealed class OverviewFloorCard : IDisposable
     }
 
     /// <summary>Updates the label and displays only a completed renderer-owned image.</summary>
-    public void Refresh(string caption, Texture texture)
+    public void Refresh(string caption, Texture texture, Rect viewport)
     {
         _caption.text = caption;
 
+        _image.uvRect = viewport;
         _image.texture = texture;
         _image.enabled = texture;
     }
+
+    /// <summary>Retains a prepared card while hiding floors not permitted by explored mode.</summary>
+    public void SetVisible(bool visible) => _root.gameObject.SetActive(visible);
 
     /// <summary>Places the card in descending floor order after newly discovered floors are inserted.</summary>
     public void SetOrder(int order)
