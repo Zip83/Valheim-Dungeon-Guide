@@ -214,7 +214,7 @@
         <value>Podlaha</value>
     </data>
     <data name="LegendVisited" xml:space="preserve">
-        <value>Navštívená místnost</value>
+        <value>Navštívená místnost (FULL)</value>
     </data>
     <data name="LegendFog" xml:space="preserve">
         <value>Neprozkoumané</value>

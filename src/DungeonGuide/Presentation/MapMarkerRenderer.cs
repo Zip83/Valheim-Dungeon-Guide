@@ -17,6 +17,7 @@ internal sealed class MapMarkerRenderer : IDisposable
     private readonly List<int> _touched = new();
     private readonly Color32[] _pixels = new Color32[Size * Size];
     private readonly PlayerMarkerRenderer _player;
+    private readonly StairMarkerRenderer _stairs;
 
     /// <summary>
     /// Shared texture used by the native dungeon map views and optional overlay.
@@ -43,6 +44,7 @@ internal sealed class MapMarkerRenderer : IDisposable
     public MapMarkerRenderer()
     {
         _player = new PlayerMarkerRenderer(Set);
+        _stairs = new StairMarkerRenderer(StrokePixel);
         Texture.SetPixels32(_pixels);
         Texture.Apply(false);
     }
@@ -296,15 +298,7 @@ internal sealed class MapMarkerRenderer : IDisposable
         var uv = UV(graph.Nodes[id].Position);
         var x = (int)(uv.x * Size);
         var y = (int)(uv.y * Size);
-        if (directions.Up)
-        {
-            Chevron(x - (directions.Down ? 5 : 0), y, true, MapPalette.FloorTransition);
-        }
-
-        if (directions.Down)
-        {
-            Chevron(x + (directions.Up ? 5 : 0), y, false, MapPalette.FloorTransition);
-        }
+        _stairs.Draw(x, y, directions.Up, directions.Down);
     }
 
     private void DrawChests(DungeonSession session, int floor, bool reveal)
