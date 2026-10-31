@@ -41,4 +41,7 @@ internal sealed class DungeonArea
     /// Known entrance position, or null when the generator cannot identify it.
     /// </summary>
     public Point? Entrance;
+
+    /// <summary>Whether entrance coordinates came from an actual native doorway transfer.</summary>
+    public bool ObservedEntrance;
 }

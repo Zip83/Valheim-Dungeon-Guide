@@ -68,4 +68,26 @@ internal sealed class DungeonSession
     /// Revision used to invalidate routes and presentation after geometry changes.
     /// </summary>
     public int GeometryRevision;
+
+    /// <summary>Layout fingerprint shared by memory and persistent geometry storage.</summary>
+    public string GeometryCacheKey
+    {
+        get; set;
+    }
+
+    /// <summary>Whether automatic geometry replacement is still required after restoring a preview or invalidating a map.</summary>
+    public bool GeometryNeedsScan;
+
+    /// <summary>Whether an observed structural change invalidated the currently published geometry.</summary>
+    public bool GeometryDirty
+    {
+        get; set;
+    }
+
+    /// <summary>Changes only on observed structural mutations so private scans can detect changes during sampling.</summary>
+    public int GeometryMutationVersion
+    {
+        get; set;
+    }
+
 }
