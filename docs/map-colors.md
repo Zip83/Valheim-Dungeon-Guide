@@ -8,7 +8,9 @@ Both the detail renderer and overview consume actual room-layer visit coverage. 
 green fills identify visited room layers; ordinary visible floor retains its base color. In explored
 mode both detail and All floors keep the ordinary floor color under fog, without a green tint.
 All floors may still expose the whole entered room layer; visit tracking and reveal coverage are
-unchanged. Manual scan regions have no inferred room visits. Saves are unchanged.
+unchanged. Unexplored areas use dark charcoal cloud shading with a soft reveal edge,
+independent of hidden floor geometry; the Full background remains unchanged.
+Manual scan regions have no inferred room visits. Saves are unchanged.
 
 Thick blue up/down arrows with dark navy outlines identify geometrically verified stairs,
 including stairs assigned to a single architectural floor. A landing may show both directions.
