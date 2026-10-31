@@ -40,7 +40,7 @@ internal sealed class NavigationInstructionFormatter
             case NavigationGoal.Entrance:
                 return session.Area.Entrance.HasValue ? _text.EntranceRoom : _text.UnknownEntrance;
             case NavigationGoal.Floor:
-                return _numbering.Label(session.Floors, navigation.DestinationFloor, session.Area.Entrance?.y);
+                return FloorTitle(session, navigation);
             default:
                 return "";
         }
@@ -100,6 +100,13 @@ internal sealed class NavigationInstructionFormatter
         };
     }
 
+    private string FloorTitle(DungeonSession session, NavigationCoordinator navigation)
+    {
+        var direction = navigation.FloorDirection > 0 ? _text.NavigateUp : _text.NavigateDown;
+        return navigation.DestinationFloor < 0 ? direction : direction + _text.Separator
+            + _numbering.Label(session.Floors, navigation.DestinationFloor, session.Area.Entrance?.y);
+    }
+
     private string StatusInstruction(DungeonSession session, NavigationStatus status)
     {
         if (session.HasPartialGeometry && session.Scanning)
@@ -113,6 +120,8 @@ internal sealed class NavigationInstructionFormatter
                 return _text.ApproachPassage;
             case NavigationStatus.ExplorationExhausted:
                 return _text.ExplorationExhausted;
+            case NavigationStatus.FloorLimit:
+                return _text.NoAdjacentFloor;
             case NavigationStatus.NoRoute:
                 return _text.NoVerifiedRoute;
             default:
