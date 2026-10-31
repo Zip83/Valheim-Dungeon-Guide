@@ -207,10 +207,11 @@ rewrite assertions simply to get a passing result.
 
 Pull requests to `master` and pushes to `master` classify their changes through
 `.github/filters.yml`. Source, tests, dependencies, build/style configuration,
-workflows, and unclassified files require Linux and Windows locked restore,
-formatting, Release build, and domain tests. Test results are uploaded for each
-OS; the Linux job packages the two project DLLs, Czech translation satellite,
-player instructions, and license.
+workflows, and unclassified files require locked restore, formatting, Release build,
+and domain tests on a single Ubuntu 24.04 runner. The same job reports test results
+and packages the two project DLLs, Czech translation satellite, player instructions,
+and license. The managed DLL package has no platform-specific native build output;
+a duplicate Windows build is not required.
 CodeQL analyzes the C# solution, including a weekly scheduled scan.
 
 Documentation/metadata-only changes skip heavy jobs. Pull requests are classified
@@ -220,7 +221,7 @@ Stable **CI result** and **CodeQL result** checks fail if detection or a require
 job fails. Skips are explicit; no empty SARIF or fabricated scan is uploaded.
 
 Actions are pinned to commits. Require the stable result checks in the ruleset,
-not conditional matrix jobs. GitHub's separate code-scanning rule governs real
+not conditional build jobs. GitHub's separate code-scanning rule governs real
 CodeQL findings and differs from required checks and Code Quality. Use advanced
 CodeQL or default setup, not both. CI does not install into a game, merge a PR,
 publish a release, or test gameplay.
@@ -273,9 +274,9 @@ be revised before reaching that limit. Generated version constants stay under
 
 Successful code builds produce a version-named Actions artifact, including
 `build-info.json` and the Czech satellite. The manifest records both the workflow
-run ID and run number. Run names include the full four-part version. Each platform's
+run ID and run number. Run names include the full four-part version. The
 build summary shows the numeric and development versions, commit, and build/test
-results, including failures. The Linux summary links to the uploaded package.
+results, including failures. The build summary links to the uploaded package.
 Docs-only changes keep the existing skip policy and do not produce a new plugin
 artifact. Manual CI dispatch always builds. No workflow publishes a stable release
 or installs into the game.

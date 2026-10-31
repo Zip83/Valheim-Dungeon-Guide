@@ -122,8 +122,8 @@ or replace an installed plugin automatically as part of a build.
 ## Pull requests
 
 CI reads the XML `.trx` results directly and publishes test counts and failure
-details in the workflow summary and `Tests (ubuntu-latest)` / `Tests (windows-latest)`
-checks. Reports also run after test failures. Fork PRs receive the workflow summary
+details in the workflow summary and the `Tests (ubuntu-24.04)` check.
+Reports also run after test failures. Fork PRs receive the workflow summary
 without requiring write access to checks. Test result files are not uploaded as
 artifacts; the plugin package remains available as a downloadable artifact.
 
