@@ -244,7 +244,10 @@ internal sealed class GuideRuntime : IDisposable
             }
 
             // Recording takeoff/landing must run every frame; proof revalidation is throttled separately.
-            _traversals.Tick(Session, player);
+            if (Session.NavigationReady)
+            {
+                _traversals.Tick(Session, player);
+            }
         }
     }
 

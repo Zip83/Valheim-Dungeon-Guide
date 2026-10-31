@@ -31,6 +31,9 @@ internal sealed class ScanResult
     /// </summary>
     public float Spacing;
 
+    /// <summary>Worker-selected endpoint candidates, consumed only by the private linking phase.</summary>
+    public PassagePairCatalog Pairs;
+
     /// <summary>
     /// Whether a work cap or saturated physics query made the scan potentially incomplete.
     /// </summary>

@@ -129,7 +129,7 @@ internal sealed class NavigationCoordinator
     public void Recalculate(DungeonSession session, MapViewState view, Vector3 player)
     {
         InvalidateRoute();
-        if (Goal == NavigationGoal.None || session.Scan == null)
+        if (Goal == NavigationGoal.None || session.Scan == null || !session.NavigationReady)
         {
             return;
         }

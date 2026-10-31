@@ -7,7 +7,6 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class ScanPassageLinker
 {
-    private static readonly (int, int)[] s_walkOffsets = { (1, 0), (0, 1), (1, 1), (1, -1) };
     private readonly PassageEvaluator _passages;
     private readonly ScanGapLinker _gaps;
 
@@ -52,7 +51,7 @@ internal sealed class ScanPassageLinker
 
     private IEnumerable<object> LinkWalks(ScanResult result, (int x, int z) column, FrameWorkBudget work)
     {
-        foreach (var pair in NeighborColumnPairs.Enumerate(result.Columns, column, s_walkOffsets))
+        foreach (var pair in result.Pairs.Walks[column])
         {
             while (!work.TryStartWork())
             {
