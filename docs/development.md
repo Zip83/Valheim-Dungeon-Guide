@@ -145,7 +145,7 @@ ray samples, standing checks, candidate pairs, and individual jump-arc queries,
 including empty-neighbor column overhead;
 a tall column or many stacked floors cannot bypass yielding until the end of
 an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
-0.25Ã¢â‚¬â€œ4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1Ã¢â‚¬â€œ8192;
+0.25–4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1–8192;
 this is a safety ceiling, while elapsed time normally determines when to yield.
 It replaces the legacy `Scan.ColumnsPerFrame` key, whose default of 24 became
 an excessive throttle after work was split into individual operations. The old
@@ -321,6 +321,17 @@ Local Unity/Harmony fixtures exercise damage-probe decisions, equipment refresh,
 native-state callback filtering/teardown and destruction classification with
 stand-in game components. Real damage responses, traversal and multiplayer
 gameplay still need an in-game check; fixtures do not establish those outcomes.
+
+## Continuous higher/lower navigation
+
+Go up / Go down retains its direction after reaching a broad, supported landing
+at the requested elevation. Arrival selects the next detected floor in that direction;
+a nearest-height label on stairs or a narrow balcony still does not count as arrival.
+Each intermediate target keeps its physical elevation across rescans and renumbering.
+At the highest/lowest known floor the direction remains active with a no-adjacent-floor
+message and an empty route; new geometry may make the next floor available. Stop,
+a different navigation command or leaving the dungeon ends or replaces the mode.
+Manual map-floor browsing does not change the navigation direction.
 
 ## Navigation instruction distances
 

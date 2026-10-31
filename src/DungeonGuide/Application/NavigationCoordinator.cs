@@ -13,6 +13,7 @@ internal sealed class NavigationCoordinator
     private readonly FloorNavigationPolicy _floorPolicy;
     private readonly GrappleFallbackSearch _grapple;
     private float _destinationHeight;
+    private int _floorDirection;
 
     /// <summary>Selected personal location when return-location navigation is active.</summary>
     public WaypointRecord Waypoint
@@ -45,12 +46,15 @@ internal sealed class NavigationCoordinator
     }
 
     /// <summary>
-    /// Current floor index resolved for the remembered physical elevation.
+    /// Current floor index resolved for the remembered physical elevation; -1 at a floor limit.
     /// </summary>
     public int DestinationFloor
     {
         get; private set;
     }
+
+    /// <summary>Direction retained while navigating through successive floors.</summary>
+    public int FloorDirection => _floorDirection;
 
     /// <summary>
     /// Ordered graph-node indices for the latest validated route.
@@ -76,6 +80,7 @@ internal sealed class NavigationCoordinator
     {
         _grapple.Reset();
         Goal = NavigationGoal.None;
+        _floorDirection = 0;
         Chest = null;
         Waypoint = null;
         Route.Clear();
@@ -125,14 +130,18 @@ internal sealed class NavigationCoordinator
     }
 
     /// <summary>
-    /// Remembers an architectural floor and its physical elevation for higher/lower navigation.
+    /// Starts persistent higher/lower navigation from the first requested physical elevation.
     /// </summary>
-    public void Floor(int floor, float height)
+    /// <param name="floor">First destination floor index.</param>
+    /// <param name="height">First destination elevation in world metres.</param>
+    /// <param name="direction">Positive to continue upward; negative to continue downward.</param>
+    public void Floor(int floor, float height, int direction)
     {
         InvalidateRoute();
         Goal = NavigationGoal.Floor;
         DestinationFloor = floor;
         _destinationHeight = height;
+        _floorDirection = System.Math.Sign(direction);
         Chest = null;
         Waypoint = null;
     }
@@ -187,16 +196,25 @@ internal sealed class NavigationCoordinator
             return false;
         }
 
-        // Being assigned to a floor by nearest height is insufficient: stairs and
-        // balconies can share that label long before the real landing is reached.
-        if (_floorPolicy.IsDestination(session.Scan.Graph, session.Layout, start, DestinationFloor)
-            && System.Math.Abs(player.y - _destinationHeight) <= 0.75f
-            && Player.m_localPlayer.IsOnGround())
+        return !ReachedFloor(session, start, player) || AdvanceFloorDestination(session);
+    }
+
+    private bool ReachedFloor(DungeonSession session, int start, Vector3 player) =>
+        _floorPolicy.IsDestination(session.Scan.Graph, session.Layout, start, DestinationFloor)
+        && System.Math.Abs(player.y - _destinationHeight) <= 0.75f
+        && Player.m_localPlayer.IsOnGround();
+
+    private bool AdvanceFloorDestination(DungeonSession session)
+    {
+        _grapple.Reset();
+        DestinationFloor = _floorPolicy.Next(session.Layout, _destinationHeight, _floorDirection);
+        if (DestinationFloor < 0)
         {
-            Stop();
+            Status = NavigationStatus.FloorLimit;
             return false;
         }
 
+        _destinationHeight = session.Floors[DestinationFloor];
         return true;
     }
 

@@ -23,5 +23,7 @@ internal enum NavigationStatus
     /// <summary>
     /// No accessible unexplored sample remains; this is not proof that every room was found.
     /// </summary>
-    ExplorationExhausted
+    ExplorationExhausted,
+    /// <summary>The requested direction remains active at the highest or lowest known floor.</summary>
+    FloorLimit
 }

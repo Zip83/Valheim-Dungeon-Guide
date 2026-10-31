@@ -91,7 +91,7 @@ internal sealed class CommandDispatcher
         }
 
         _view.Follow();
-        _navigator.Floor(floor, session.Floors[floor]);
+        _navigator.Floor(floor, session.Floors[floor], delta);
     }
 
     private void ApplyCommand(GuideCommand command, DungeonSession session)
