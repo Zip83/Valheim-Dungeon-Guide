@@ -145,7 +145,7 @@ ray samples, standing checks, candidate pairs, and individual jump-arc queries,
 including empty-neighbor column overhead;
 a tall column or many stacked floors cannot bypass yielding until the end of
 an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
-0.25–4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1–8192;
+0.25â€“4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1â€“8192;
 this is a safety ceiling, while elapsed time normally determines when to yield.
 It replaces the legacy `Scan.ColumnsPerFrame` key, whose default of 24 became
 an excessive throttle after work was split into individual operations. The old
@@ -321,6 +321,26 @@ Local Unity/Harmony fixtures exercise damage-probe decisions, equipment refresh,
 native-state callback filtering/teardown and destruction classification with
 stand-in game components. Real damage responses, traversal and multiplayer
 gameplay still need an in-game check; fixtures do not establish those outcomes.
+
+## Animated dungeon floors
+
+Native `Door.SetState(int)` observation also starts a short-lived collider watch.
+The Morkhalla drawbridge uses the native Door component; its floor panel rotates
+into the gap instead of merely unblocking an existing edge. Pending watches poll
+at 10 Hz, wait for the native Animator to finish and for 0.5 s of stable collider
+bounds, then compare changed solid coverage. Moved, enabled or disabled horizontal
+floor-like colliders invalidate geometry through the existing bounded automatic
+scan and persistent-cache invalidation. Ordinary vertical doors and stationary
+thresholds retain the permissions-only refresh. Leaving the dungeon discards watches.
+
+A geometry replacement retains the published map while sampling and linking finish;
+this repair is automatic but is not an instantaneous local graph patch. The observer
+neither moves objects nor writes network state. Target: Valheim 1.0.21. Native prefab
+and API inspection, Release compilation and local Unity collider/Animator fixtures
+are distinct from gameplay verification, which remains pending. In-game regression:
+scan with the bridge raised, lower it, wait for automatic replacement, verify floor
+coverage and a normal route; raise it again and verify the route is removed. Repeat
+with another player operating it and with an ordinary door beside a fixed threshold.
 
 ## Numbered development builds
 

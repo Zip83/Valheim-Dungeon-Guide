@@ -19,6 +19,7 @@ internal sealed class GuideRuntime : IDisposable
     private readonly ExplorationRecorder _exploration;
     private readonly TraversalRecorder _traversals;
     private readonly DungeonGeometrySessions _geometry;
+    private readonly DoorGeometryMonitor _doorGeometry;
     private float _nextDetect;
     private bool _entrancePending;
     private readonly RoomVisitRecorder _rooms = new();
@@ -76,6 +77,7 @@ internal sealed class GuideRuntime : IDisposable
         _exploration = exploration;
         _traversals = traversals;
         _geometry = geometry;
+        _doorGeometry = new DoorGeometryMonitor(GeometryChanged);
         _geometry.Restored += () => ScanCompleted?.Invoke();
         _geometry.PermissionsChanged += () => ScanCompleted?.Invoke();
         _geometry.WorldChanged += () => WorldChanged?.Invoke();
@@ -114,6 +116,7 @@ internal sealed class GuideRuntime : IDisposable
 
         _rooms.Track(Session, player.transform.position);
         RefreshEquipmentIfDue(player);
+        _doorGeometry.Tick(Time.unscaledTime);
         RefreshGeometryIfDue();
         TrackMovement(player);
         SaveIfDue();
@@ -165,6 +168,7 @@ internal sealed class GuideRuntime : IDisposable
         if (Session != null && door && Session.Area.Bounds.Contains(door.transform.position))
         {
             DoorChanged();
+            _doorGeometry.Observe(door, Time.unscaledTime);
         }
     }
 
@@ -243,6 +247,7 @@ internal sealed class GuideRuntime : IDisposable
         _rooms.Reset();
         _equipment.Reset();
         _exploration.Reset();
+        _doorGeometry.Reset();
         _geometryRefresh = float.PositiveInfinity;
         Left?.Invoke();
     }
