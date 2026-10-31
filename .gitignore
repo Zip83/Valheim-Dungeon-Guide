@@ -45,3 +45,11 @@ coverage/
 .nuget/
 .DS_Store
 Thumbs.db
+
+# Optional Unity UI shader build
+assets/map-shader/Library/
+assets/map-shader/Temp/
+assets/map-shader/Logs/
+assets/map-shader/UserSettings/
+assets/map-shader/BundleOutput/
+src/DungeonGuide/Content/dungeonguide-ui

@@ -4,12 +4,13 @@ using UnityEngine;
 
 namespace DungeonGuide;
 
-/// <summary>Composites one cached floor using dirty mask tiles and bounded CPU compositing.</summary>
+/// <summary>Composites one cached floor using dirty mask tiles with optional GPU rendering and a CPU fallback.</summary>
 internal sealed class FloorSurfaceRenderer : IDisposable
 {
     private readonly FloorPlanRaster _raster;
     private readonly IncrementalFloorFog _fog;
     private readonly FloorFogMask _publishedFog;
+    private readonly Texture2D _mask;
     private readonly Color32[] _terrain;
     private readonly Color32[] _cloud;
     private IEnumerator<byte> _job;
@@ -31,8 +32,11 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         _publishedFog = new FloorFogMask(raster);
         Array.Copy(_fog.Fog.Opacity, _publishedFog.Opacity, _publishedFog.Opacity.Length);
         _terrain = new Color32[raster.Size * raster.Size];
-        _cloud = new Color32[_terrain.Length];
         Texture = CreateTexture(raster.Size);
+        Material = MapShaderResources.Acquire();
+        _mask = Material ? CreateTexture(raster.Size, true) : null;
+        _cloud = Material ? null : new Color32[_terrain.Length];
+        ConfigureMaterial();
 
         _job = Initialize().GetEnumerator();
     }
@@ -43,8 +47,11 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         get;
     }
 
-    /// <summary>Default UI material for CPU compositing.</summary>
-    public Material Material => null;
+    /// <summary>Owned GPU material, or null for ordinary UI and CPU compositing.</summary>
+    public Material Material
+    {
+        get;
+    }
 
     /// <summary>Whether all tiles have a valid initial image.</summary>
     public bool Ready
@@ -67,6 +74,17 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         PublishChanges();
     }
 
+    private void ConfigureMaterial()
+    {
+        if (Material)
+        {
+            Material.SetTexture("_FogMask", _mask);
+            Material.SetVector("_VisitedColor", (Color)MapPalette.VisitedRoom);
+            Material.SetVector("_ScannedColor", (Color)MapPalette.ScannedFloor);
+            Material.SetFloat("_LinearColorSpace", QualitySettings.activeColorSpace == ColorSpace.Linear ? 1 : 0);
+        }
+    }
+
     private void ObserveState(Exploration exploration, Exploration visits, bool reveal)
     {
         _fog.Observe(exploration);
@@ -84,6 +102,10 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         }
 
         _reveal = reveal;
+        if (Material)
+        {
+            Material.SetFloat("_RevealAll", reveal ? 1 : 0);
+        }
     }
 
     private void AdvanceWork(Exploration exploration, Exploration visits, bool reveal, FrameWorkBudget budget)
@@ -124,7 +146,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             return;
         }
 
-        Texture.Apply(false);
+        (Material ? _mask : Texture).Apply(false);
         _uploaded = false;
         if (Ready && _job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
         {
@@ -170,6 +192,17 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         {
             yield return step;
         }
+
+        PublishTerrain();
+    }
+
+    private void PublishTerrain()
+    {
+        if (Material)
+        {
+            Texture.SetPixels32(_terrain);
+            Texture.Apply(false);
+        }
     }
 
     private IEnumerable<byte> PrepareTerrain()
@@ -188,7 +221,10 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             var index = y * _raster.Size + x;
             _terrain[index] = _raster.Owners[index] == 0 ? MapPalette.TextureBackground
                 : _raster.Boundary[index] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
-            _cloud[index] = MapPalette.Cloud(x, y);
+            if (!Material)
+            {
+                _cloud[index] = MapPalette.Cloud(x, y);
+            }
         }
     }
 
@@ -226,6 +262,11 @@ internal sealed class FloorSurfaceRenderer : IDisposable
     {
         var owner = _raster.Owners[index] - 1;
         var visited = owner >= 0 && visits.Has(_raster.Graph.Nodes[owner]);
+        if (Material)
+        {
+            return ComposeMaskPixel(index, owner, visited);
+        }
+
         var color = _terrain[index];
         if (owner >= 0 && !_raster.Boundary[index])
         {
@@ -235,9 +276,13 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         return reveal ? color : Color32.Lerp(color, _cloud[index], _fog.Fog.Opacity[index] / 255f);
     }
 
+    private Color32 ComposeMaskPixel(int index, int owner, bool visited) =>
+        new(_fog.Fog.Opacity[index], visited ? (byte)255 : (byte)0,
+            owner >= 0 && !_raster.Boundary[index] ? (byte)255 : (byte)0, 255);
+
     private void UploadTile(int tile, FogTileRegion region, Color32[] pixels)
     {
-        Texture.SetPixels32(region.X, region.Y, region.Width, region.Height, pixels);
+        (Material ? _mask : Texture).SetPixels32(region.X, region.Y, region.Width, region.Height, pixels);
         PublishFog(region);
         _uploaded = true;
         _completed.Add(tile);
@@ -253,16 +298,19 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         }
     }
 
-    private static Texture2D CreateTexture(int size) => new(size, size, TextureFormat.RGBA32, false)
-    {
-        filterMode = FilterMode.Bilinear,
-        wrapMode = TextureWrapMode.Clamp
-    };
+    private static Texture2D CreateTexture(int size, bool linear = false) =>
+        new(size, size, TextureFormat.RGBA32, false, linear)
+        {
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp
+        };
 
     /// <inheritdoc />
     public void Dispose()
     {
         _job?.Dispose();
+        MapShaderResources.Release(Material);
         UnityEngine.Object.Destroy(Texture);
+        UnityEngine.Object.Destroy(_mask);
     }
 }
