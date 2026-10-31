@@ -7,12 +7,12 @@ namespace DungeonGuide.Tests;
 /// <summary>Protects circular exploration, physical floors, opaque unknown space, and saved fog restoration.</summary>
 public sealed class FloorFogTests
 {
-    /// <summary>Revealing has a circular three-dimensional radius and a separate vertical tolerance.</summary>
+    /// <summary>Revealing has a thirty-metre horizontal radius on the physical floor.</summary>
     [Theory]
-    [InlineData(3, 0, 0, true)]
-    [InlineData(2.2f, 0, 2.2f, false)]
-    [InlineData(3.01f, 0, 0, false)]
-    [InlineData(0, 0.91f, 0, false)]
+    [InlineData(30, 0, 0, true)]
+    [InlineData(22, 0, 22, false)]
+    [InlineData(30.01f, 0, 0, false)]
+    [InlineData(0, 0.91f, 0, true)]
     public void RestrictsRevealToCircularRange(float x, float y, float z, bool expected)
     {
         var explored = new Exploration();

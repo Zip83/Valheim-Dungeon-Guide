@@ -72,6 +72,8 @@ internal sealed class OverlayPresenter : IDisposable
         _floor.gameObject.SetActive(ready);
         if (ready)
         {
+            _floor.texture = _renderer.Texture;
+            _floor.material = _renderer.Material;
             _floor.uvRect = _markers.uvRect = _renderer.FitFloor(session, _renderer.DisplayedFloor);
         }
     }

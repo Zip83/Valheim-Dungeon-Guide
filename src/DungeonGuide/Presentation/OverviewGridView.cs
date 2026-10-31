@@ -164,7 +164,7 @@ internal sealed class OverviewGridView : IDisposable
             if (_cards.TryGetValue(floor.Floor, out var card))
             {
                 card.Refresh(_numbering.Label(session.Floors, floor.Floor, session.Area.Entrance?.y),
-                    renderer.Texture(floor.Floor));
+                    renderer.Texture(floor.Floor), renderer.Material(floor.Floor));
                 card.SetOrder(order++);
             }
         }
