@@ -74,3 +74,13 @@ Room bounds are transformed world AABBs, not exact internal walkable dimensions.
 
 Compilation and domain tests do not establish gameplay timings or graphics compatibility. The current
 workspace has only Unity 2020.3.20f1, so the 6000.0.75 bundle and GPU path cannot be built/tested here.
+
+## Native map pin maintenance fix
+
+The previous Harmony pointer list incorrectly included `CreateMapNamePin`. Valheim 1.0.21 calls this
+from `UpdatePins` before accessing the name's RectTransform. Suppressing creation can leave the name
+data present without its UI and repeatedly throw at `RectTransform.anchoredPosition`. The pointer
+policy now excludes marker lifecycle methods. World pins and other map plugins keep their native
+maintenance calls even while the dungeon layer is active. This fixes the guard; it does not suppress
+Unity exceptions or attempt to repair another plugin's pin data. Restart the game after replacing the
+DLL to remove old Harmony patches and recreate map UI. The reported log used build 0.1.0.336.
