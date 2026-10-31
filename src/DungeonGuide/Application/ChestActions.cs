@@ -105,7 +105,7 @@ internal sealed class ChestActions
 
         session.Chests.Collect(chest);
         _lifecycle.Save(session);
-        _notice.Show("Vyzvednuto: " + chest.label);
+        _notice.Show(_text.ChestCollected + chest.label);
         return chest;
     }
 

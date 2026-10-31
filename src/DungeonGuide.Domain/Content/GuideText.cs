@@ -27,6 +27,8 @@ internal sealed class GuideText
 
     internal string ChestSaved => Get(nameof(ChestSaved));
 
+    internal string ChestCollected => Get(nameof(ChestCollected));
+
     internal string NoKnownChest => Get(nameof(NoKnownChest));
 
     internal string NoAdjacentFloor => Get(nameof(NoAdjacentFloor));

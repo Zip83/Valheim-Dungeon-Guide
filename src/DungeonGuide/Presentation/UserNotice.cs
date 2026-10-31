@@ -1,34 +1,15 @@
-using UnityEngine;
-
 namespace DungeonGuide;
 
-/// <summary>
-/// Stores a short-lived player notice separately from technical logging.
-/// </summary>
+/// <summary>Displays transient notices through Valheim's native message HUD and its game font.</summary>
 internal sealed class UserNotice
 {
-    /// <summary>
-    /// Latest short player-facing message.
-    /// </summary>
-    public string Text
-    {
-        get; private set;
-    }
-
-    /// <summary>
-    /// Unscaled game time at which the message expires.
-    /// </summary>
-    public float Until
-    {
-        get; private set;
-    }
-
-    /// <summary>
-    /// Replaces the current message and schedules its short display interval.
-    /// </summary>
+    /// <summary>Shows a native center notice when the game's message HUD is available.</summary>
+    /// <param name="text">Localized player-facing notice, including any existing chest name.</param>
     public void Show(string text)
     {
-        Text = text;
-        Until = Time.unscaledTime + 4;
+        if (MessageHud.instance)
+        {
+            MessageHud.instance.ShowMessage(MessageHud.MessageType.Center, text);
+        }
     }
 }

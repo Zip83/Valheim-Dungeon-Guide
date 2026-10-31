@@ -18,6 +18,9 @@
     <data name="ChestSaved" xml:space="preserve">
         <value>Uloženo: </value>
     </data>
+    <data name="ChestCollected" xml:space="preserve">
+        <value>Vyzvednuto: </value>
+    </data>
     <data name="NoKnownChest" xml:space="preserve">
         <value>Žádná známá neprázdná ani označená truhla.</value>
     </data>
