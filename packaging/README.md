@@ -34,7 +34,7 @@ its numeric equivalent. Include the development version in bug reports.
 - **Insert** — Rescan dungeon geometry.
 
 The map shows explored areas by default. Cloud fog completely hides unknown rooms;
-exploration reveals nearby visible floor within three metres, stopping at walls
+exploration reveals nearby visible floor within the configured radius (30 metres by default), stopping at walls
 and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
 
 The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
@@ -104,3 +104,11 @@ your character or transfers inventory items.
 [Full documentation and source](https://github.com/Zip83/Valheim-Dungeon-Guide)
 
 License: MIT; see LICENSE.
+
+## Responsive map development build
+
+Targets Valheim **1.0.21**. Initial maps no longer wait for navigation linking. Discovery defaults to
+30 m and remains blocked by walls and floors. All floors marks actually entered room layers in green.
+Saves migrate to schema 3; keep the previous backup for rollback. The optional UI shader uses a separate
+`dungeonguide-ui` bundle; without it the plugin uses incremental CPU rendering. Gameplay verification
+and GPU comparisons are pending.

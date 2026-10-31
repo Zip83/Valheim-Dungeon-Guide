@@ -55,8 +55,15 @@ internal sealed class NativeMapLayer : IDisposable
     }
 
     /// <summary>
-    /// Updates dungeon-layer visibility and hides or restores native map chrome.
+    /// Binds the published renderer-owned texture and material without changing native game materials.
     /// </summary>
+    public void SetSurface(Texture texture, Material material)
+    {
+        _image.texture = texture;
+        _image.material = material;
+    }
+
+    /// <summary>Updates dungeon visibility while preserving the native map layer.</summary>
     public void Show(bool enabled, Rect viewport)
     {
         if (!_root || !_image)

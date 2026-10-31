@@ -9,7 +9,7 @@ namespace DungeonGuide;
 public sealed class SaveMigration
 {
     /// <summary>
-    /// Updates legacy exploration and chest state to schema 2, initializing missing traversal records without erasing
+    /// Updates legacy exploration and chest state to schema 3, initializing missing traversal records without erasing
     /// notes.
     /// </summary>
     /// <param name="data">Loaded dungeon state that may be upgraded in place.</param>
@@ -17,7 +17,7 @@ public sealed class SaveMigration
     /// <exception cref="System.InvalidOperationException">The save uses an unsupported future schema.</exception>
     public SavedRun Upgrade(SavedRun data)
     {
-        if (data.version > 2)
+        if (data.version > 3)
         {
             throw new InvalidOperationException("The saved data requires a newer plugin version.");
         }
@@ -45,7 +45,12 @@ public sealed class SaveMigration
             }
         }
 
-        data.version = 2;
+        if (data.visitedRooms == null)
+        {
+            data.visitedRooms = new List<RoomVisit>();
+        }
+
+        data.version = 3;
         return data;
     }
 }

@@ -54,16 +54,22 @@ internal sealed class SessionScanController
             return;
         }
 
+        foreach (var room in session.Area.Rooms)
+        {
+            _log.LogInfo("Dungeon room bounds: size=" + room.size + ", center=" + room.center);
+        }
+
         session.Scanning = true;
         _scanStarted = Time.realtimeSinceStartup;
         _nextProgress = _scanStarted;
-        var preview = ScanPreviewArea.Create(session, _settings.RevealAll.Value);
+        var preview = ScanPreviewArea.Create(session);
         _scanJob = _host.StartCoroutine(Guard(BuildScan(session, preview), session));
     }
 
     /// <summary>Cancels private floor analysis before the runtime saves and closes its session.</summary>
     public void CancelAnalysis()
     {
+        _scanner.CancelAnalysis();
         _floorAnalysis?.Dispose();
         _floorAnalysis = null;
     }
@@ -104,13 +110,26 @@ internal sealed class SessionScanController
     {
         _preparingPreview = preview;
         ScanResult result = null;
-        foreach (var pause in CoroutinePhase.Forward(SampleGeometry(area, completed => result = completed)))
+        foreach (var pause in CoroutinePhase.Forward(SampleGeometry(area, completed => result = completed, preview)))
         {
             yield return pause;
         }
 
         if (Session != session || (preview && result.Graph.Nodes.Count == 0))
         {
+            yield break;
+        }
+
+        if (preview)
+        {
+            var player = Player.m_localPlayer;
+            var previewLayout = PreviewFloorClassifier.Classify(result.Graph,
+                player ? UnityPoints.P(player.transform.position) : session.Data.start);
+            if (previewLayout.Levels.Count > 0)
+            {
+                PublishScan(session, result, previewLayout, true);
+            }
+
             yield break;
         }
 
@@ -128,12 +147,15 @@ internal sealed class SessionScanController
 
     private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout, bool preview)
     {
-        // Each published graph is complete and no longer owned by a sampling or analysis job.
+        // Each published snapshot is exclusively owned and no longer changed by a scan or worker.
+        session.OverviewExploration.Load(Array.Empty<string>());
+        session.VisitedRoomCoverage.Load(Array.Empty<string>());
         session.Scan = result;
         session.Layout = layout;
         session.Floors = layout.Levels;
         session.GeometryRevision++;
         session.HasPartialGeometry = preview;
+        session.NavigationReady = !preview;
         session.Scanning = preview;
         _log.LogInfo((preview ? "Scan preview ready: " : "Scan complete: ") + session.Area.Id
             + ", nodes=" + result.Graph.Nodes.Count + ", floors=" + session.Floors.Count
@@ -164,7 +186,7 @@ internal sealed class SessionScanController
         }
     }
 
-    private IEnumerator SampleGeometry(DungeonArea area, Action<ScanResult> completed)
+    private IEnumerator SampleGeometry(DungeonArea area, Action<ScanResult> completed, bool preview)
     {
         return _scanner.Scan(
             area,
@@ -172,7 +194,7 @@ internal sealed class SessionScanController
             Mathf.Clamp(_settings.Columns.Value, 1000, 120000),
             Mathf.Clamp(_settings.Budget.Value, 1, 8192),
             Mathf.Clamp(_settings.MillisecondsPerFrame.Value, 0.25f, 4),
-            completed);
+            completed, preview);
     }
 
     private IEnumerator AnalyzeFloors(DungeonSession session, ScanResult result, Action<FloorLayout> completed)
@@ -212,12 +234,17 @@ internal sealed class SessionScanController
     {
         try
         {
+            _scanner.BeginSlice();
             return task.MoveNext();
         }
         catch (Exception e)
         {
             _log.LogError("Geometry scan failed: " + e);
             return false;
+        }
+        finally
+        {
+            _scanner.EndSlice();
         }
     }
 

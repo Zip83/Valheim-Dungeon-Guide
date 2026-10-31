@@ -20,7 +20,6 @@ internal sealed class GuideGameLoop : IDisposable
     private readonly NavigationHud _hud;
     private float _nextObserve;
     private float _nextRoute;
-    private float _nextRender;
     private bool _disposed;
     private readonly DynamicRouteValidator _validator;
     private string _blockedHint;
@@ -62,7 +61,7 @@ internal sealed class GuideGameLoop : IDisposable
         _view.Enter();
         _navigator.Stop();
         _maps.Center();
-        _nextObserve = _nextRender = _nextRoute = 0;
+        _nextObserve = _nextRoute = 0;
     }
 
     private void Scanned()
@@ -71,7 +70,7 @@ internal sealed class GuideGameLoop : IDisposable
         _view.RemapFloors(_knownFloors, floors);
         _knownFloors = floors;
         _navigator.InvalidateRoute();
-        _nextRender = _nextObserve = _nextRoute = 0;
+        _nextObserve = _nextRoute = 0;
     }
 
     /// <summary>
@@ -79,7 +78,7 @@ internal sealed class GuideGameLoop : IDisposable
     /// </summary>
     public void RefreshView()
     {
-        _nextRender = _nextRoute = 0;
+        _nextRoute = 0;
     }
 
     /// <summary>
@@ -164,20 +163,16 @@ internal sealed class GuideGameLoop : IDisposable
         if (Time.unscaledTime >= _nextRoute)
         {
             _nextRoute = Time.unscaledTime + 1;
-            _blockedHint = _validator.Inspect(session, _navigator, player);
+            _blockedHint = session.NavigationReady ? _validator.Inspect(session, _navigator, player) : null;
             _navigator.Recalculate(session, _view, player.transform.position);
         }
     }
 
     private void RenderMap(DungeonSession session, Player player)
     {
-        if (Time.unscaledTime >= _nextRender)
+        if (_view.Dungeon)
         {
-            _nextRender = Time.unscaledTime + 0.4f;
-            if (_view.Dungeon)
-            {
-                _texture.Render(session, _view, _navigator, player);
-            }
+            _texture.Render(session, _view, _navigator, player);
         }
     }
 }

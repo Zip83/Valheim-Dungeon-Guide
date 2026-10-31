@@ -131,8 +131,8 @@ Two compatibility exceptions are intentional:
 
 - Legacy serialized fields retain names such as `world`, `dungeon`, `visited`,
   `chests`, and `position`. Renaming them would break existing JSON. Tests freeze
-  this contract. Save schema 2 migrates version 1, preserves exploration and notes,
-  and rejects unknown future versions. This import does not change the schema.
+  this contract. Save schema 3 migrates versions 1 and 2, preserves exploration and notes,
+  initializes actual room visits independently, and rejects unknown future versions.
 - `WorldChangeHooks` preserves Harmony's special parameter names `__result`,
   `__instance`, and `__0`. Narrow, per-method IDE1006 suppressions document that
   injection contract; ordinary parameter naming remains enforced everywhere else.
@@ -279,3 +279,12 @@ results, including failures. The Linux summary links to the uploaded package.
 Docs-only changes keep the existing skip policy and do not produce a new plugin
 artifact. Manual CI dispatch always builds. No workflow publishes a stable release
 or installs into the game.
+
+## Responsive-map verification (2026-10-31)
+
+The responsive-map changes compile against the local Valheim 1.0.21 installation with zero compiler
+warnings/errors. The full domain test suite passes, including tiled/full fog equivalence, independent
+change consumers, room orientation/layer remapping, save migration and pure endpoint preselection.
+See [implementation and gameplay acceptance](responsive-map.md). Gameplay, latency, shader rendering,
+Direct3D 11/Vulkan and multiplayer interaction remain unverified. Unity 6000.0.75f1 is not installed;
+the numbered test package therefore uses the incremental CPU renderer and includes no shader bundle.

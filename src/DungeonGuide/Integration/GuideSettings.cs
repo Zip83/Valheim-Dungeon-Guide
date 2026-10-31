@@ -17,6 +17,9 @@ internal sealed class GuideSettings
     /// </summary>
     public readonly ConfigEntry<float> Spacing;
 
+    /// <summary>Horizontal fog discovery radius in metres, still blocked by solid geometry.</summary>
+    public readonly ConfigEntry<float> ExploreRadius;
+
     /// <summary>
     /// Horizontal radius used by manual scans.
     /// </summary>
@@ -123,6 +126,8 @@ internal sealed class GuideSettings
     public GuideSettings(ConfigFile file)
     {
         _file = file;
+        ExploreRadius = file.Bind("Exploration", "Radius", 30f,
+            "Horizontal discovery radius in metres, clamped to 1-100. Walls and physical floors still limit discovery.");
         Spacing = file.Bind("Scan", "GridSpacing", 1.25f, "Sampling grid, metres.");
         Radius = file.Bind("Scan", "ManualRadius", 45f, "Manual scan radius.");
         Height = file.Bind("Scan", "ManualVerticalRange", 120f, "Metres above and below manual scan origin.");

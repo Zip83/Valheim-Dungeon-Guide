@@ -134,3 +134,13 @@ also follow [AGENTS.md](AGENTS.md).
 
 [MIT](LICENSE). Valheim and third-party components remain the property of their
 respective owners. External reference assemblies are not included in the plugin artifact.
+
+## Responsive map development build
+
+Targets Valheim **1.0.21**. Initial maps no longer wait for navigation linking. Discovery defaults to
+30 m and remains blocked by walls and floors. All floors marks actually entered room layers in green.
+Saves migrate to schema 3; keep the previous backup for rollback. The optional UI shader uses a separate
+`dungeonguide-ui` bundle; without it the plugin uses incremental CPU rendering. Gameplay verification
+and GPU comparisons are pending.
+
+See [responsive-map implementation and gameplay checks](docs/responsive-map.md).

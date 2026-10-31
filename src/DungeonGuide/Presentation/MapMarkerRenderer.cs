@@ -35,10 +35,22 @@ internal sealed class MapMarkerRenderer : IDisposable
     /// </summary>
     public float Span { get; private set; } = 1;
 
+    /// <summary>Clears the backing texture before incremental rectangle uploads begin.</summary>
+    public MapMarkerRenderer()
+    {
+        Texture.SetPixels32(_pixels);
+        Texture.Apply(false);
+    }
+
     private Vector3 _center;
     private FloorFogMask _fog;
     private bool _reveal;
     private bool _playerMarker;
+    private int _left;
+    private int _right;
+    private int _bottom;
+    private int _top;
+    private Color32[] _upload;
 
     /// <summary>
     /// Projects a world-space floor position into the shared texture coordinate system.
@@ -56,6 +68,13 @@ internal sealed class MapMarkerRenderer : IDisposable
         _playerMarker = false;
         Span = raster.Span;
         _center = UnityPoints.V(raster.Center);
+        _left = _bottom = Size;
+        _right = _top = -1;
+        foreach (var index in _touched)
+        {
+            IncludePixel(index % Size, index / Size);
+        }
+
         ClearPixels();
         var floor = raster.Floor;
 
@@ -69,8 +88,7 @@ internal sealed class MapMarkerRenderer : IDisposable
 
         DrawPlayer(view, player, floor);
 
-        Texture.SetPixels32(_pixels);
-        Texture.Apply(false);
+        UploadChanges();
     }
 
     private void Square(Point p, int r, Color32 c)
@@ -124,7 +142,39 @@ internal sealed class MapMarkerRenderer : IDisposable
             }
 
             _pixels[index] = c;
+            IncludePixel(x, y);
         }
+    }
+
+    private void IncludePixel(int x, int y)
+    {
+        _left = Mathf.Min(_left, x);
+        _right = Mathf.Max(_right, x);
+        _bottom = Mathf.Min(_bottom, y);
+        _top = Mathf.Max(_top, y);
+    }
+
+    private void UploadChanges()
+    {
+        if (_right < _left || _top < _bottom)
+        {
+            return;
+        }
+
+        var width = _right - _left + 1;
+        var height = _top - _bottom + 1;
+        if (_upload == null || _upload.Length != width * height)
+        {
+            _upload = new Color32[width * height];
+        }
+
+        for (var y = 0; y < height; y++)
+        {
+            Array.Copy(_pixels, (_bottom + y) * Size + _left, _upload, y * width, width);
+        }
+
+        Texture.SetPixels32(_left, _bottom, width, height, _upload);
+        Texture.Apply(false);
     }
 
     private void ClearPixels()
@@ -140,9 +190,15 @@ internal sealed class MapMarkerRenderer : IDisposable
     /// <summary>Removes markers belonging to an exited session or superseded scan.</summary>
     public void Clear()
     {
+        _left = _bottom = Size;
+        _right = _top = -1;
+        foreach (var index in _touched)
+        {
+            IncludePixel(index % Size, index / Size);
+        }
+
         ClearPixels();
-        Texture.SetPixels32(_pixels);
-        Texture.Apply(false);
+        UploadChanges();
     }
 
     /// <inheritdoc/>

@@ -5,14 +5,13 @@ namespace DungeonGuide;
 /// <summary>Adapts the initial scan neighborhood to Unity sampling bounds without changing dungeon identity.</summary>
 internal static class ScanPreviewArea
 {
-    /// <summary>Restricts first-time explored-mode sampling to the local player's current neighborhood.</summary>
+    /// <summary>Restricts first-time sampling in either reveal mode to the local player's current neighborhood.</summary>
     /// <param name="session">Dungeon whose completed scan, if any, must remain available.</param>
-    /// <param name="revealAll">Whether the player requested the complete map immediately.</param>
     /// <returns>A private sampling area, or null when a preview is unnecessary or unavailable.</returns>
-    public static DungeonArea Create(DungeonSession session, bool revealAll)
+    public static DungeonArea Create(DungeonSession session)
     {
         var player = Player.m_localPlayer;
-        if (session.Scan != null || revealAll || !player)
+        if (session.Scan != null || !player)
         {
             return null;
         }
@@ -34,6 +33,7 @@ internal static class ScanPreviewArea
             IsManual = area.IsManual,
             Bounds = bounds,
             Rooms = area.Rooms,
+            RoomVolumes = area.RoomVolumes,
             Entrance = area.Entrance
         };
     }

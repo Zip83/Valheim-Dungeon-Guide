@@ -27,6 +27,12 @@ internal sealed class DungeonSession
     /// </summary>
     public readonly Exploration Exploration = new();
 
+    /// <summary>Overview-only union of visible samples and entered room layers.</summary>
+    public readonly Exploration OverviewExploration = new();
+
+    /// <summary>Overview-only coverage of actually entered rooms.</summary>
+    public readonly Exploration VisitedRoomCoverage = new();
+
     /// <summary>
     /// Chest identity and collection registry backed by this session's save data.
     /// </summary>
@@ -49,6 +55,9 @@ internal sealed class DungeonSession
 
     /// <summary>Whether published geometry covers only the initial neighborhood rather than the complete dungeon.</summary>
     public bool HasPartialGeometry;
+
+    /// <summary>Whether the published graph has complete passage and architectural floor analysis.</summary>
+    public bool NavigationReady;
 
     /// <summary>
     /// Whether saving is disabled to protect corrupt or unsupported data.

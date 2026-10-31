@@ -25,7 +25,7 @@ internal sealed class NativeMapPresenter : IDisposable
     private readonly DungeonOverviewRenderer _overviewRenderer = new();
     private Minimap _boundMap;
     private bool _controlsCzech;
-    private int _lastFloor = -1;
+    private float _lastFloorHeight = float.NaN;
     private int _boundFloorCount;
     private readonly FloorNumbering _numbering;
 
@@ -195,12 +195,16 @@ internal sealed class NativeMapPresenter : IDisposable
 
     private void ShowDungeon(DungeonSession session)
     {
+        _small.SetSurface(_renderer.Texture, _renderer.Material);
+        _large.SetSurface(_renderer.Texture, _renderer.Material);
         var uv = _renderer.UV(UnityPoints.P(Player.m_localPlayer.transform.position));
-        if (_lastFloor != _renderer.DisplayedFloor)
+        var height = _renderer.DisplayedHeight;
+        if (float.IsNaN(_lastFloorHeight) || Mathf.Abs(_lastFloorHeight - height) > 1.2f)
         {
-            _lastFloor = _renderer.DisplayedFloor;
             _viewport.Center();
         }
+
+        _lastFloorHeight = height;
 
         _viewport.FollowOpening(() => _renderer.FitFloor(session, _renderer.DisplayedFloor), Minimap.IsOpen());
         var span = Mathf.Clamp(40 / Mathf.Max(1, _renderer.Span), 0.12f, 1);

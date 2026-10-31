@@ -41,6 +41,7 @@ internal sealed class DungeonAreaFactory
             Label = generator.m_themes.ToString(),
             Bounds = DungeonRoomGeometry.Enclose(boxes),
             Rooms = boxes,
+            RoomVolumes = rooms.Select(room => new DungeonRoom(room)).ToArray(),
             Entrance = FindEntrance(rooms)
         };
     }

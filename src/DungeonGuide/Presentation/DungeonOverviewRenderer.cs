@@ -30,6 +30,9 @@ internal sealed class DungeonOverviewRenderer : IDisposable
     /// <summary>Whether the first visible-floor classification is still running.</summary>
     public bool Preparing => _catalogJob != null && Floors.Count == 0;
 
+    /// <summary>Returns the material paired with a completed floor thumbnail.</summary>
+    public Material Material(int floor) => _thumbnails.TryGetValue(floor, out var thumbnail) ? thumbnail.Material : null;
+
     /// <summary>Returns a completed thumbnail without allocating or performing rendering work.</summary>
     public Texture2D Texture(int floor) => _thumbnails.TryGetValue(floor, out var thumbnail) ? thumbnail.Texture : null;
 
@@ -105,11 +108,18 @@ internal sealed class DungeonOverviewRenderer : IDisposable
     private void UpdateCatalog(DungeonSession session)
     {
         if (_catalogJob == null
-            && (_catalog == null || !_revealAll && _explorationRevision != session.Exploration.Revision))
+            && (_catalog == null || !_revealAll && _explorationRevision != session.OverviewExploration.Revision))
         {
-            _explorationRevision = session.Exploration.Revision;
-            _catalog = new OverviewFloorCatalog();
-            _catalogJob = _catalog.Build(_graph, session.Exploration, _revealAll).GetEnumerator();
+            _explorationRevision = session.OverviewExploration.Revision;
+            if (_catalog == null)
+            {
+                _catalog = new OverviewFloorCatalog();
+                _catalogJob = _catalog.Build(_graph, session.OverviewExploration, _revealAll).GetEnumerator();
+            }
+            else
+            {
+                _catalogJob = _catalog.Update(session.OverviewExploration).GetEnumerator();
+            }
         }
 
         while (_catalogJob != null && _budget.TryStartWork())
@@ -131,7 +141,23 @@ internal sealed class DungeonOverviewRenderer : IDisposable
             return;
         }
 
+        var current = Player.m_localPlayer && session.Floors.Count > 0
+            ? FloorDetector.Nearest(session.Floors, Player.m_localPlayer.transform.position.y) : -1;
         var floor = Floors[_cursor++ % Floors.Count];
+        foreach (var entry in Floors)
+        {
+            if (entry.Floor == current)
+            {
+                AdvanceThumbnail(session, entry);
+                break;
+            }
+        }
+
+        AdvanceThumbnail(session, floor);
+    }
+
+    private void AdvanceThumbnail(DungeonSession session, OverviewFloor floor)
+    {
         if (!_thumbnails.TryGetValue(floor.Floor, out var thumbnail))
         {
             thumbnail = new OverviewThumbnailRenderer();

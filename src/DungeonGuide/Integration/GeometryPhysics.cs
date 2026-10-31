@@ -8,6 +8,15 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class GeometryPhysics
 {
+    /// <summary>Shared soft physics budget for scanning and exploration in the current game frame.</summary>
+    public FrameWorkBudget Work { get; private set; } = new(4096, 1, frame: () => Time.frameCount);
+
+    /// <summary>Applies the configured scan limits to the shared physics scheduler.</summary>
+    public void ConfigureBudget(int steps, float milliseconds)
+    {
+        Work = new FrameWorkBudget(steps, milliseconds, frame: () => Time.frameCount);
+    }
+
     private readonly RaycastHit[] _passageHits = new RaycastHit[128];
     private readonly RaycastHit[] _clearanceHits = new RaycastHit[128];
     private readonly Collider[] _standingHits = new Collider[128];
