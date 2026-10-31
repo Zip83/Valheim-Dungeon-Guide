@@ -27,6 +27,9 @@ internal sealed class MapViewportController
         _dragging = false;
     }
 
+    /// <summary>Discards a pending map drag when a dialog or overview takes ownership of pointer input.</summary>
+    public void SuspendInput() => _dragging = false;
+
     /// <summary>
     /// Fits the first opening while retaining later manual pan and zoom.
     /// </summary>

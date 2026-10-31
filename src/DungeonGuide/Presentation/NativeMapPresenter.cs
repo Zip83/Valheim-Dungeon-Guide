@@ -137,9 +137,13 @@ internal sealed class NativeMapPresenter : IDisposable
 
         var overviewVisible = ready && Minimap.IsOpen() && _state.Overview;
         UpdateOverview(session, overviewVisible);
-        if (ready && Minimap.IsOpen() && !overviewVisible)
+        if (ready && Minimap.IsOpen() && !overviewVisible && !_controls.LegendOpen)
         {
             _viewport.Tick(_large, _controls.Root, session, _state, _renderer, _targets);
+        }
+        else
+        {
+            _viewport.SuspendInput();
         }
     }
 

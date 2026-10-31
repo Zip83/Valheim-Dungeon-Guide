@@ -163,6 +163,14 @@ internal sealed class GuideText
 
     internal string PreviewSuffix => Get(nameof(PreviewSuffix));
 
+    internal string Legend => Get(nameof(Legend));
+
+    internal string LegendOverlayHint => Get(nameof(LegendOverlayHint));
+
+    internal string LegendClose => Get(nameof(LegendClose));
+
+    internal string LegendScrollHint => Get(nameof(LegendScrollHint));
+
     internal string LegendExplored => Get(nameof(LegendExplored));
 
     internal string LegendVisited => Get(nameof(LegendVisited));

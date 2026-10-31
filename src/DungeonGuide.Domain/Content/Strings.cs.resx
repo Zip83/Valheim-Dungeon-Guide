@@ -282,4 +282,16 @@
     <data name="LegendGrapple" xml:space="preserve">
         <value>Grappling hook; + místo zachycení</value>
     </data>
+    <data name="Legend" xml:space="preserve">
+        <value>Legenda</value>
+    </data>
+    <data name="LegendClose" xml:space="preserve">
+        <value>Zavřít</value>
+    </data>
+    <data name="LegendScrollHint" xml:space="preserve">
+        <value>Posunutím zobrazíš všechny barvy a značky.</value>
+    </data>
+    <data name="LegendOverlayHint" xml:space="preserve">
+        <value>Legenda: otevři mapu dungeonu.</value>
+    </data>
 </root>

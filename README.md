@@ -151,3 +151,8 @@ respective owners. External reference assemblies are not included in the plugin 
 
 Target Valheim 1.0.21. Maps use incremental CPU compositing for floor colors, exploration and visits.
 See [fog updates](docs/incremental-fog.md) and [room visits](docs/room-visits.md).
+
+The **Legend** button opens a separate, scrollable color legend with native fonts
+and actual color swatches. Close it with **Close** or by clicking outside the panel.
+The legend starts hidden and closes when leaving the large dungeon map; map pointer
+interaction is blocked while it is open.

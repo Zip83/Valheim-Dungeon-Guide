@@ -282,4 +282,16 @@
     <data name="LegendGrapple" xml:space="preserve">
         <value>Grappling hook; + anchor</value>
     </data>
+    <data name="Legend" xml:space="preserve">
+        <value>Legend</value>
+    </data>
+    <data name="LegendClose" xml:space="preserve">
+        <value>Close</value>
+    </data>
+    <data name="LegendScrollHint" xml:space="preserve">
+        <value>Scroll to see all colors and symbols.</value>
+    </data>
+    <data name="LegendOverlayHint" xml:space="preserve">
+        <value>Legend: open the dungeon map.</value>
+    </data>
 </root>

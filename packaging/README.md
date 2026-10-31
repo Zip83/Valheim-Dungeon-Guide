@@ -122,3 +122,8 @@ License: MIT; see LICENSE.
 Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to 25 m,
 limited by walls and physical floors. The package contains the plugin DLLs, Czech translations,
 installation notes and exact build identity. Preserve the cs translation directory when installing.
+
+The **Legend** button opens a separate, scrollable color legend with native fonts
+and actual color swatches. Close it with **Close** or by clicking outside the panel.
+The legend starts hidden and closes when leaving the large dungeon map; map pointer
+interaction is blocked while it is open.
