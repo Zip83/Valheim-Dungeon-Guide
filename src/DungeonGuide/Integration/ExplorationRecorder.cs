@@ -63,7 +63,7 @@ internal sealed class ExplorationRecorder
         }
     }
 
-    private float Radius => Mathf.Clamp(_settings.ExploreRadius.Value, 1, 100);
+    private float Radius => Mathf.Clamp(_settings.ExploreRadius.Value, 1, ExplorationRevealPolicy.MaximumRadius);
 
     private void RefreshDistantSweep(ScanResult scan, Vector3 player)
     {

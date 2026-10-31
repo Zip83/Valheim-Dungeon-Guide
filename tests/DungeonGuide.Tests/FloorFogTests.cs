@@ -7,12 +7,18 @@ namespace DungeonGuide.Tests;
 /// <summary>Protects circular exploration, physical floors, opaque unknown space, and saved fog restoration.</summary>
 public sealed class FloorFogTests
 {
-    /// <summary>Revealing has a twenty-five-metre horizontal radius on the physical floor.</summary>
+    /// <summary>Revealing has a ten-metre horizontal radius on the physical floor.</summary>
     [Theory]
-    [InlineData(25, 0, 0, true)]
-    [InlineData(17, 0, 17, true)]
-    [InlineData(22, 0, 22, false)]
-    [InlineData(25.01f, 0, 0, false)]
+    [InlineData(10, 0, 0, true)]
+    [InlineData(-10, 0, 0, true)]
+    [InlineData(0, 0, 10, true)]
+    [InlineData(0, 0, -10, true)]
+    [InlineData(6, 0, 8, true)]
+    [InlineData(7, 0, 7, true)]
+    [InlineData(8, 0, 8, false)]
+    [InlineData(-8, 0, -8, false)]
+    [InlineData(10, 0, 10, false)]
+    [InlineData(10.01f, 0, 0, false)]
     [InlineData(0, 0.91f, 0, true)]
     public void RestrictsRevealToCircularRange(float x, float y, float z, bool expected)
     {
@@ -24,14 +30,44 @@ public sealed class FloorFogTests
         Assert.Equal(expected, explored.Has(sample));
     }
 
-    /// <summary>A smaller default does not override an explicitly configured discovery radius.</summary>
-    [Fact]
-    public void PreservesExplicitRadiusOverride()
+    /// <summary>A smaller configured radius includes its boundary and excludes more distant samples.</summary>
+    [Theory]
+    [InlineData(5, true)]
+    [InlineData(6, false)]
+    public void PreservesSmallerRadiusOverride(float distance, bool expected)
     {
         var explored = new Exploration();
-        var sample = new NavNode(new Point(30, 0, 0));
+        var sample = new NavNode(new Point(distance, 0, 0));
 
-        Assert.True(ExplorationRevealPolicy.TryReveal(explored, sample, new Point(), 0, (_, _) => true, 30));
+        Assert.Equal(expected, ExplorationRevealPolicy.TryReveal(explored, sample, new Point(), 0, (_, _) => true, 5));
+    }
+
+    /// <summary>Legacy radius values cannot reveal beyond ten metres or invoke distant visibility queries.</summary>
+    [Theory]
+    [InlineData(25)]
+    [InlineData(100)]
+    public void CapsLegacyRadius(float radius)
+    {
+        var explored = new Exploration();
+        var sample = new NavNode(new Point(11, 0, 0));
+
+        Assert.False(ExplorationRevealPolicy.TryReveal(explored, sample, new Point(), 0,
+            (_, _) => throw new InvalidOperationException("Out-of-range visibility query"), radius));
+        Assert.Empty(explored.Export());
+    }
+
+    /// <summary>Moving the player translates the circular boundary away from the world origin.</summary>
+    [Fact]
+    public void CentersCircleOnPlayer()
+    {
+        var explored = new Exploration();
+        var player = new Point(100, 0, -50);
+        var boundary = new NavNode(new Point(106, 0, -42));
+        var corner = new NavNode(new Point(108, 0, -42));
+
+        Assert.True(ExplorationRevealPolicy.TryReveal(explored, boundary, player, 0, (_, _) => true));
+        Assert.False(ExplorationRevealPolicy.TryReveal(explored, corner, player, 0,
+            (_, _) => throw new InvalidOperationException("Square-corner visibility query")));
     }
 
     /// <summary>A wall blocks exploration even when a same-floor sample is near the player.</summary>

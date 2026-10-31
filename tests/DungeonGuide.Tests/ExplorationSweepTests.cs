@@ -11,7 +11,7 @@ public sealed class ExplorationSweepTests
     public void MovementDoesNotRestartDistantSweep()
     {
         using var sweep = new ExplorationSweep();
-        var distant = new NavNode(new Point(25, 0, 0));
+        var distant = new NavNode(new Point(10, 0, 0));
         sweep.RefreshDistant(new[] { null, null, distant });
         var exploration = new Exploration();
         for (var frame = 0; frame < 10 && !exploration.Has(distant); frame++)
@@ -52,7 +52,7 @@ public sealed class ExplorationSweepTests
     {
         using var sweep = new ExplorationSweep();
         sweep.RefreshNearby(new[] { new NavNode(new Point()) });
-        sweep.RefreshDistant(new[] { new NavNode(new Point(20, 0, 0)) });
+        sweep.RefreshDistant(new[] { new NavNode(new Point(10, 0, 0)) });
         sweep.Reset();
 
         Assert.False(sweep.HasDistant);
@@ -64,7 +64,7 @@ public sealed class ExplorationSweepTests
     public void CompletedSweepCanRetryBlockedSample()
     {
         using var sweep = new ExplorationSweep();
-        var sample = new NavNode(new Point(20, 0, 0));
+        var sample = new NavNode(new Point(10, 0, 0));
         var exploration = new Exploration();
         sweep.RefreshDistant(new[] { sample });
         Assert.True(sweep.TryTake(out var blocked));
