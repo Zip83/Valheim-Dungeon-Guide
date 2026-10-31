@@ -11,6 +11,7 @@ internal static class MapPalette
     internal static readonly Color32 TextureBackground = new Color32(17, 22, 27, 255);
     internal static readonly Color32 ExploredFloor = new Color32(159, 139, 99, 255);
     internal static readonly Color32 FloorOutline = new Color32(63, 51, 35, 255);
+    internal static readonly Color32 VisitedRoom = new Color32(124, 177, 117, 255);
     internal static readonly Color32 ScannedFloor = new Color32(91, 109, 121, 255);
     internal static readonly Color32 Route = new Color32(255, 222, 65, 255);
     internal static readonly Color32 FloorTransition = new Color32(105, 198, 255, 255);

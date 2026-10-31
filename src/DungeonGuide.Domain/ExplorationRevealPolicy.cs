@@ -6,18 +6,21 @@ namespace DungeonGuide;
 internal static class ExplorationRevealPolicy
 {
     /// <summary>
-    /// Reveals only visible samples on the player's physical floor within three metres and vertical tolerance.
+    /// Reveals only visible samples on the player's physical floor within the configured horizontal radius.
     /// The visibility callback is not invoked for known or out-of-range samples.
     /// </summary>
     public static bool TryReveal(Exploration exploration, NavNode node, Point player, int physicalFloor,
-        Func<Point, Point, bool> visible)
+        Func<Point, Point, bool> visible, float radius = 30)
     {
         if (physicalFloor < 0 || node.Floor != physicalFloor || exploration.Has(node)
-            || Math.Abs(player.y - node.Position.y) > 0.9f || Point.Distance(player, node.Position) > 3)
+            || HorizontalSquared(player, node.Position) > radius * radius)
         {
             return false;
         }
 
         return visible(player, node.Position) && exploration.Reveal(node);
     }
+
+    private static float HorizontalSquared(Point a, Point b) =>
+        (a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z);
 }

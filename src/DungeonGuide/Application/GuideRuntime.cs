@@ -20,7 +20,6 @@ internal sealed class GuideRuntime : IDisposable
     private readonly ExplorationRecorder _exploration;
     private readonly TraversalRecorder _traversals;
     private float _nextDetect;
-    private float _nextTrack;
     private float _nextSave;
     private float _doorRescan = float.PositiveInfinity;
 
@@ -184,6 +183,7 @@ internal sealed class GuideRuntime : IDisposable
 
         Session = null;
         _traversals.Reset();
+        _exploration.Reset();
         _doorRescan = float.PositiveInfinity;
         Left?.Invoke();
     }
@@ -236,12 +236,8 @@ internal sealed class GuideRuntime : IDisposable
     {
         if (Session.Scan != null)
         {
-            if (Time.unscaledTime >= _nextTrack)
-            {
-                _nextTrack = Time.unscaledTime + 0.35f;
-                _exploration.Track(Session.Scan, Session.Exploration, player.transform.position,
-                    Session.Floors.Count == 0 ? -1 : FloorDetector.Nearest(Session.Floors, player.transform.position.y));
-            }
+            _exploration.Track(Session.Scan, Session.Exploration, player.transform.position,
+                Session.Floors.Count == 0 ? -1 : FloorDetector.Nearest(Session.Floors, player.transform.position.y));
 
             // Recording takeoff/landing must run every frame; proof revalidation is throttled separately.
             if (Session.NavigationReady)

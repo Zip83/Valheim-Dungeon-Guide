@@ -8,6 +8,28 @@ namespace DungeonGuide;
 public sealed class Exploration
 {
     private readonly HashSet<string> _known = new();
+    private readonly Dictionary<int, int> _floorRevisions = new();
+
+    /// <summary>Monotonic additions since the latest load, independently consumed by each map layer.</summary>
+    internal List<(string Key, int Floor, long Timestamp)> Changes { get; } = new();
+
+    /// <summary>Changes when replacing the underlying saved keys, invalidating incremental consumers.</summary>
+    internal int Generation
+    {
+        get; private set;
+    }
+
+    /// <summary>Returns the revision for a single physical floor, including unclassified additions.</summary>
+    internal int FloorRevision(int floor) =>
+        (_floorRevisions.TryGetValue(floor, out var revision) ? revision : 0)
+        + (_floorRevisions.TryGetValue(-1, out var unknown) ? unknown : 0);
+
+    private void Changed(string key, int floor)
+    {
+        Changes.Add((key, floor, System.Diagnostics.Stopwatch.GetTimestamp()));
+        _floorRevisions[floor] = (_floorRevisions.TryGetValue(floor, out var revision) ? revision : 0) + 1;
+        Revision++;
+    }
 
     /// <summary>
     /// Change counter used to invalidate rendered exploration caches.
@@ -24,6 +46,9 @@ public sealed class Exploration
     public void Load(IEnumerable<string> keys)
     {
         _known.Clear();
+        Changes.Clear();
+        _floorRevisions.Clear();
+        Generation++;
         foreach (var key in keys)
         {
             _known.Add(key);
@@ -58,7 +83,7 @@ public sealed class Exploration
             return false;
         }
 
-        Revision++;
+        Changed(node.Key, node.Floor);
         return true;
     }
 
@@ -74,7 +99,7 @@ public sealed class Exploration
             return false;
         }
 
-        Revision++;
+        Changed(Point.Key(p), -1);
         return true;
     }
 
