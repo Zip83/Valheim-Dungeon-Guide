@@ -222,8 +222,7 @@ internal sealed class NavigationCoordinator
         var destination = ResolvePointDestination(session);
         var policy = new RoutePolicy
         {
-            Breakables = view.AllowBreakables,
-            Jumps = view.AllowJumps
+            Breakables = view.AllowBreakables
         };
         Route = _planner.Find(
             scan.Graph,

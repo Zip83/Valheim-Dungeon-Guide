@@ -83,8 +83,6 @@ internal sealed class GuideText
 
     internal string BreakablePassages => Get(nameof(BreakablePassages));
 
-    internal string VerifiedJumps => Get(nameof(VerifiedJumps));
-
     internal string Yes => Get(nameof(Yes));
 
     internal string No => Get(nameof(No));

@@ -102,9 +102,6 @@
     <data name="BreakablePassages" xml:space="preserve">
         <value>Breakable passages: </value>
     </data>
-    <data name="VerifiedJumps" xml:space="preserve">
-        <value>Verified jumps: </value>
-    </data>
     <data name="Yes" xml:space="preserve">
         <value>YES</value>
     </data>

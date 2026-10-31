@@ -54,16 +54,17 @@ public sealed class RoutePlannerTests
     }
 
     /// <summary>
-    /// Special passages require both verification and the corresponding opt-in.
+    /// Special passages require verification; only destructive passages require an opt-in.
     /// </summary>
     [Theory]
-    [InlineData(PassageKind.Breakable, true, false, false, false)]
-    [InlineData(PassageKind.Breakable, true, true, false, true)]
-    [InlineData(PassageKind.Drop, true, false, false, false)]
-    [InlineData(PassageKind.Drop, true, false, true, true)]
-    [InlineData(PassageKind.Jump, false, false, true, false)]
-    [InlineData(PassageKind.Breakable, false, true, false, false)]
-    public void AppliesSpecialPassagePolicy(PassageKind kind, bool verified, bool breakables, bool jumps, bool allowed)
+    [InlineData(PassageKind.Breakable, true, false, false)]
+    [InlineData(PassageKind.Breakable, true, true, true)]
+    [InlineData(PassageKind.Drop, true, false, true)]
+    [InlineData(PassageKind.Jump, true, false, true)]
+    [InlineData(PassageKind.Drop, false, false, false)]
+    [InlineData(PassageKind.Jump, false, false, false)]
+    [InlineData(PassageKind.Breakable, false, true, false)]
+    public void AppliesSpecialPassagePolicy(PassageKind kind, bool verified, bool breakables, bool allowed)
     {
         var graph = new NavGraph();
         graph.Nodes.Add(new NavNode(new Point(0, 0, 0)));
@@ -71,8 +72,7 @@ public sealed class RoutePlannerTests
         graph.Connect(0, 1, kind, verified, false);
         var policy = new RoutePolicy
         {
-            Breakables = breakables,
-            Jumps = jumps
+            Breakables = breakables
         };
         var route = new RoutePlanner().Find(graph, 0, n => n == 1, policy);
         Assert.Equal(allowed, route.Count == 2);
@@ -88,7 +88,7 @@ public sealed class RoutePlannerTests
         graph.Nodes.Add(new NavNode(new Point(0, 2, 0)));
         graph.Nodes.Add(new NavNode(new Point(1, 0, 0)));
         graph.Connect(0, 1, PassageKind.Drop, true, false);
-        Assert.Empty(new RoutePlanner().Find(graph, 1, n => n == 0, new RoutePolicy { Jumps = true }));
+        Assert.Empty(new RoutePlanner().Find(graph, 1, n => n == 0, new RoutePolicy()));
     }
 
     /// <summary>

@@ -77,8 +77,8 @@ must not be copied from the build references into the plugin directory.
 | **F9 / Shift+F9** | Start exploration navigation / stop navigation |
 | **F10** | Navigate to the known entrance, or explicitly labeled scan origin |
 
-The map buttons also select reveal mode, navigation targets, and optional
-breakable/jump routes. Mouse wheel zooms; dragging pans the dungeon map.
+The map buttons select reveal mode, navigation targets, and optional breakable routes.
+Verified jumps are always allowed. Mouse wheel zooms; dragging pans the dungeon map.
 Mark a chest by opening it or aiming at its interaction target. Cycling with F8
 selects a navigation destination; it does not select the chest affected by F7.
 Collection markers record your confirmation; the plugin does not move items.
@@ -97,7 +97,8 @@ configurable there. Insert rescans geometry; F5 remains available for the Valhei
 If an existing configuration still has `[Keys] Rescan = F5`, change it to `Insert`;
 saved shortcut overrides are preserved.
 `Display.RevealAll` defaults to `false`. The overlay always starts hidden.
-Breakable and jump routes both default to disabled.
+Verified jump/drop routes are always enabled; breakable routes default to disabled.
+The former Routes.AllowJumps setting is ignored; its saved false value cannot disable verified jumps.
 `Display.AllowOutdoorMapping` defaults to `false`: Insert at an outdoor base leaves
 its ordinary map alone. Enable this option only if you want manual scans using Insert
 outside dungeon interiors. Enabling it does not start outdoor scans automatically.
@@ -127,7 +128,7 @@ individual engine query cannot be interrupted, so the budget is not a hard frame
 guarantee. Actual frame times and compatibility with other mods require in-game checks.
 
 Ordinary walking routes are preferred. Optional breakable routes require an
-approved exact prefab and geometry checks. Optional jumps and drops require a
+approved exact prefab and geometry checks. Jumps and drops are always permitted after a
 previously observed directional traversal and current geometry/capability checks.
 The guide does not open doors, break objects, jump, or control your character.
 
