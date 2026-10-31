@@ -18,3 +18,8 @@ graph; stair markers become available after navigation preparation.
 Automated checks cover stair policies, same-floor raster indexing, both landing directions, and
 localization key parity. Native UI wrapping, overlay placement and rendering in Valheim need manual
 verification; compiling against game references does not establish those gameplay checks.
+
+The player pointer is larger, with a dark outline, softly shaded white fill and antialiased edges.
+It is centered at the player's position and follows the original character heading. Detail, minimap
+and overlay share this marker layer. Glyph pixels are cached until heading changes by one degree;
+movement only stamps the existing glyph at its new position. Other-floor browsing still hides it.
