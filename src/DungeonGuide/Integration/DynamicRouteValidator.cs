@@ -42,6 +42,11 @@ internal sealed class DynamicRouteValidator
             return null;
         }
 
+        if (navigation.IsGrapplePassage(route[near], route[next]))
+        {
+            return null;
+        }
+
         var a = graph.Nodes[route[near]];
         var b = graph.Nodes[route[next]];
         var edge = a.Edges.FirstOrDefault(e => e.To == route[next]);

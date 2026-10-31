@@ -11,6 +11,9 @@ namespace DungeonGuide;
 internal sealed class MapMarkerRenderer : IDisposable
 {
     private const int Size = 768;
+    private const int RouteRadius = 2;
+    private const int RouteOutlineRadius = 3;
+    private const int AnchorRadius = 7;
     private readonly List<int> _touched = new();
     private readonly Color32[] _pixels = new Color32[Size * Size];
     private readonly PlayerMarkerRenderer _player;
@@ -109,7 +112,7 @@ internal sealed class MapMarkerRenderer : IDisposable
         }
     }
 
-    private void Segment(Point a, Point b, Color32 c)
+    private void Segment(Point a, Point b, Color32 c, int radius)
     {
         var va = UV(a) * Size;
         var vb = UV(b) * Size;
@@ -117,8 +120,39 @@ internal sealed class MapMarkerRenderer : IDisposable
         for (var i = 0; i <= n; i++)
         {
             var p = Vector2.Lerp(va, vb, (float)i / n);
-            Set((int)p.x, (int)p.y, c);
-            Set((int)p.x + 1, (int)p.y, c);
+            StrokePixel((int)p.x, (int)p.y, radius, c);
+        }
+    }
+
+    private void StrokePixel(int x, int y, int radius, Color32 color)
+    {
+        for (var dx = -radius; dx <= radius; dx++)
+        {
+            for (var dy = -radius; dy <= radius; dy++)
+            {
+                if (dx * dx + dy * dy <= radius * radius)
+                {
+                    Set(x + dx, y + dy, color);
+                }
+            }
+        }
+    }
+
+    private void DrawGrappleAnchor(Point anchor)
+    {
+        var uv = UV(anchor) * Size;
+        var x = Mathf.RoundToInt(uv.x);
+        var y = Mathf.RoundToInt(uv.y);
+        AnchorCross(x, y, 2, MapPalette.RouteOutline);
+        AnchorCross(x, y, 0, MapPalette.GrappleRoute);
+    }
+
+    private void AnchorCross(int x, int y, int radius, Color32 color)
+    {
+        for (var offset = -AnchorRadius; offset <= AnchorRadius; offset++)
+        {
+            StrokePixel(x + offset, y, radius, color);
+            StrokePixel(x, y + offset, radius, color);
         }
     }
 
@@ -217,13 +251,20 @@ internal sealed class MapMarkerRenderer : IDisposable
         {
             var a = graph.Nodes[navigator.Route[i - 1]];
             var b = graph.Nodes[navigator.Route[i]];
-            if (a.Floor != floor || b.Floor != floor
+            var grapple = navigator.IsGrapplePassage(navigator.Route[i - 1], navigator.Route[i]);
+            var onFloor = grapple ? a.Floor == floor || b.Floor == floor : a.Floor == floor && b.Floor == floor;
+            if (!onFloor
                 || !reveal && (!session.Exploration.Has(a) || !session.Exploration.Has(b)))
             {
                 continue;
             }
 
-            Segment(a.Position, b.Position, MapPalette.Route);
+            Segment(a.Position, b.Position, MapPalette.RouteOutline, RouteOutlineRadius);
+            Segment(a.Position, b.Position, grapple ? MapPalette.GrappleRoute : MapPalette.Route, RouteRadius);
+            if (grapple)
+            {
+                DrawGrappleAnchor(UnityPoints.P(navigator.GrappleAnchor));
+            }
         }
     }
 

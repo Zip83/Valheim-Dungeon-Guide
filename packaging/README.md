@@ -107,6 +107,11 @@ Other game languages fall back to English. Existing chest names and notes stay u
 Maps depend on loaded geometry. Routes and detected floors may be incomplete.
 Verified jumps are automatic; breakable routes are disabled by default. The guide never controls
 your character or transfers inventory items.
+When ordinary routing fails, a usable grappling hook can enable a single checked
+crossing. Orange route sections and crosses identify the hook and its anchor;
+the HUD warns explicitly. Ordinary sections are yellow; all routes have thicker,
+outlined strokes. Hook firing and release remain manual. Swinging, chained hooks,
+and modded drag/random/charged projectile attacks are not inferred.
 
 [Full documentation and source](https://github.com/Zip83/Valheim-Dungeon-Guide)
 

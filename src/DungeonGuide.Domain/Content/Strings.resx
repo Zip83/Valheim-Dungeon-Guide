@@ -270,4 +270,16 @@
     <data name="LegendWaypoint" xml:space="preserve">
         <value>Personal return location</value>
     </data>
+    <data name="GrappleInstruction" xml:space="preserve">
+        <value>GRAPPLING HOOK — orange cross marks the anchor; allow for the shot arc</value>
+    </data>
+    <data name="GrappleRequired" xml:space="preserve">
+        <value>Route requires a grappling hook</value>
+    </data>
+    <data name="SearchingGrapple" xml:space="preserve">
+        <value>No ordinary route — checking grappling hook landings…</value>
+    </data>
+    <data name="LegendGrapple" xml:space="preserve">
+        <value>Grappling hook; + anchor</value>
+    </data>
 </root>

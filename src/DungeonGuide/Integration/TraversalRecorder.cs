@@ -80,7 +80,8 @@ internal sealed class TraversalRecorder
 
     private bool CanObserve(DungeonSession session, Player player)
     {
-        return session.Scan != null && !player.IsTeleporting() && !player.IsDead() && _debugFly != null
+        return session.Scan != null && !player.IsTeleporting() && !player.IsDead() && player.m_grappling <= 0
+            && !GrapplingPoint.m_localGrappler && _debugFly != null
             && !(bool)_debugFly.GetValue(player);
     }
 
