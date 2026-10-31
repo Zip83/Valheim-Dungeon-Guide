@@ -14,6 +14,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
     private GuideGameLoop _loop;
     private MapHooks _hooks;
     private WorldChangeHooks _changes;
+    private DungeonEntranceHooks _entranceHooks;
     private float _nextError;
 
     /// <summary>
@@ -30,7 +31,8 @@ public sealed class DungeonGuide : BaseUnityPlugin
         var physics = new GeometryPhysics();
         var locator = new GraphLocator(physics);
         var lifecycle = CreateSessionLifecycle(notice, text);
-        var runtime = CreateRuntime(settings, physics, locator, lifecycle, notice, text);
+        var entrances = new DungeonEntranceRecorder();
+        var runtime = CreateRuntime(settings, physics, locator, lifecycle, notice, text, entrances);
 
         var floorPolicy = new FloorNavigationPolicy();
         var numbering = new FloorNumbering(language.Current);
@@ -70,6 +72,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
 
         InstallMapHooks(maps, view, runtime, settings);
         InstallWorldChangeHooks(runtime, settings);
+        _entranceHooks = new DungeonEntranceHooks(entrances.Observe, e => Logger.LogError(e));
 
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.DisplayVersion} loaded. "
             + "M: map; Alt+M: World/Dungeon; F6: optional overlay. Explored-only by default.");
@@ -116,6 +119,8 @@ public sealed class DungeonGuide : BaseUnityPlugin
     /// </summary>
     private void OnDestroy()
     {
+        _entranceHooks?.Dispose();
+        _entranceHooks = null;
         _changes?.Dispose();
         _changes = null;
         _hooks?.Dispose();
@@ -152,12 +157,12 @@ public sealed class DungeonGuide : BaseUnityPlugin
     }
 
     private GuideRuntime CreateRuntime(GuideSettings settings, GeometryPhysics physics, GraphLocator locator,
-        SessionLifecycle lifecycle, UserNotice notice, GuideText text)
+        SessionLifecycle lifecycle, UserNotice notice, GuideText text, DungeonEntranceRecorder entrances)
     {
         return new GuideRuntime(
             this,
             settings,
-            new DungeonLocator(text),
+            new DungeonLocator(text, entrances),
             new DungeonActivationPolicy(),
             CreateScanner(physics, settings),
             new FloorDetector(new FloorLandingDetector()),

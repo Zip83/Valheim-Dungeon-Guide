@@ -353,14 +353,37 @@ internal sealed class MapMarkerRenderer : IDisposable
 
     private void DrawEntrance(DungeonSession session, int floor, bool reveal)
     {
-        var graph = session.Scan.Graph;
-
         var exit = session.Area.Entrance ?? session.Data.start;
+        if (FloorDetector.Nearest(session.Floors, exit.y) != floor)
+        {
+            return;
+        }
+
+        if (session.Area.Entrance.HasValue)
+        {
+            DrawKnownEntrance(exit);
+            return;
+        }
+
+        var graph = session.Scan.Graph;
         var exitNode = graph.Nearest(exit, 3);
-        if (FloorDetector.Nearest(session.Floors, exit.y) == floor
-            && (reveal || exitNode >= 0 && session.Exploration.Has(graph.Nodes[exitNode])))
+        if (reveal || exitNode >= 0 && session.Exploration.Has(graph.Nodes[exitNode]))
         {
             Square(exit, 6, MapPalette.Entrance);
+        }
+    }
+
+    private void DrawKnownEntrance(Point exit)
+    {
+        var reveal = _reveal;
+        _reveal = true;
+        try
+        {
+            Square(exit, 6, MapPalette.Entrance);
+        }
+        finally
+        {
+            _reveal = reveal;
         }
     }
 

@@ -10,14 +10,17 @@ namespace DungeonGuide;
 internal sealed class DungeonAreaFactory
 {
     private readonly GuideText _text;
+    private readonly DungeonEntranceRecorder _entrances;
 
     /// <summary>
     /// Uses localized copy only for automatically supplied manual-area labels.
     /// </summary>
     /// <param name="text">Selected-language catalog for generated manual-area labels.</param>
-    public DungeonAreaFactory(GuideText text)
+    /// <param name="entrances">Confirmed local dungeon transfers, independent of navigation readiness.</param>
+    public DungeonAreaFactory(GuideText text, DungeonEntranceRecorder entrances)
     {
         _text = text;
+        _entrances = entrances;
     }
 
     /// <summary>
@@ -42,7 +45,7 @@ internal sealed class DungeonAreaFactory
             Bounds = DungeonRoomGeometry.Enclose(boxes),
             Rooms = boxes,
             RoomVolumes = rooms.Select(room => new DungeonRoom(room)).ToArray(),
-            Entrance = FindEntrance(rooms)
+            Entrance = _entrances.Find(rooms) ?? FindEntrance(rooms)
         };
     }
 
