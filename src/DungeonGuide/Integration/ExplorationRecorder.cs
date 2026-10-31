@@ -113,7 +113,11 @@ internal sealed class ExplorationRecorder
     }
 
     private bool Visible(Point a, Point b) =>
-        _physics.Clear(_eyes, UnityPoints.V(b) + Vector3.up * 0.65f, 0.1f);
+        _physics.Clear(_eyes, UnityPoints.V(b) + Vector3.up * 0.65f, 0.1f) || NearbyFloorVisible(a, b);
+
+    private bool NearbyFloorVisible(Point player, Point sample) =>
+        Point.Distance(player, sample) <= 3 && _physics.Work.TryStartWork()
+        && _physics.Visible(UnityPoints.V(player), UnityPoints.V(sample));
 
     private static IEnumerable<NavNode> Candidates(ScanResult scan, Vector3 player, float range)
     {
