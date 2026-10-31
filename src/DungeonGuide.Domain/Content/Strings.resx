@@ -246,4 +246,31 @@
     <data name="LegendUnverified" xml:space="preserve">
         <value>Unverified passage</value>
     </data>
+    <data name="WaypointPrefix" xml:space="preserve">
+        <value>Location </value>
+    </data>
+    <data name="WaypointNamePrompt" xml:space="preserve">
+        <value>Return location name / note</value>
+    </data>
+    <data name="WaypointAdded" xml:space="preserve">
+        <value>Location marked: </value>
+    </data>
+    <data name="WaypointSelected" xml:space="preserve">
+        <value>Return to: </value>
+    </data>
+    <data name="WaypointRemoved" xml:space="preserve">
+        <value>Location removed: </value>
+    </data>
+    <data name="NoWaypoint" xml:space="preserve">
+        <value>No personal location selected. Use Alt+F7 to mark here, Alt+F8 to select.</value>
+    </data>
+    <data name="WaypointControls" xml:space="preserve">
+        <value>Alt+F7 mark here · Alt+F8 next location · Alt+Shift+F7 name · Alt+Ctrl+F7 delete</value>
+    </data>
+    <data name="WaypointMapControls" xml:space="preserve">
+        <value>Alt+click mark · click navigate · Shift+click name · right-click delete location</value>
+    </data>
+    <data name="LegendWaypoint" xml:space="preserve">
+        <value>Personal return location</value>
+    </data>
 </root>

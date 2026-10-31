@@ -14,6 +14,7 @@ internal sealed class CommandDispatcher
     private readonly MapViewState _view;
     private readonly NavigationCoordinator _navigator;
     private readonly ChestActions _chests;
+    private readonly WaypointActions _waypoints;
     private readonly GuideSettings _settings;
     private readonly UserNotice _notice;
     private readonly FloorNavigationPolicy _floorPolicy;
@@ -36,6 +37,7 @@ internal sealed class CommandDispatcher
         MapViewState view,
         NavigationCoordinator navigator,
         ChestActions chests,
+        WaypointActions waypoints,
         GuideSettings settings,
         UserNotice notice,
         FloorNavigationPolicy floorPolicy,
@@ -46,6 +48,7 @@ internal sealed class CommandDispatcher
         _view = view;
         _navigator = navigator;
         _chests = chests;
+        _waypoints = waypoints;
         _settings = settings;
         _notice = notice;
         _floorPolicy = floorPolicy;
@@ -99,6 +102,11 @@ internal sealed class CommandDispatcher
 
     private void ApplyCommand(GuideCommand command, DungeonSession session)
     {
+        if (_waypoints.TryExecute(command, session))
+        {
+            return;
+        }
+
         if (!ApplyViewCommand(command, session) && !ApplyNavigationCommand(command, session))
         {
             ApplyChestCommand(command, session);

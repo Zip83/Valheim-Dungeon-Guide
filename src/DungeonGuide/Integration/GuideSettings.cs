@@ -120,6 +120,18 @@ internal sealed class GuideSettings
     /// </summary>
     public readonly ConfigEntry<KeyboardShortcut> World;
 
+    /// <summary>Shortcut saving the player's current physical location.</summary>
+    public readonly ConfigEntry<KeyboardShortcut> MarkLocation;
+
+    /// <summary>Shortcut cycling saved personal locations.</summary>
+    public readonly ConfigEntry<KeyboardShortcut> NextLocation;
+
+    /// <summary>Shortcut renaming the selected personal location.</summary>
+    public readonly ConfigEntry<KeyboardShortcut> RenameLocation;
+
+    /// <summary>Shortcut deleting the selected personal location.</summary>
+    public readonly ConfigEntry<KeyboardShortcut> RemoveLocation;
+
     /// <summary>
     /// Binds user-configurable scan budgets, display defaults, traversal options, and shortcuts.
     /// </summary>
@@ -179,6 +191,10 @@ internal sealed class GuideSettings
             KeyCode.F7,
             "Confirm collection at actual chest; no F8 selection required.",
             KeyCode.LeftControl);
+        MarkLocation = Key("MarkLocation", KeyCode.F7, "Save current location.", KeyCode.LeftAlt);
+        NextLocation = Key("NextLocation", KeyCode.F8, "Cycle personal locations.", KeyCode.LeftAlt);
+        RenameLocation = Key("RenameLocation", KeyCode.F7, "Rename selected location.", KeyCode.LeftAlt, KeyCode.LeftShift);
+        RemoveLocation = Key("RemoveLocation", KeyCode.F7, "Delete selected location.", KeyCode.LeftAlt, KeyCode.LeftControl);
         NextChest = Key("NextChest", KeyCode.F8, "Cycle known chest destinations.");
         Explore = Key("Explore", KeyCode.F9, "Explore unvisited reachable floor.");
         Return = Key("Return", KeyCode.F10, "Guide to known entrance, otherwise scan start explicitly labelled.");

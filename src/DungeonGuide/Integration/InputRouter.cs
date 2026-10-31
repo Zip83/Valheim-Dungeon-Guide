@@ -45,14 +45,42 @@ internal sealed class InputRouter
             _command(GuideCommand.Rescan);
         }
 
-        DispatchChestShortcuts();
-
-        DispatchNavigationShortcuts();
+        if (!DispatchLocationShortcuts())
+        {
+            DispatchChestShortcuts();
+            DispatchNavigationShortcuts();
+        }
 
         if (mapVisible)
         {
             DispatchFloorShortcuts();
         }
+    }
+
+    private bool DispatchLocationShortcuts()
+    {
+        if (_settings.RemoveLocation.Value.IsDown())
+        {
+            _command(GuideCommand.RemoveLocation);
+        }
+        else if (_settings.RenameLocation.Value.IsDown())
+        {
+            _command(GuideCommand.RenameLocation);
+        }
+        else if (_settings.MarkLocation.Value.IsDown())
+        {
+            _command(GuideCommand.MarkLocation);
+        }
+        else if (_settings.NextLocation.Value.IsDown())
+        {
+            _command(GuideCommand.NextLocation);
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void DispatchChestShortcuts()
