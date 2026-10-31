@@ -68,7 +68,6 @@ must not be copied from the build references into the plugin directory.
 | **Alt+M** | Switch dungeon/world map |
 | **Page Up / Page Down** | Browse floors while the map is open |
 | **Home** | Follow and fit your current floor |
-| **Insert** | Rescan geometry; starts a bounded manual scan in an undetected interior |
 | **F6** | Toggle the optional standalone overlay |
 | **F7** | Mark the open or directly targeted chest for collection |
 | **Shift+F7** | Name the actual chest or add a note |
@@ -77,8 +76,9 @@ must not be copied from the build references into the plugin directory.
 | **F9 / Shift+F9** | Start exploration navigation / stop navigation |
 | **F10** | Navigate to the known entrance, or explicitly labeled scan origin |
 
-The map buttons select reveal mode, navigation targets, and optional breakable routes.
-Verified jumps are always allowed. Mouse wheel zooms; dragging pans the dungeon map.
+The map buttons select reveal mode and navigation targets. Verified jumps and
+breakable routes are automatic; neither needs a switch. Mouse wheel zooms;
+dragging pans the dungeon map. Geometry refreshes automatically when needed.
 Mark a chest by opening it or aiming at its interaction target. Cycling with F8
 selects a navigation destination; it does not select the chest affected by F7.
 Collection markers record your confirmation; the plugin does not move items.
@@ -93,15 +93,13 @@ Locations persist per world/dungeon in schema 4; they do not prevent dropped ite
 ## Settings and saved exploration
 
 The first run creates `BepInEx/config/zip.dungeonguide.cfg`. Shortcuts are
-configurable there. Insert rescans geometry; F5 remains available for the Valheim console.
-If an existing configuration still has `[Keys] Rescan = F5`, change it to `Insert`;
-saved shortcut overrides are preserved.
+configurable there. There is no manual Rescan button or shortcut. F5 remains
+available for the Valheim console.
 `Display.RevealAll` defaults to `false`. The overlay always starts hidden.
-Verified jump/drop routes are always enabled; breakable routes default to disabled.
-The former Routes.AllowJumps setting is ignored; its saved false value cannot disable verified jumps.
-`Display.AllowOutdoorMapping` defaults to `false`: Insert at an outdoor base leaves
-its ordinary map alone. Enable this option only if you want manual scans using Insert
-outside dungeon interiors. Enabling it does not start outdoor scans automatically.
+Verified jump/drop and breakable routes are always enabled. Former
+`Routes.AllowJumps`, `Routes.AllowBreakables`, prefab approval and manual scan
+settings are ignored; saved false values cannot disable verified traversal.
+Only detected dungeon interiors activate mapping. Outdoor bases keep the native map.
 Leaving a dungeon restores the ordinary map, including teleporting outside an
 interior while still within its former scan bounds.
 

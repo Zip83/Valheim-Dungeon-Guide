@@ -59,12 +59,6 @@ internal sealed class CommandDispatcher
     /// </summary>
     public void Execute(GuideCommand command)
     {
-        if (command == GuideCommand.Rescan)
-        {
-            _runtime.Rescan();
-            return;
-        }
-
         if (command == GuideCommand.ToggleOverlay)
         {
             _view.Overlay = !_view.Overlay;
@@ -125,10 +119,6 @@ internal sealed class CommandDispatcher
                 return true;
             case GuideCommand.ToggleReveal:
                 _view.RevealAll = !_view.RevealAll;
-                _settings.SaveView(_view);
-                return true;
-            case GuideCommand.ToggleBreakables:
-                _view.AllowBreakables = !_view.AllowBreakables;
                 _settings.SaveView(_view);
                 return true;
             case GuideCommand.FloorUp:

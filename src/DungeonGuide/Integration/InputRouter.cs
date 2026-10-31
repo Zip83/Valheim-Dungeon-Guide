@@ -40,11 +40,6 @@ internal sealed class InputRouter
             _command(GuideCommand.ToggleOverlay);
         }
 
-        if (_settings.Rescan.Value.IsDown())
-        {
-            _command(GuideCommand.Rescan);
-        }
-
         if (!DispatchLocationShortcuts())
         {
             DispatchChestShortcuts();

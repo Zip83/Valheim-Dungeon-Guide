@@ -52,14 +52,6 @@ internal enum GuideCommand
     /// </summary>
     Stop,
     /// <summary>
-    /// Rebuild loaded dungeon geometry.
-    /// </summary>
-    Rescan,
-    /// <summary>
-    /// Enable or disable approved destructive passages.
-    /// </summary>
-    ToggleBreakables,
-    /// <summary>
     /// Mark the actual interactive chest for collection.
     /// </summary>
     MarkChest,

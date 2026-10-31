@@ -134,8 +134,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
     {
         return new MapViewState
         {
-            RevealAll = settings.RevealAll.Value,
-            AllowBreakables = settings.Breakables.Value
+            RevealAll = settings.RevealAll.Value
         };
     }
 

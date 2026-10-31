@@ -69,8 +69,6 @@ internal sealed class GuideText
 
     internal string Stop => Get(nameof(Stop));
 
-    internal string Rescan => Get(nameof(Rescan));
-
     internal string Chests => Get(nameof(Chests));
 
     internal string ChestControls => Get(nameof(ChestControls));
@@ -80,8 +78,6 @@ internal sealed class GuideText
     internal string PreparingMap => Get(nameof(PreparingMap));
 
     internal string FullDungeon => Get(nameof(FullDungeon));
-
-    internal string BreakablePassages => Get(nameof(BreakablePassages));
 
     internal string Yes => Get(nameof(Yes));
 

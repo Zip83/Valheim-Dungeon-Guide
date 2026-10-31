@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DungeonGuide;
 
 /// <summary>
-/// Owns BepInEx configuration bindings and persistence of user display and route preferences.
+/// Owns BepInEx scan limits, display preferences and shortcut bindings.
 /// </summary>
 internal sealed class GuideSettings
 {
@@ -17,16 +17,6 @@ internal sealed class GuideSettings
 
     /// <summary>Horizontal fog discovery radius in metres, still blocked by solid geometry.</summary>
     public readonly ConfigEntry<float> ExploreRadius;
-
-    /// <summary>
-    /// Horizontal radius used by manual scans.
-    /// </summary>
-    public readonly ConfigEntry<float> Radius;
-
-    /// <summary>
-    /// Vertical range above and below a manual scan origin.
-    /// </summary>
-    public readonly ConfigEntry<float> Height;
 
     /// <summary>
     /// Maximum sampled horizontal columns before reporting an incomplete scan.
@@ -44,29 +34,14 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<float> MillisecondsPerFrame;
 
     /// <summary>
-    /// Whether explicit manual scans may replace the world map outside dungeon interiors.
-    /// </summary>
-    public readonly ConfigEntry<bool> AllowOutdoorMapping;
-
-    /// <summary>
     /// Whether all scanned geometry is shown instead of explored floor samples only.
     /// </summary>
     public readonly ConfigEntry<bool> RevealAll;
 
     /// <summary>
-    /// Whether natively verified breakable passages may be used in routes.
-    /// </summary>
-    public readonly ConfigEntry<bool> Breakables;
-
-    /// <summary>
     /// Shortcut for the manually enabled standalone map.
     /// </summary>
     public readonly ConfigEntry<KeyboardShortcut> Overlay;
-
-    /// <summary>
-    /// Shortcut requesting a geometry rescan.
-    /// </summary>
-    public readonly ConfigEntry<KeyboardShortcut> Rescan;
 
     /// <summary>
     /// Shortcut marking the actual selected chest for collection.
@@ -121,7 +96,7 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<KeyboardShortcut> RemoveLocation;
 
     /// <summary>
-    /// Binds user-configurable scan budgets, display defaults, traversal options, and shortcuts.
+    /// Binds user-configurable scan budgets, display defaults and shortcuts.
     /// </summary>
     public GuideSettings(ConfigFile file)
     {
@@ -129,8 +104,6 @@ internal sealed class GuideSettings
         ExploreRadius = file.Bind("Exploration", "Radius", 25f,
             "Horizontal discovery radius in metres, clamped to 1-100. Walls and physical floors still limit discovery.");
         Spacing = file.Bind("Scan", "GridSpacing", 1.25f, "Sampling grid, metres.");
-        Radius = file.Bind("Scan", "ManualRadius", 45f, "Manual scan radius.");
-        Height = file.Bind("Scan", "ManualVerticalRange", 120f, "Metres above and below manual scan origin.");
         Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
         Budget = file.Bind(
             "Scan",
@@ -142,26 +115,12 @@ internal sealed class GuideSettings
             "MillisecondsPerFrame",
             1f,
             "Soft main-thread budget, clamped to 0.25-4 ms. Individual Unity queries cannot be interrupted.");
-        AllowOutdoorMapping = file.Bind(
-            "Display",
-            "AllowOutdoorMapping",
-            false,
-            "Allow manual Rescan outside dungeon interiors, including player bases. No automatic outdoor scans.");
         RevealAll = file.Bind(
             "Display",
             "RevealAll",
             false,
             "False: explored floor only. True: all scanned floor. Applies to all map views.");
-        Breakables = file.Bind(
-            "Routes",
-            "AllowBreakables",
-            false,
-            "Allow only natively verified, geometrically checked breakable passages.");
         Overlay = Key("ToggleMap", KeyCode.F6, "Optional overlay; always hidden on game startup.");
-        Rescan = Key(
-            "Rescan",
-            KeyCode.Insert,
-            "Rebuild dungeon geometry; outdoor scans require Display.AllowOutdoorMapping.");
         Mark = Key("MarkChest", KeyCode.F7, "Mark the actual open or aimed chest.");
         Name = Key("NameChest", KeyCode.F7, "Name actual chest.", KeyCode.LeftShift);
         Collected = Key(
@@ -184,12 +143,11 @@ internal sealed class GuideSettings
         _file.Bind("Keys", key, new KeyboardShortcut(code, modifiers), help);
 
     /// <summary>
-    /// Persists shared map reveal and optional traversal preferences.
+    /// Persists the shared map reveal preference.
     /// </summary>
     public void SaveView(MapViewState state)
     {
         RevealAll.Value = state.RevealAll;
-        Breakables.Value = state.AllowBreakables;
         _file.Save();
     }
 }

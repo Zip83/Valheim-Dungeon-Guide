@@ -5,7 +5,8 @@ Target: Valheim 1.0.21, BepInEx 5.4.23.5.
 Navigation first searches the existing verified graph, including observed jumps
 and directional drops. Only when this returns no route does it search for a
 hook-assisted crossing. A shorter hook shortcut never replaces an available
-ordinary route. Breakable passages still require their existing permission.
+ordinary route. Verified breakable passages are always eligible; native damage
+and geometry checks establish their permission automatically.
 
 The player must carry a usable hook with sufficient durability and launch stamina.
 Capabilities come from the inventory item's actual attack, projectile, and native
