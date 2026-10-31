@@ -34,6 +34,9 @@ internal sealed class DungeonArea
     /// </summary>
     public Bounds[] Rooms;
 
+    /// <summary>Oriented generated rooms; manual volumes deliberately have no inferred rooms.</summary>
+    public DungeonRoom[] RoomVolumes = Array.Empty<DungeonRoom>();
+
     /// <summary>
     /// Known entrance position, or null when the generator cannot identify it.
     /// </summary>

@@ -148,6 +148,8 @@ internal sealed class SessionScanController
     private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout, bool preview)
     {
         // Each published snapshot is exclusively owned and no longer changed by a scan or worker.
+        session.OverviewExploration.Load(Array.Empty<string>());
+        session.VisitedRoomCoverage.Load(Array.Empty<string>());
         session.Scan = result;
         session.Layout = layout;
         session.Floors = layout.Levels;

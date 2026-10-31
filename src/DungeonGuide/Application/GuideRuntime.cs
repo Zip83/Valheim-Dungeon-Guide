@@ -20,6 +20,7 @@ internal sealed class GuideRuntime : IDisposable
     private readonly ExplorationRecorder _exploration;
     private readonly TraversalRecorder _traversals;
     private float _nextDetect;
+    private readonly RoomVisitRecorder _rooms = new();
     private float _nextSave;
     private float _doorRescan = float.PositiveInfinity;
 
@@ -97,6 +98,7 @@ internal sealed class GuideRuntime : IDisposable
             return;
         }
 
+        _rooms.Track(Session, player.transform.position);
         RescanIfDue();
         TrackMovement(player);
         SaveIfDue();
@@ -183,6 +185,7 @@ internal sealed class GuideRuntime : IDisposable
 
         Session = null;
         _traversals.Reset();
+        _rooms.Reset();
         _exploration.Reset();
         _doorRescan = float.PositiveInfinity;
         Left?.Invoke();

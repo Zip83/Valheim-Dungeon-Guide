@@ -10,9 +10,9 @@ namespace DungeonGuide;
 public sealed class SavedRun
 {
     /// <summary>
-    /// Serialized schema version, currently 2; this is independent of the plugin release version.
+    /// Serialized schema version, currently 3; this is independent of the plugin release version.
     /// </summary>
-    public int version = 2;
+    public int version = 3;
 
     /// <summary>
     /// World identifier used to keep exploration from different worlds separate.
@@ -28,6 +28,9 @@ public sealed class SavedRun
     /// Quantized floor sample keys already explored by the player.
     /// </summary>
     public List<string> visited = new();
+
+    /// <summary>Stable generated-room and local-layer identities actually entered by the player.</summary>
+    public List<RoomVisit> visitedRooms = new();
 
     /// <summary>
     /// Known container identities, player notes, and collection markers.

@@ -27,6 +27,12 @@ internal sealed class DungeonSession
     /// </summary>
     public readonly Exploration Exploration = new();
 
+    /// <summary>Overview-only union of visible samples and entered room layers.</summary>
+    public readonly Exploration OverviewExploration = new();
+
+    /// <summary>Overview-only coverage of actually entered rooms.</summary>
+    public readonly Exploration VisitedRoomCoverage = new();
+
     /// <summary>
     /// Chest identity and collection registry backed by this session's save data.
     /// </summary>
