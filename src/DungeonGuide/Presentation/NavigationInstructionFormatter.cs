@@ -59,7 +59,7 @@ internal sealed class NavigationInstructionFormatter
         var route = navigation.Route;
         if (route.Count == 0)
         {
-            return StatusInstruction(session, navigation.Status);
+            return navigation.SearchingGrapple ? _text.SearchingGrapple : StatusInstruction(session, navigation.Status);
         }
 
         var graph = session.Scan.Graph;
@@ -73,6 +73,11 @@ internal sealed class NavigationInstructionFormatter
             return _text.NearDestination;
         }
 
+        if (navigation.IsGrapplePassage(route[near], route[next]))
+        {
+            return _text.GrappleInstruction;
+        }
+
         if (edge?.Kind == PassageKind.Jump)
         {
             return _text.JumpInstruction;
@@ -83,7 +88,8 @@ internal sealed class NavigationInstructionFormatter
             return _text.DropInstruction;
         }
 
-        return DirectionInstruction(player, b.Position);
+        var direction = DirectionInstruction(player, b.Position);
+        return navigation.RequiresGrapple ? _text.GrappleRequired + _text.Separator + direction : direction;
     }
 
     private string StatusInstruction(DungeonSession session, NavigationStatus status)

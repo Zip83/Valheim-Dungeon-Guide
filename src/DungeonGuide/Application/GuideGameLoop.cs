@@ -104,6 +104,7 @@ internal sealed class GuideGameLoop : IDisposable
 
         ObserveChests(session);
         UpdateRoute(session, player);
+        _navigator.AdvanceFallback(session, player);
         RenderMap(session, player);
     }
 
@@ -147,6 +148,7 @@ internal sealed class GuideGameLoop : IDisposable
         }
 
         _disposed = true;
+        _navigator.Stop();
         _runtime.Dispose();
         _runtime.Entered -= Enter;
         _runtime.Left -= _navigator.Stop;

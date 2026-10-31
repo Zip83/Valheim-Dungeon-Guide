@@ -32,10 +32,11 @@ internal sealed class NavigationHud
         {
             var x = Screen.width / 2f - 250;
             float y = Screen.height - 170;
-            GUI.Box(new Rect(x, y, 500, 78), GUIContent.none);
+            GUI.Box(new Rect(x, y, 500, 106), GUIContent.none);
             GUI.Label(new Rect(x + 8, y + 4, 484, 30), _formatter.Title(session, navigator), style);
+            style.normal.textColor = navigator.RequiresGrapple ? (Color)MapPalette.GrappleRoute : Color.white;
             GUI.Label(
-                new Rect(x + 8, y + 35, 484, 38),
+                new Rect(x + 8, y + 35, 484, 66),
                 _formatter.Instruction(session, navigator, Player.m_localPlayer, blockedHint),
                 style);
         }

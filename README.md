@@ -130,7 +130,11 @@ guarantee. Actual frame times and compatibility with other mods require in-game 
 Ordinary walking routes are preferred. Optional breakable routes require an
 approved exact prefab and geometry checks. Jumps and drops are always permitted after a
 previously observed directional traversal and current geometry/capability checks.
-The guide does not open doors, break objects, jump, or control your character.
+If ordinary routing fails, navigation can check a single grappling-hook crossing.
+The hook section is orange, its attachment surface is marked with an orange cross,
+and the HUD explicitly warns that the route requires a hook. All route lines are
+thicker and outlined. See [hook routing and current limitations](docs/grappling-routes.md).
+The guide does not open doors, break objects, fire the hook, jump, or control your character.
 
 ## Contributing
 

@@ -270,4 +270,16 @@
     <data name="LegendWaypoint" xml:space="preserve">
         <value>Vlastní místo návratu</value>
     </data>
+    <data name="GrappleInstruction" xml:space="preserve">
+        <value>GRAPPLING HOOK — oranžový kříž značí zachycení; miř výš kvůli oblouku</value>
+    </data>
+    <data name="GrappleRequired" xml:space="preserve">
+        <value>Trasa vyžaduje grappling hook</value>
+    </data>
+    <data name="SearchingGrapple" xml:space="preserve">
+        <value>Běžná cesta nenalezena — ověřuji místa pro grappling hook…</value>
+    </data>
+    <data name="LegendGrapple" xml:space="preserve">
+        <value>Grappling hook; + místo zachycení</value>
+    </data>
 </root>

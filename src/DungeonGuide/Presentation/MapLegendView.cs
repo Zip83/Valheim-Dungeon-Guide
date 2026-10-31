@@ -36,6 +36,7 @@ internal sealed class MapLegendView
         Entry(MapPalette.FloorOutline, text.LegendWalls),
         Entry(MapPalette.Player, text.LegendPlayer),
         Entry(MapPalette.Route, text.LegendRoute),
+        Entry(MapPalette.GrappleRoute, text.LegendGrapple),
         Entry(MapPalette.FloorTransition, text.LegendStairs),
         Entry(MapPalette.Entrance, text.LegendEntrance),
         Entry(MapPalette.Waypoint, text.LegendWaypoint),

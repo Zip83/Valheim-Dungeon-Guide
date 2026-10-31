@@ -103,6 +103,14 @@ internal sealed class GuideText
 
     internal string NearDestination => Get(nameof(NearDestination));
 
+    internal string GrappleInstruction => Get(nameof(GrappleInstruction));
+
+    internal string GrappleRequired => Get(nameof(GrappleRequired));
+
+    internal string SearchingGrapple => Get(nameof(SearchingGrapple));
+
+    internal string LegendGrapple => Get(nameof(LegendGrapple));
+
     internal string JumpInstruction => Get(nameof(JumpInstruction));
 
     internal string DropInstruction => Get(nameof(DropInstruction));

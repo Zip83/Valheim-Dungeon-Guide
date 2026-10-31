@@ -11,6 +11,7 @@ internal sealed class NavigationCoordinator
     private readonly RoutePlanner _planner;
     private readonly GraphLocator _locator;
     private readonly FloorNavigationPolicy _floorPolicy;
+    private readonly GrappleFallbackSearch _grapple;
     private float _destinationHeight;
 
     /// <summary>Selected personal location when return-location navigation is active.</summary>
@@ -59,11 +60,13 @@ internal sealed class NavigationCoordinator
     /// <summary>
     /// Connects graph routing, position snapping, and physical-floor destination policy.
     /// </summary>
-    public NavigationCoordinator(RoutePlanner planner, GraphLocator locator, FloorNavigationPolicy floorPolicy)
+    public NavigationCoordinator(RoutePlanner planner, GraphLocator locator, FloorNavigationPolicy floorPolicy,
+        GrappleFallbackSearch grapple)
     {
         _planner = planner;
         _locator = locator;
         _floorPolicy = floorPolicy;
+        _grapple = grapple;
     }
 
     /// <summary>
@@ -71,6 +74,7 @@ internal sealed class NavigationCoordinator
     /// </summary>
     public void Stop()
     {
+        _grapple.Reset();
         Goal = NavigationGoal.None;
         Chest = null;
         Waypoint = null;
@@ -138,6 +142,7 @@ internal sealed class NavigationCoordinator
     /// </summary>
     public void InvalidateRoute()
     {
+        _grapple.Reset();
         Route.Clear();
         Status = NavigationStatus.None;
     }
@@ -148,7 +153,8 @@ internal sealed class NavigationCoordinator
     /// </summary>
     public void Recalculate(DungeonSession session, MapViewState view, Vector3 player)
     {
-        InvalidateRoute();
+        Route = new List<int>();
+        Status = NavigationStatus.None;
         if (Goal == NavigationGoal.None || session.Scan == null || !session.NavigationReady)
         {
             return;
@@ -229,9 +235,47 @@ internal sealed class NavigationCoordinator
             start,
             n => IsDestination(session, n, destination),
             policy);
+        if (Route.Count > 0)
+        {
+            _grapple.Reset();
+            return;
+        }
+
+        _grapple.Request(scan, start, n => IsDestination(session, n, destination), policy, Player.m_localPlayer);
+        Route = _grapple.Route;
         if (Route.Count == 0)
         {
             Status = Goal == NavigationGoal.Explore ? NavigationStatus.ExplorationExhausted : NavigationStatus.NoRoute;
+        }
+    }
+
+    /// <summary>Whether an asynchronous hook search is still checking supported landings.</summary>
+    public bool SearchingGrapple => _grapple.Pending;
+
+    /// <summary>Whether the active route explicitly requires the hook fallback.</summary>
+    public bool RequiresGrapple => _grapple.Route.Count > 0 && Route == _grapple.Route;
+
+    /// <summary>Checked attachment surface for the active hook section.</summary>
+    public Vector3 GrappleAnchor => _grapple.Anchor;
+
+    /// <summary>Distinguishes the directed hook section from ordinary approach and departure segments.</summary>
+    public bool IsGrapplePassage(int from, int to) => RequiresGrapple && _grapple.IsPassage(from, to);
+
+    /// <summary>Advances fallback physics without waiting for the once-per-second ordinary route refresh.</summary>
+    public void AdvanceFallback(DungeonSession session, Player player)
+    {
+        var wasGrapple = RequiresGrapple;
+        _grapple.Advance(session, player);
+        if (wasGrapple && _grapple.Route.Count == 0)
+        {
+            Route = new List<int>();
+            Status = NavigationStatus.NoRoute;
+        }
+
+        if (_grapple.Route.Count > 0)
+        {
+            Route = _grapple.Route;
+            Status = NavigationStatus.None;
         }
     }
 

@@ -13,6 +13,8 @@ internal static class MapPalette
     internal static readonly Color32 FloorOutline = new Color32(63, 51, 35, 255);
     internal static readonly Color32 VisitedRoom = new Color32(124, 177, 117, 255);
     internal static readonly Color32 ScannedFloor = new Color32(91, 109, 121, 255);
+    internal static readonly Color32 GrappleRoute = new Color32(255, 132, 45, 255);
+    internal static readonly Color32 RouteOutline = new Color32(25, 20, 15, 255);
     internal static readonly Color32 Route = new Color32(255, 222, 65, 255);
     internal static readonly Color32 FloorTransition = new Color32(105, 198, 255, 255);
     internal static readonly Color32 UnverifiedPassage = new Color32(180, 126, 208, 255);

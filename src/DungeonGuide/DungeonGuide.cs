@@ -34,7 +34,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
 
         var floorPolicy = new FloorNavigationPolicy();
         var numbering = new FloorNumbering(language.Current);
-        var navigator = new NavigationCoordinator(new RoutePlanner(), locator, floorPolicy);
+        var navigator = new NavigationCoordinator(new RoutePlanner(), locator, floorPolicy, new GrappleFallbackSearch(physics));
         var cursor = new RouteCursor();
         var chests = CreateChestActions(locator, lifecycle, notice, text);
         chests.DestinationRequested += navigator.ToChest;
