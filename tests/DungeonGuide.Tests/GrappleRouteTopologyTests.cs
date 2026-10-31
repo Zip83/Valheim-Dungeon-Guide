@@ -65,16 +65,16 @@ public sealed class GrappleRouteTopologyTests
         Assert.Empty(topology.Join(1, 2));
     }
 
-    /// <summary>Destructive approach permissions apply equally to ordinary and fallback routing.</summary>
+    /// <summary>Destructive approach verification applies equally to ordinary and fallback routing.</summary>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void RespectsBreakablePermission(bool allowed)
+    public void RespectsBreakableVerification(bool verified)
     {
         var graph = Disconnected();
         graph.Nodes[0].Edges.Clear();
-        graph.Connect(0, 1, PassageKind.Breakable, true, false);
-        Assert.Equal(allowed, Build(graph, allowed).Sources.Contains(1));
+        graph.Connect(0, 1, PassageKind.Breakable, verified, false);
+        Assert.Equal(verified, Build(graph).Sources.Contains(1));
     }
 
     /// <summary>Small work slices yield repeatedly, including graphs with many disconnected nodes.</summary>
@@ -112,10 +112,10 @@ public sealed class GrappleRouteTopologyTests
         Assert.Empty(Build(Disconnected()).Join(source, destination));
     }
 
-    private static GrappleRouteTopology Build(NavGraph graph, bool breakables = false)
+    private static GrappleRouteTopology Build(NavGraph graph)
     {
         var topology = new GrappleRouteTopology();
-        foreach (var pause in topology.Build(graph, 0, n => n == 3, new RoutePolicy { Breakables = breakables },
+        foreach (var pause in topology.Build(graph, 0, n => n == 3, new RoutePolicy(),
             new FrameWorkBudget(100, 1, () => 0)))
         {
         }

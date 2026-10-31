@@ -151,7 +151,7 @@ internal sealed class NavigationCoordinator
     /// Resolves the active goal against current geometry and route policy without silently changing destination
     /// elevation.
     /// </summary>
-    public void Recalculate(DungeonSession session, MapViewState view, Vector3 player)
+    public void Recalculate(DungeonSession session, Vector3 player)
     {
         Route = new List<int>();
         Status = NavigationStatus.None;
@@ -169,7 +169,7 @@ internal sealed class NavigationCoordinator
 
         if (PrepareFloorDestination(session, start, player))
         {
-            FindRoute(session, view, start);
+            FindRoute(session, start);
         }
     }
 
@@ -222,14 +222,11 @@ internal sealed class NavigationCoordinator
         return destination;
     }
 
-    private void FindRoute(DungeonSession session, MapViewState view, int start)
+    private void FindRoute(DungeonSession session, int start)
     {
         var scan = session.Scan;
         var destination = ResolvePointDestination(session);
-        var policy = new RoutePolicy
-        {
-            Breakables = view.AllowBreakables
-        };
+        var policy = new RoutePolicy();
         Route = _planner.Find(
             scan.Graph,
             start,

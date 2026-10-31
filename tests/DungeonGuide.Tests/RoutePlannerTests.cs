@@ -54,26 +54,28 @@ public sealed class RoutePlannerTests
     }
 
     /// <summary>
-    /// Special passages require verification; only destructive passages require an opt-in.
+    /// Special passages always require verification; verified destruction needs no opt-in.
     /// </summary>
     [Theory]
-    [InlineData(PassageKind.Breakable, true, false, false)]
-    [InlineData(PassageKind.Breakable, true, true, true)]
-    [InlineData(PassageKind.Drop, true, false, true)]
-    [InlineData(PassageKind.Jump, true, false, true)]
-    [InlineData(PassageKind.Drop, false, false, false)]
-    [InlineData(PassageKind.Jump, false, false, false)]
-    [InlineData(PassageKind.Breakable, false, true, false)]
-    public void AppliesSpecialPassagePolicy(PassageKind kind, bool verified, bool breakables, bool allowed)
+    [InlineData(PassageKind.Breakable, true, true)]
+    [InlineData(PassageKind.Drop, true, true)]
+    [InlineData(PassageKind.Jump, true, true)]
+    [InlineData(PassageKind.Drop, false, false)]
+    [InlineData(PassageKind.Jump, false, false)]
+    [InlineData(PassageKind.Breakable, false, false)]
+    [InlineData(PassageKind.Door, true, true)]
+    [InlineData(PassageKind.Door, false, false)]
+    [InlineData(PassageKind.Walk, true, true)]
+    [InlineData(PassageKind.Walk, false, false)]
+    [InlineData(PassageKind.Stairs, true, true)]
+    [InlineData(PassageKind.Stairs, false, false)]
+    public void AppliesSpecialPassagePolicy(PassageKind kind, bool verified, bool allowed)
     {
         var graph = new NavGraph();
         graph.Nodes.Add(new NavNode(new Point(0, 0, 0)));
         graph.Nodes.Add(new NavNode(new Point(1, 0, 0)));
         graph.Connect(0, 1, kind, verified, false);
-        var policy = new RoutePolicy
-        {
-            Breakables = breakables
-        };
+        var policy = new RoutePolicy();
         var route = new RoutePlanner().Find(graph, 0, n => n == 1, policy);
         Assert.Equal(allowed, route.Count == 2);
     }
@@ -116,7 +118,7 @@ public sealed class RoutePlannerTests
         graph.Connect(2, 3);
         Assert.Equal(
             new[] { 0, 2, 3 },
-            new RoutePlanner().Find(graph, 0, n => n == 3, new RoutePolicy { Breakables = true }));
+            new RoutePlanner().Find(graph, 0, n => n == 3, new RoutePolicy()));
     }
 
     private static NavGraph ConnectedFloors()

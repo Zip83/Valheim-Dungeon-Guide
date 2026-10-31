@@ -81,7 +81,7 @@ internal sealed class CommandDispatcher
 
         if (session.Scan != null && Player.m_localPlayer)
         {
-            _navigator.Recalculate(session, _view, Player.m_localPlayer.transform.position);
+            _navigator.Recalculate(session, Player.m_localPlayer.transform.position);
         }
 
         ViewChanged?.Invoke();
