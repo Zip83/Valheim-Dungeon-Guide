@@ -34,11 +34,12 @@ internal sealed class OverviewFloorCard : IDisposable
     }
 
     /// <summary>Updates the label and displays only a completed renderer-owned image.</summary>
-    public void Refresh(string caption, Texture texture)
+    public void Refresh(string caption, Texture texture, Material material)
     {
         _caption.text = caption;
 
         _image.texture = texture;
+        _image.material = material;
         _image.enabled = texture;
     }
 

@@ -1,68 +1,60 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonGuide;
 
-/// <summary>
-/// Schedules cached floor preparation independently of dynamic route and player markers.
-/// </summary>
+/// <summary>Owns published and pending floor surfaces independently of dynamic markers.</summary>
 internal sealed class MapTextureRenderer : IDisposable
 {
     private const int Size = 768;
     private readonly FloorPlanCache _cache = new();
-    private readonly FloorFogCache _fog = new();
     private readonly MapMarkerRenderer _markers = new();
     private readonly FrameWorkBudget _budget = new(8192, 1);
-    private readonly Color32[] _pixels = new Color32[Size * Size];
     private readonly MapExtentFitter _extentFitter;
-    private IEnumerator<byte> _paint;
-    private FloorPlanRaster _painting;
-    private FloorFogMask _paintingFog;
-    private FloorFogMask _publishedFog;
-    private bool _publishedReveal;
-    private readonly Color32[] _cloud = new Color32[Size * Size];
-    private bool _cloudReady;
-    private bool _reveal;
+    private readonly Exploration _noVisits = new();
+    private FloorSurfaceRenderer _surface;
+    private FloorSurfaceRenderer _pending;
+    private FloorPlanRaster _pendingRaster;
     private DungeonSession _session;
+    private bool _reveal;
+    private float _firstStarted;
+    private float _pendingHeight;
 
-    /// <summary>Creates the shared terrain texture and its floor-extent policy.</summary>
+    /// <summary>Uses a shared floor-fitting policy for the map and overlay.</summary>
     public MapTextureRenderer(MapExtentFitter extentFitter)
     {
         _extentFitter = extentFitter;
-        Texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false)
-        {
-            filterMode = FilterMode.Bilinear,
-            wrapMode = TextureWrapMode.Clamp
-        };
     }
 
-    /// <summary>Last complete floor image, unchanged while a replacement is prepared.</summary>
-    public Texture2D Texture
-    {
-        get;
-    }
+    /// <summary>Last fully initialized surface, or null before first publication.</summary>
+    public Texture2D Texture => _surface?.Texture;
 
-    /// <summary>Independent transparent route and player layer.</summary>
+    /// <summary>Private GPU material, or null when CPU compositing is selected.</summary>
+    public Material Material => _surface?.Material;
+
+    /// <summary>Transparent marker layer, independent of fog compositing.</summary>
     public Texture2D Markers => _markers.Texture;
 
-    /// <summary>Grid corresponding to the published terrain and marker projection.</summary>
+    /// <summary>Projection paired with the actually displayed surface.</summary>
     public FloorPlanRaster Published
     {
         get; private set;
     }
 
-    /// <summary>Floor of the image actually being displayed, or -1 before the first publication.</summary>
+    /// <summary>Displayed physical floor, or -1 while the first map is being prepared.</summary>
     public int DisplayedFloor => Published?.Floor ?? -1;
 
-    /// <summary>World-space width of the published map.</summary>
+    /// <summary>Physical elevation paired with the published image, even while its replacement is pending.</summary>
+    public float DisplayedHeight { get; private set; } = float.NaN;
+
+    /// <summary>Width of the displayed map in world metres.</summary>
     public float Span => Published?.Span ?? 1;
 
-    /// <summary>Projects a position using the same coordinates as the published terrain.</summary>
+    /// <summary>Projects a world position into the published surface.</summary>
     public Vector2 UV(Point p) => Published == null ? new Vector2(0.5f, 0.5f)
         : new Vector2(Published.X(p.x) / Size, Published.Y(p.z) / Size);
 
-    /// <summary>Fits the displayed floor rather than a replacement that has not finished rendering.</summary>
+    /// <summary>Fits a selected floor using its conservative sampled extent.</summary>
     public Rect FitFloor(DungeonSession session, int floor)
     {
         var fit = _extentFitter.Fit(session.Scan.Graph, floor, UnityPoints.P(session.Area.Bounds.center),
@@ -70,75 +62,131 @@ internal sealed class MapTextureRenderer : IDisposable
         return new Rect(fit.X, fit.Y, fit.Size, fit.Size);
     }
 
-    /// <summary>Advances geometry and terrain rows under one shared per-frame soft budget.</summary>
+    /// <summary>Advances raster construction and dirty fog tiles under a shared presentation budget.</summary>
     public void Tick(DungeonSession session, MapViewState view)
     {
-        if (_session != session)
-        {
-            Reset();
-            _session = session;
-        }
-
+        EnsureSession(session);
         if (session?.Scan == null)
         {
             return;
         }
 
-        PrepareRaster(session, view);
-
-        var ready = _cache.Ready;
-        if (ready == null)
+        ResetChangedMode(view.RevealAll);
+        _budget.BeginFrame();
+        var raster = PrepareRaster(session, view.SelectedFloor);
+        if (raster != null)
         {
-            return;
+            AdvanceSurface(session, raster, view.RevealAll);
         }
 
-        _fog.Tick(ready, session.Exploration, _budget);
-        var fog = _fog.Ready;
-        if (fog == null || fog.Raster != ready)
-        {
-            return;
-        }
-
-        PreparePaint(ready, fog, view.RevealAll);
-
-        AdvancePaint();
+        _reveal = view.RevealAll;
     }
 
-    private IEnumerable<byte> Paint(FloorPlanRaster raster, FloorFogMask fog, bool reveal)
+    private void EnsureSession(DungeonSession session)
     {
-        foreach (var step in PrepareCloud())
+        if (_session != session)
         {
-            yield return step;
-        }
-
-        foreach (var step in PaintRows(raster, fog, reveal))
-        {
-            yield return step;
+            Reset();
+            _session = session;
+            _firstStarted = Time.realtimeSinceStartup;
         }
     }
 
-    /// <summary>Matches marker selection to the actually published fog rather than an in-flight mask.</summary>
-    public bool IsVisible(Point position) => Published != null && (_publishedReveal || _publishedFog.Visible(position));
+    private void ResetChangedMode(bool reveal)
+    {
+        if (_surface == null || _reveal == reveal)
+        {
+            return;
+        }
 
-    /// <summary>Updates dynamic markers without rebuilding the floor geometry.</summary>
+        // Discard full-map pixels before preparing explored-mode coverage.
+        _surface.Dispose();
+        _surface = null;
+        Published = null;
+        _pending?.Dispose();
+        _pending = null;
+        _pendingRaster = null;
+    }
+
+    private FloorPlanRaster PrepareRaster(DungeonSession session, int floor)
+    {
+        var span = Mathf.Max(1, Mathf.Max(session.Area.Bounds.size.x, session.Area.Bounds.size.z) + 3);
+        _cache.Tick(session.Scan.Graph, floor, session.Scan.Spacing, Size,
+            UnityPoints.P(session.Area.Bounds.center), span, _budget);
+        return _cache.Ready;
+    }
+
+    private void AdvanceSurface(DungeonSession session, FloorPlanRaster raster, bool reveal)
+    {
+        if (raster == Published)
+        {
+            _surface.Tick(session.Exploration, _noVisits, reveal, _budget);
+            return;
+        }
+
+        PrepareReplacement(session, raster);
+        _pending.Tick(session.Exploration, _noVisits, reveal, _budget);
+        if (_pending.Ready)
+        {
+            PublishReplacement(raster, session.NavigationReady);
+        }
+    }
+
+    private void PrepareReplacement(DungeonSession session, FloorPlanRaster raster)
+    {
+        if (_pendingRaster == raster)
+        {
+            return;
+        }
+
+        _pending?.Dispose();
+        _pending = new FloorSurfaceRenderer(raster);
+        _pendingRaster = raster;
+        _pendingHeight = raster.Graph == session.Scan.Graph && raster.Floor < session.Floors.Count
+            ? session.Floors[raster.Floor] : DisplayedHeight;
+    }
+
+    private void PublishReplacement(FloorPlanRaster raster, bool navigationReady)
+    {
+        var first = Published == null;
+        _surface?.Dispose();
+        _surface = _pending;
+        _pending = null;
+        _pendingRaster = null;
+        Published = raster;
+        DisplayedHeight = _pendingHeight;
+        if (first)
+        {
+            LogFirstImage(navigationReady);
+        }
+    }
+
+    private void LogFirstImage(bool navigationReady)
+    {
+        Debug.Log("DungeonGuide first floor image: elapsedSeconds="
+            + (Time.realtimeSinceStartup - _firstStarted).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+            + ", navigationReady=" + navigationReady);
+    }
+
+    /// <summary>Uses current displayed fog for pointer selection.</summary>
+    public bool IsVisible(Point position) => Published != null && (_reveal || _surface.Fog.Visible(position));
+
+    /// <summary>Refreshes dynamic markers independently of static terrain.</summary>
     public void Render(DungeonSession session, MapViewState view, NavigationCoordinator navigator, Player player)
     {
         if (Published != null && _session == session && Published.Graph == session.Scan.Graph)
         {
-            _markers.Render(session, view, navigator, player, Published, _publishedFog, _publishedReveal);
+            _markers.Render(session, view, navigator, player, Published, _surface.Fog, _reveal);
         }
     }
 
     private void Reset()
     {
-        _session = null;
-        _paint?.Dispose();
-        _paint = null;
-        _painting = Published = null;
+        _surface?.Dispose();
+        _pending?.Dispose();
+        _surface = _pending = null;
+        Published = _pendingRaster = null;
         _cache.Dispose();
-        _fog.Dispose();
-        _paintingFog = _publishedFog = null;
-        _publishedReveal = false;
         _markers.Clear();
     }
 
@@ -147,75 +195,5 @@ internal sealed class MapTextureRenderer : IDisposable
     {
         Reset();
         _markers.Dispose();
-        UnityEngine.Object.Destroy(Texture);
-    }
-
-    private void AdvancePaint()
-    {
-        while (_paint != null && _budget.TryStartWork())
-        {
-            if (!_paint.MoveNext())
-            {
-                Texture.SetPixels32(_pixels);
-                Texture.Apply(false);
-                Published = _painting;
-                _publishedFog = _paintingFog;
-                _publishedReveal = _reveal;
-                _paint.Dispose();
-                _paint = null;
-            }
-        }
-    }
-
-    private void PrepareRaster(DungeonSession session, MapViewState view)
-    {
-        var span = Mathf.Max(1, Mathf.Max(session.Area.Bounds.size.x, session.Area.Bounds.size.z) + 3);
-        _budget.BeginFrame();
-        _cache.Tick(session.Scan.Graph, view.SelectedFloor, session.Scan.Spacing, Size,
-            UnityPoints.P(session.Area.Bounds.center), span, _budget);
-    }
-
-    private void PreparePaint(FloorPlanRaster ready, FloorFogMask fog, bool reveal)
-    {
-        if (_painting != ready || _reveal != reveal || _paint == null && _paintingFog != fog)
-        {
-            _paint?.Dispose();
-            _painting = ready;
-            _paintingFog = fog;
-            _reveal = reveal;
-            _paint = Paint(ready, fog, _reveal).GetEnumerator();
-        }
-    }
-
-    private IEnumerable<byte> PrepareCloud()
-    {
-        if (!_cloudReady)
-        {
-            for (var y = 0; y < Size; y++)
-            {
-                yield return 0;
-                for (var x = 0; x < Size; x++)
-                {
-                    _cloud[y * Size + x] = MapPalette.Cloud(x, y);
-                }
-            }
-
-            _cloudReady = true;
-        }
-    }
-
-    private IEnumerable<byte> PaintRows(FloorPlanRaster raster, FloorFogMask fog, bool reveal)
-    {
-        for (var y = 0; y < Size; y++)
-        {
-            yield return 0;
-            for (var x = 0; x < Size; x++)
-            {
-                var index = y * Size + x;
-                var floor = raster.Owners[index] == 0 ? MapPalette.TextureBackground
-                    : raster.Boundary[index] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
-                _pixels[index] = reveal ? floor : Color32.Lerp(floor, _cloud[index], fog.Opacity[index] / 255f);
-            }
-        }
     }
 }
