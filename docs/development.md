@@ -145,7 +145,7 @@ ray samples, standing checks, candidate pairs, and individual jump-arc queries,
 including empty-neighbor column overhead;
 a tall column or many stacked floors cannot bypass yielding until the end of
 an entire column. `Scan.MillisecondsPerFrame` defaults to 1 ms, clamped to
-0.25â€“4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1â€“8192;
+0.25Ã¢â‚¬â€œ4 ms. `Scan.MaxWorkStepsPerFrame` defaults to 4096, clamped to 1Ã¢â‚¬â€œ8192;
 this is a safety ceiling, while elapsed time normally determines when to yield.
 It replaces the legacy `Scan.ColumnsPerFrame` key, whose default of 24 became
 an excessive throttle after work was split into individual operations. The old
@@ -321,6 +321,19 @@ Local Unity/Harmony fixtures exercise damage-probe decisions, equipment refresh,
 native-state callback filtering/teardown and destruction classification with
 stand-in game components. Real damage responses, traversal and multiplayer
 gameplay still need an in-game check; fixtures do not establish those outcomes.
+
+## Navigation instruction distances
+
+The instruction distance measures the current route leg through aligned samples,
+rather than stopping at the next grid sample. Remaining distance includes the
+player's approach to the next sample and subsequent three-dimensional edge lengths.
+Heading remains relative to the next sample so the instruction follows the actual
+route instead of pointing across a bend. Lookahead stops at a heading change of
+more than 25 degrees from the initial edge, a slope-direction or passage-kind
+change, the next physical floor, unverified/missing edges, and any hook section.
+Doors, breakable passages, jumps and drops remain separate maneuvers. This affects
+all navigation goals, including Explore; it never invents a route beyond the
+selected destination or changes exploration target selection.
 
 ## Animated dungeon floors
 

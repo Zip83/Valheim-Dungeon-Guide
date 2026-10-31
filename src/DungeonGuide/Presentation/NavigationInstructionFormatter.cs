@@ -73,23 +73,31 @@ internal sealed class NavigationInstructionFormatter
             return _text.NearDestination;
         }
 
-        if (navigation.IsGrapplePassage(route[near], route[next]))
+        var action = PassageInstruction(navigation, route[near], route[next], edge);
+        if (action != null)
+        {
+            return action;
+        }
+
+        var leg = RouteInstructionLookahead.Measure(graph, route, near, UnityPoints.P(player.transform.position),
+            navigation.IsGrapplePassage);
+        var direction = DirectionInstruction(player, b.Position, leg.Distance);
+        return navigation.RequiresGrapple ? _text.GrappleRequired + _text.Separator + direction : direction;
+    }
+
+    private string PassageInstruction(NavigationCoordinator navigation, int from, int to, NavEdge edge)
+    {
+        if (navigation.IsGrapplePassage(from, to))
         {
             return _text.GrappleInstruction;
         }
 
-        if (edge?.Kind == PassageKind.Jump)
+        return edge?.Kind switch
         {
-            return _text.JumpInstruction;
-        }
-
-        if (edge?.Kind == PassageKind.Drop)
-        {
-            return _text.DropInstruction;
-        }
-
-        var direction = DirectionInstruction(player, b.Position);
-        return navigation.RequiresGrapple ? _text.GrappleRequired + _text.Separator + direction : direction;
+            PassageKind.Jump => _text.JumpInstruction,
+            PassageKind.Drop => _text.DropInstruction,
+            _ => null
+        };
     }
 
     private string StatusInstruction(DungeonSession session, NavigationStatus status)
@@ -112,7 +120,7 @@ internal sealed class NavigationInstructionFormatter
         }
     }
 
-    private string DirectionInstruction(Player player, Point destination)
+    private string DirectionInstruction(Player player, Point destination, float distance)
     {
         var delta = UnityPoints.V(destination) - player.transform.position;
         var angle = Vector3.SignedAngle(player.transform.forward, new Vector3(delta.x, 0, delta.z), Vector3.up);
@@ -121,7 +129,7 @@ internal sealed class NavigationInstructionFormatter
             : Mathf.Abs(angle) > 145 ? _text.TurnAround : angle > 0 ? _text.Right : _text.Left;
         return turn + (delta.y > 0.5f ? _text.UpIndicator : delta.y < -0.5f ? _text.DownIndicator : "")
             + _text.Separator
-            + delta.magnitude.ToString("0.0")
+            + distance.ToString("0.0")
             + " m";
     }
 }
