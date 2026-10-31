@@ -5,6 +5,7 @@ internal enum GeometryScanPhase
 {
     Idle,
     Sampling,
+    PairSelection,
     Linking,
     Complete
 }

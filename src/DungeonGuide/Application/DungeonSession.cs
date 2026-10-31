@@ -50,6 +50,9 @@ internal sealed class DungeonSession
     /// <summary>Whether published geometry covers only the initial neighborhood rather than the complete dungeon.</summary>
     public bool HasPartialGeometry;
 
+    /// <summary>Whether the published graph has complete passage and architectural floor analysis.</summary>
+    public bool NavigationReady;
+
     /// <summary>
     /// Whether saving is disabled to protect corrupt or unsupported data.
     /// </summary>

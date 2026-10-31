@@ -8,7 +8,6 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class ScanGapLinker
 {
-    private static readonly (int, int)[] s_gapOffsets = { (2, 0), (0, 2), (-2, 0), (0, -2) };
     private readonly GeometryPhysics _physics;
     private readonly PassageEvaluator _passages;
     private readonly JumpEvaluator _jumps;
@@ -35,7 +34,7 @@ internal sealed class ScanGapLinker
     /// <returns>Frame pauses while candidate pairs and their required physics queries are evaluated.</returns>
     public IEnumerable<object> LinkColumn(ScanResult result, (int x, int z) column, FrameWorkBudget work)
     {
-        foreach (var pair in NeighborColumnPairs.Enumerate(result.Columns, column, s_gapOffsets))
+        foreach (var pair in result.Pairs.Gaps[column])
         {
             while (!work.TryStartWork())
             {
