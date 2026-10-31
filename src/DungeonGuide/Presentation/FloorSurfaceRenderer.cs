@@ -10,11 +10,13 @@ internal sealed class FloorSurfaceRenderer : IDisposable
     private readonly FloorPlanRaster _raster;
     private readonly IncrementalFloorFog _fog;
     private readonly FloorFogMask _publishedFog;
+    private readonly FloorSurfaceImages _images;
+    private Color32[] _tilePixels;
+    private Color32[] _fullPixels;
     private readonly Color32[] _terrain;
     private readonly Color32[] _cloud;
     private IEnumerator<byte> _job;
     private bool _indexed;
-    private bool _reveal;
     private int _visits = -1;
     private readonly HashSet<int> _completed = new();
     private int _visitCursor;
@@ -31,17 +33,14 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         _publishedFog = new FloorFogMask(raster);
         Array.Copy(_fog.Fog.Opacity, _publishedFog.Opacity, _publishedFog.Opacity.Length);
         _terrain = new Color32[raster.Size * raster.Size];
-        Texture = CreateTexture(raster.Size);
+        _images = new FloorSurfaceImages(raster.Size);
         _cloud = new Color32[_terrain.Length];
 
         _job = Initialize().GetEnumerator();
     }
 
     /// <summary>Incrementally composited floor colors paired with the published fog.</summary>
-    public Texture2D Texture
-    {
-        get;
-    }
+    public Texture2D Texture => _images.Texture;
 
     /// <summary>Whether all tiles have a valid initial image.</summary>
     public bool Ready
@@ -55,20 +54,24 @@ internal sealed class FloorSurfaceRenderer : IDisposable
     /// <summary>Advances pending tile work without regenerating static geometry or repainting unrelated pixels.</summary>
     public void Tick(Exploration exploration, Exploration visits, bool reveal, FrameWorkBudget budget)
     {
+        SetMode(reveal);
         if (_indexed)
         {
-            ObserveState(exploration, visits, reveal);
+            ObserveState(exploration, visits);
         }
 
-        AdvanceWork(exploration, visits, reveal, budget);
+        AdvanceWork(exploration, visits, budget);
         PublishChanges();
     }
 
-    private void ObserveState(Exploration exploration, Exploration visits, bool reveal)
+    /// <summary>Switches between already maintained visibility variants without rebuilding tiles.</summary>
+    public void SetMode(bool reveal) => _images.SetMode(reveal);
+
+    private void ObserveState(Exploration exploration, Exploration visits)
     {
         _fog.Observe(exploration);
         ObserveLatency(exploration);
-        if (_reveal != reveal || _visits != visits.Generation)
+        if (_visits != visits.Generation)
         {
             _fog.InvalidateAll();
             _visits = visits.Generation;
@@ -79,11 +82,9 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         {
             _fog.Invalidate(visits.Changes[_visitCursor++].Key);
         }
-
-        _reveal = reveal;
     }
 
-    private void AdvanceWork(Exploration exploration, Exploration visits, bool reveal, FrameWorkBudget budget)
+    private void AdvanceWork(Exploration exploration, Exploration visits, FrameWorkBudget budget)
     {
         while (budget.TryStartWork())
         {
@@ -100,7 +101,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
                 break;
             }
 
-            _job = UpdateTile(tile, exploration, visits, reveal).GetEnumerator();
+            _job = UpdateTile(tile, exploration, visits).GetEnumerator();
         }
     }
 
@@ -121,7 +122,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             return;
         }
 
-        Texture.Apply(false);
+        _images.ApplyChanges();
         _uploaded = false;
         if (Ready && _job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
         {
@@ -189,7 +190,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         }
     }
 
-    private IEnumerable<byte> UpdateTile(int tile, Exploration exploration, Exploration visits, bool reveal)
+    private IEnumerable<byte> UpdateTile(int tile, Exploration exploration, Exploration visits)
     {
         foreach (var step in _fog.Update(tile, exploration))
         {
@@ -197,16 +198,16 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         }
 
         var region = new FogTileRegion(_raster.Size, tile, IncrementalFloorFog.TileSize, 0);
-        var pixels = new Color32[region.Width * region.Height];
-        foreach (var step in PaintTile(region, visits, reveal, pixels))
+        PrepareTileBuffers(region.Width * region.Height);
+        foreach (var step in PaintTile(region, visits))
         {
             yield return step;
         }
 
-        UploadTile(tile, region, pixels);
+        UploadTile(tile, region);
     }
 
-    private IEnumerable<byte> PaintTile(FogTileRegion region, Exploration visits, bool reveal, Color32[] pixels)
+    private IEnumerable<byte> PaintTile(FogTileRegion region, Exploration visits)
     {
         for (var y = 0; y < region.Height; y++)
         {
@@ -214,28 +215,34 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             for (var x = 0; x < region.Width; x++)
             {
                 var index = (region.Y + y) * _raster.Size + region.X + x;
-                pixels[y * region.Width + x] = ComposePixel(index, visits, reveal);
+                WritePixel(index, y * region.Width + x, visits);
             }
         }
     }
 
-    private Color32 ComposePixel(int index, Exploration visits, bool reveal)
+    private void PrepareTileBuffers(int count)
+    {
+        if (_tilePixels?.Length != count)
+        {
+            _tilePixels = new Color32[count];
+            _fullPixels = new Color32[count];
+        }
+    }
+
+    private void WritePixel(int index, int local, Exploration visits)
     {
         var owner = _raster.Owners[index] - 1;
         var visited = owner >= 0 && visits.Has(_raster.Graph.Nodes[owner]);
 
-        var color = _terrain[index];
-        if (owner >= 0 && !_raster.Boundary[index])
-        {
-            color = visited ? MapPalette.VisitedRoom : reveal ? MapPalette.ScannedFloor : color;
-        }
-
-        return reveal ? color : Color32.Lerp(color, _cloud[index], _fog.Fog.Opacity[index] / 255f);
+        var floor = owner >= 0 && !_raster.Boundary[index];
+        var color = floor && visited ? MapPalette.VisitedRoom : _terrain[index];
+        _fullPixels[local] = floor && !visited ? MapPalette.ScannedFloor : color;
+        _tilePixels[local] = Color32.Lerp(color, _cloud[index], _fog.Fog.Opacity[index] / 255f);
     }
 
-    private void UploadTile(int tile, FogTileRegion region, Color32[] pixels)
+    private void UploadTile(int tile, FogTileRegion region)
     {
-        Texture.SetPixels32(region.X, region.Y, region.Width, region.Height, pixels);
+        _images.UploadTile(region, _tilePixels, _fullPixels);
         PublishFog(region);
         _uploaded = true;
         _completed.Add(tile);
@@ -251,17 +258,10 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         }
     }
 
-    private static Texture2D CreateTexture(int size) =>
-        new(size, size, TextureFormat.RGBA32, false)
-        {
-            filterMode = FilterMode.Bilinear,
-            wrapMode = TextureWrapMode.Clamp
-        };
-
     /// <inheritdoc />
     public void Dispose()
     {
         _job?.Dispose();
-        UnityEngine.Object.Destroy(Texture);
+        _images.Dispose();
     }
 }

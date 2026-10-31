@@ -65,7 +65,7 @@ internal sealed class MapTextureRenderer : IDisposable
             return;
         }
 
-        ResetChangedMode(view.RevealAll);
+        SetMode(view.RevealAll);
         _budget.BeginFrame();
         UpdateWorkingSet(session, view);
         var selected = AdvanceSelected(session);
@@ -83,7 +83,7 @@ internal sealed class MapTextureRenderer : IDisposable
         }
     }
 
-    private void ResetChangedMode(bool reveal)
+    private void SetMode(bool reveal)
     {
         if (_reveal == reveal)
         {
@@ -92,10 +92,9 @@ internal sealed class MapTextureRenderer : IDisposable
 
         foreach (var floor in _floors.Resources)
         {
-            floor.InvalidateSurface();
+            floor.SetMode(reveal);
         }
 
-        _published = null;
         _reveal = reveal;
         _markers.Clear();
     }
