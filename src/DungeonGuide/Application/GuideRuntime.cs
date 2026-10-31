@@ -315,14 +315,10 @@ internal sealed class GuideRuntime : IDisposable
     {
         if (Session.Scan != null)
         {
+            // Capture real jumps even while the published preview is waiting for navigation.
+            _traversals.Tick(Session, player);
             _exploration.Track(Session.Scan, Session.Exploration, player.transform.position, player.GetEyePoint(),
                 Session.Floors.Count == 0 ? -1 : FloorDetector.Nearest(Session.Floors, player.transform.position.y));
-
-            // Recording takeoff/landing must run every frame; proof revalidation is throttled separately.
-            if (Session.NavigationReady)
-            {
-                _traversals.Tick(Session, player);
-            }
         }
     }
 

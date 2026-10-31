@@ -168,7 +168,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new FloorDetector(new FloorLandingDetector()),
             lifecycle,
             new ExplorationRecorder(physics, settings),
-            new TraversalRecorder(locator, new TraversalProofVerifier()),
+            new TraversalRecorder(new ObservedTraversalReplay(physics), new TraversalProofVerifier()),
             Logger,
             notice,
             new DungeonGeometrySessions(settings,
