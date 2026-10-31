@@ -36,7 +36,7 @@ public sealed class SaveCompatibilityTests
             traversals = null
         };
         var upgraded = new SaveMigration().Upgrade(old);
-        Assert.Equal(3, upgraded.version);
+        Assert.Equal(4, upgraded.version);
         Assert.Empty(upgraded.visitedRooms);
         Assert.Equal("known", Assert.Single(upgraded.visited));
         var chest = Assert.Single(upgraded.chests);
@@ -75,7 +75,7 @@ public sealed class SaveCompatibilityTests
     [InlineData(typeof(Point), "x,y,z")]
     [InlineData(typeof(RoomVisit), "local,room")]
     [InlineData(typeof(ChestRecord), "collect,contents,discovered,done,id,label,position")]
-    [InlineData(typeof(SavedRun), "chests,dungeon,start,traversals,version,visited,visitedRooms,world")]
+    [InlineData(typeof(SavedRun), "chests,dungeon,start,traversals,version,visited,visitedRooms,waypoints,world")]
     [InlineData(typeof(TraversalProof), "from,jumpForce,jumpSkill,to")]
     public void PreservesSerializedFieldNames(Type type, string expected)
     {

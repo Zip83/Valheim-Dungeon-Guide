@@ -3,54 +3,58 @@ using System.Collections.Generic;
 
 namespace DungeonGuide;
 
-/// <summary>
-/// Upgrades supported save schemas while rejecting unknown future formats.
-/// </summary>
+/// <summary>Upgrades supported save schemas while rejecting unknown future formats and corrupt return locations.</summary>
 public sealed class SaveMigration
 {
-    /// <summary>
-    /// Updates legacy exploration and chest state to schema 3, initializing missing traversal records without erasing
-    /// notes.
-    /// </summary>
-    /// <param name="data">Loaded dungeon state that may be upgraded in place.</param>
-    /// <returns>The supported state upgraded in place to the current save schema.</returns>
-    /// <exception cref="System.InvalidOperationException">The save uses an unsupported future schema.</exception>
+    /// <summary>Upgrades legacy state to schema 4 without inferring visits or rewriting names and coordinates.</summary>
+    /// <param name="data">Loaded dungeon state, upgraded in place only after version validation.</param>
+    /// <returns>The same supported state with initialized collections.</returns>
+    /// <exception cref="InvalidOperationException">The schema is newer or personal locations are corrupt.</exception>
     public SavedRun Upgrade(SavedRun data)
     {
-        if (data.version > 3)
+        if (data.version > 4)
         {
             throw new InvalidOperationException("The saved data requires a newer plugin version.");
         }
 
-        if (data.chests == null)
-        {
-            data.chests = new List<ChestRecord>();
-        }
+        InitializeCollections(data);
+        ValidateWaypoints(data.waypoints);
+        MigrateLegacyChests(data);
+        data.version = 4;
+        return data;
+    }
 
-        if (data.visited == null)
-        {
-            data.visited = new List<string>();
-        }
+    private static void InitializeCollections(SavedRun data)
+    {
+        data.chests ??= new List<ChestRecord>();
+        data.visited ??= new List<string>();
+        data.traversals ??= new List<TraversalProof>();
+        data.visitedRooms ??= new List<RoomVisit>();
+        data.waypoints ??= new List<WaypointRecord>();
+    }
 
-        if (data.traversals == null)
+    private static void ValidateWaypoints(IEnumerable<WaypointRecord> records)
+    {
+        var identities = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var record in records)
         {
-            data.traversals = new List<TraversalProof>();
-        }
-
-        if (data.version < 2)
-        {
-            foreach (var chest in data.chests)
+            if (!WaypointRegistry.IsValid(record) || !identities.Add(record.id))
             {
-                chest.discovered = chest.collect || chest.done;
+                throw new InvalidOperationException("The saved return locations contain invalid or duplicate records.");
             }
         }
+    }
 
-        if (data.visitedRooms == null)
+    private static void MigrateLegacyChests(SavedRun data)
+    {
+        if (data.version >= 2)
         {
-            data.visitedRooms = new List<RoomVisit>();
+            return;
         }
 
-        data.version = 3;
-        return data;
+        foreach (var chest in data.chests)
+        {
+            chest.discovered = chest.collect || chest.done;
+        }
     }
 }

@@ -13,7 +13,7 @@ public sealed class RoomVisitMigrationTests
         data.visited.Add("known");
         var result = new SaveMigration().Upgrade(data);
         Assert.Same(data, result);
-        Assert.Equal(3, result.version);
+        Assert.Equal(4, result.version);
         Assert.Equal("known", Assert.Single(result.visited));
         Assert.Empty(result.visitedRooms);
     }

@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace DungeonGuide;
 
 /// <summary>
-/// Stores exploration and chest state for one world and dungeon using the existing JSON schema.
+/// Stores exploration, chest and personal return-location state for one world and dungeon using the existing JSON schema.
 /// </summary>
 [Serializable]
 public sealed class SavedRun
 {
     /// <summary>
-    /// Serialized schema version, currently 3; this is independent of the plugin release version.
+    /// Serialized schema version, currently 4; this is independent of the plugin release version.
     /// </summary>
-    public int version = 3;
+    public int version = 4;
 
     /// <summary>
     /// World identifier used to keep exploration from different worlds separate.
@@ -36,6 +36,9 @@ public sealed class SavedRun
     /// Known container identities, player notes, and collection markers.
     /// </summary>
     public List<ChestRecord> chests = new();
+
+    /// <summary>Personal named world positions, scoped to this world and dungeon.</summary>
+    public List<WaypointRecord> waypoints = new();
 
     /// <summary>
     /// Observed directional jump and drop evidence retained for later validation.
