@@ -322,6 +322,27 @@ native-state callback filtering/teardown and destruction classification with
 stand-in game components. Real damage responses, traversal and multiplayer
 gameplay still need an in-game check; fixtures do not establish those outcomes.
 
+## Observed jumps outside automatic gap candidates
+
+Automatic gap candidates retain their conservative short-gap envelope. Actual
+successful grounded-to-airborne-to-grounded movement is recorded independently
+of candidate existence, including while a preview waits for navigation. Death,
+teleporting, debug flight and grappling cancel observation. Flights lasting 3 s
+or more and displacements outside 0.75-30 m are not accepted. Jump force and skill
+are captured at takeoff. Saved traversal field names and schema remain unchanged.
+
+A cooperative replay matches recorded physical endpoints to close indexed samples,
+checks support at both ends, standing clearance and the existing conservative arc,
+then adds or reuses only the observed directed Jump/Drop edge. It does not replace
+ordinary, door or breakable edges or infer the reverse traversal. Newly saved raw
+endpoints may wait for full geometry; replay also runs after a rescan or cache load,
+so saved evidence does not depend on a cached automatic gap candidate. Duplicate
+normalized observations retain the latest record. Capability/stamina verification
+remains required, and waits until current geometry replay completes. All replay
+physics consumes the existing shared frame allowance; uncertain geometry remains
+unverified. The conservative reconstructed arc may reject an observed trajectory
+that passed by a different curve. Native gameplay verification remains required.
+
 ## Continuous higher/lower navigation
 
 Go up / Go down retains its direction after reaching a broad, supported landing

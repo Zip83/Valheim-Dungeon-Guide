@@ -44,6 +44,53 @@ internal sealed class JumpEvaluator
         }
     }
 
+    /// <summary>Rechecks an actually observed traversal without the automatic short-gap search envelope.</summary>
+    /// <param name="start">Observed takeoff matched to current floor geometry.</param>
+    /// <param name="end">Observed landing matched to current floor geometry.</param>
+    /// <param name="work">Existing shared frame budget.</param>
+    /// <param name="complete">Receives current landing and arc clearance, without capability approval.</param>
+    /// <returns>Frame pauses while the saved observation is checked.</returns>
+    public IEnumerable<object> Observed(Vector3 start, Vector3 end, FrameWorkBudget work, Action<bool> complete)
+    {
+        var supported = false;
+        foreach (var pause in CheckObservedSupport(start, end, work, valid => supported = valid))
+        {
+            yield return pause;
+        }
+
+        if (!supported)
+        {
+            complete(false);
+            yield break;
+        }
+
+        foreach (var pause in CheckLandingAndArc(start, end, work, complete))
+        {
+            yield return pause;
+        }
+    }
+
+    private IEnumerable<object> CheckObservedSupport(Vector3 start, Vector3 end, FrameWorkBudget work,
+        Action<bool> complete)
+    {
+        foreach (var point in new[] { start, end })
+        {
+            while (!work.TryStartWork())
+            {
+                yield return null;
+                work.BeginFrame();
+            }
+
+            if (!_physics.Supported(point))
+            {
+                complete(false);
+                yield break;
+            }
+        }
+
+        complete(true);
+    }
+
     private static bool WithinRange(Vector3 start, Vector3 end)
     {
         var horizontal = new Vector2(start.x - end.x, start.z - end.z).magnitude;

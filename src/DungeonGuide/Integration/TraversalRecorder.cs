@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -11,23 +10,25 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class TraversalRecorder
 {
-    private readonly GraphLocator _locator;
+    private readonly ObservedTraversalReplay _replay;
     private readonly TraversalProofVerifier _verifier;
     private Point _grounded;
     private bool _hasGround;
     private bool _airborne;
     private float _began;
+    private float _jumpForce;
+    private float _jumpSkill;
     private float _nextApply;
     private readonly FieldInfo _debugFly = typeof(Player).GetField(
         "m_debugFly",
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
     /// <summary>
-    /// Uses supported graph snapping to match observed takeoff and landing positions.
+    /// Records physical movement independently of automatic scan candidates and replays saved evidence.
     /// </summary>
-    public TraversalRecorder(GraphLocator locator, TraversalProofVerifier verifier)
+    public TraversalRecorder(ObservedTraversalReplay replay, TraversalProofVerifier verifier)
     {
-        _locator = locator;
+        _replay = replay;
         _verifier = verifier;
     }
 
@@ -38,6 +39,7 @@ internal sealed class TraversalRecorder
     {
         _hasGround = _airborne = false;
         _verifier.Reset();
+        _replay.Reset();
     }
 
     /// <summary>
@@ -52,7 +54,12 @@ internal sealed class TraversalRecorder
         }
 
         TrackMovement(session, player);
-        if (Time.unscaledTime >= _nextApply)
+        _replay.Tick(session.Scan, session.Data.traversals);
+        if (!_replay.Ready)
+        {
+            _verifier.Reset();
+        }
+        else if (Time.unscaledTime >= _nextApply)
         {
             _nextApply = Time.unscaledTime + 0.5f;
             Apply(session, player);
@@ -93,6 +100,8 @@ internal sealed class TraversalRecorder
         {
             _airborne = true;
             _began = Time.unscaledTime;
+            _jumpForce = player.m_jumpForce;
+            _jumpSkill = player.GetSkillFactor(Skills.SkillType.Jump);
         }
 
         if (ground)
@@ -110,30 +119,20 @@ internal sealed class TraversalRecorder
 
     private void RecordLanding(DungeonSession session, Player player)
     {
-        var a = _locator.Snap(session.Scan, UnityPoints.V(_grounded));
-        var b = _locator.Snap(session.Scan, player.transform.position);
-        if (a >= 0 && b >= 0)
+        var landing = UnityPoints.P(player.transform.position);
+        var distance = Point.Distance(_grounded, landing);
+        if (distance < 0.75f || distance > 30)
         {
-            var edge = session.Scan.Graph.Nodes[a].Edges.FirstOrDefault(
-                e => e.To == b && (e.Kind == PassageKind.Jump || e.Kind == PassageKind.Drop));
-            if (edge != null)
-            {
-                SaveProof(session, player, a, b);
-            }
+            return;
         }
-    }
 
-    private static void SaveProof(DungeonSession session, Player player, int a, int b)
-    {
-        var from = session.Scan.Graph.Nodes[a].Position;
-        var to = session.Scan.Graph.Nodes[b].Position;
-        session.Data.traversals.RemoveAll(t => Point.Key(t.from) == Point.Key(from) && Point.Key(t.to) == Point.Key(to));
         session.Data.traversals.Add(new TraversalProof
         {
-            from = from,
-            to = to,
-            jumpForce = player.m_jumpForce,
-            jumpSkill = player.GetSkillFactor(Skills.SkillType.Jump)
+            from = _grounded,
+            to = landing,
+            jumpForce = _jumpForce,
+            jumpSkill = _jumpSkill
         });
+        _replay.Reset();
     }
 }
