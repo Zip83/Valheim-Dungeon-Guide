@@ -1,37 +1,36 @@
-# Adjacent floor preloading (Valheim 1.0.21)
+# Dungeon floor preloading (Valheim 1.0.21)
 
-The detail/minimap renderer retains the player's physical floor and its existing immediate neighbors.
-The lowest floor has only an upper neighbor, the highest only a lower neighbor, and a single-floor
-snapshot does not request background work. Manual browsing keeps its selected floor as an additional
-foreground entry without replacing the physical neighborhood. The overview thumbnail cache remains
-independent.
+The selected display floor runs first under the existing shared soft 1 ms presentation budget.
+When following the player, this is the physical floor. Manual browsing immediately prioritizes the
+explicitly selected floor. The player's physical floor and its valid upper/lower neighbors form the
+next priority group. Missing edge neighbors are skipped. Unfinished members of that group receive
+fair alternating slices before any distant floor begins construction.
 
-The selected floor runs first under the existing shared 1 ms presentation budget. Once its first
-image is ready, at most one background floor receives a slice of the remaining budget per frame.
-Round-robin ordering prevents either neighbor from starving. Entries retain display geometry without
-keeping obsolete scan-column/pair indices. Each entry retains its completed raster,
-texture, fog mask. Entering an already prepared floor publishes that
-same image without repeating raster construction. Prefetch reads exploration; it never marks geometry
-as discovered or rooms as visited. Dynamic player/route markers continue updating separately.
+After the physical neighborhood is ready, increasingly distant floors continue warming progressively.
+At most one background floor receives a slice per frame, using only capacity left by foreground work.
+Distant warmup alternates with round-robin maintenance of already ready floors, keeping discovery and
+visited-room overlays current without starving the remaining dungeon. A selection/physical-floor
+change recalculates priorities and preserves all ready and partially built resources.
 
-The working set is bounded to three physical-neighborhood floors, plus one manually browsed floor.
-A previously displayed image may temporarily add one protected entry while its replacement is being
-prepared. Old neighbors and obsolete graph builds are disposed; the displayed old snapshot stays only
-until replacement publication. New sessions release every entry. Graph identity prevents preview/full
-floor-number collisions from reusing the wrong geometry, and cached physical heights preserve the
-existing viewport behavior. The player-floor tracking step runs before texture selection.
+Every prepared floor retains its raster, textures, fog mask throughout
+the active dungeon geometry snapshot. Browsing away from a floor never evicts it. Returning publishes
+the same ready image. The cache grows only as construction progresses; it does not allocate every
+floor's full-size textures up front. Prefetch never marks samples explored or rooms visited.
 
-Switching full/explored visibility selects the maintained color-image variant without rebuilding. Cached geometry, masks and pending tile work survive the switch. CPU fog images
-are updated even while Full is displayed, preventing full-map pixels appearing through explored fog.
-The marker layer is refreshed for the selected visibility policy. Physics scan limits, navigation readiness, discovery radius, saved data and sample accuracy are
-unchanged. The presentation time limit remains soft: Unity allocation/upload calls cannot be preempted.
+Leaving/changing the dungeon or shutting down the plugin releases all cached resources. A rescan or
+preview-to-final geometry replacement invalidates resources by graph identity, preventing stale floor
+numbers/projections from being reused. Only the previous displayed image may remain temporarily while
+its replacement finishes. Physical floor tracking runs before texture selection. The overview cache
+is independent and already maintains its own progressively prepared thumbnails.
 
-Regression coverage checks boundary indices, manual selection, foreground priority, exhausted budgets,
-fair neighbor admission, actual completed raster reuse, stale-graph eviction and resource cleanup.
-In-game stair transitions, native UI behavior, texture memory use and real frame times remain manual checks;
-passing domain tests and compiling against Valheim references are not gameplay performance evidence.
+Full/FOG switching retains geometry and pending work. Both color-image variants remain updated together. Markers refresh separately under their existing visibility
+policy. Discovery radius, sample accuracy, navigation readiness, physics limits and save data are unchanged.
 
-An isolated Unity 6000.0.75 CPU fixture also verified actual texture reuse, static-raster retention
-while invalidating visibility-mode images, opaque fog after switching from Full, stale-work rejection,
-old-display retirement and final texture cleanup. It uses minimal session DTOs and editor-compatible
-immediate texture destruction, so this evidence is distinct from Valheim UI gameplay tests.
+The former three-neighbor working-set cap is intentionally removed: memory now scales with prepared
+floors in the current snapshot. Each 768-square RGBA texture uses about 2.25 MiB before engine overhead;
+Two color images are retained per floor, in addition to raster/mask bookkeeping. Unity allocation/upload calls cannot be preempted by the soft frame budget.
+
+Regression coverage protects complete ordering, boundary floors, manual display priority, neighbor-first
+warmup, distant progress, ready-floor maintenance, denied-frame scheduling, retained resources across
+repeated browsing, stale-graph eviction and final cleanup. Actual Valheim stair transitions, UI response,
+texture memory use and frame times remain manual gameplay checks.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace DungeonGuide.Tests;
@@ -109,6 +110,35 @@ public sealed class FloorResourceCacheTests
         Assert.Equal(1, resource.Disposals);
         Assert.Equal(1, replacement.Disposals);
         Assert.Equal(0, cache.Count);
+    }
+
+    /// <summary>Browsing distant floors and returning never retires resources from the active dungeon snapshot.</summary>
+    [Fact]
+    public void CompletePreloadOrderRetainsEveryPreparedFloorAcrossBrowsing()
+    {
+        var graph = new NavGraph();
+        var resources = new List<Resource>();
+        using var cache = new FloorResourceCache<Resource>();
+        for (var floor = 0; floor < 10; floor++)
+        {
+            var resource = new Resource();
+            resources.Add(resource);
+            cache.Add(graph, floor, resource);
+        }
+
+        var targets = new List<int>();
+        foreach (var selected in new[] { 0, 9, 4, 1, 8, 0 })
+        {
+            FloorPreloadPolicy.Fill(targets, 0, selected, 10);
+            cache.Retain(graph, targets, resources[selected]);
+            Assert.Equal(10, cache.Count);
+            for (var floor = 0; floor < 10; floor++)
+            {
+                Assert.True(cache.TryGet(graph, floor, out var retained));
+                Assert.Same(resources[floor], retained);
+                Assert.Equal(0, retained.Disposals);
+            }
+        }
     }
 
     private sealed class Resource : IDisposable
