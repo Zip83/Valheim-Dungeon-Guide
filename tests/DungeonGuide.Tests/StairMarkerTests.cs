@@ -35,6 +35,7 @@ public sealed class StairMarkerTests
 
         Assert.Equal((true, true), StairMarkerPolicy.Directions(graph, 0));
     }
+
     /// <summary>The raster indexes same-floor stairs so the marker renderer can actually draw their arrows.</summary>
     [Fact]
     public void RasterIncludesSameFloorStairFeatures()
@@ -48,6 +49,7 @@ public sealed class StairMarkerTests
 
         Assert.Contains(0, raster.Features);
         Assert.Contains(1, raster.Features);
+        Assert.Single(raster.StairGroups);
     }
 
 }

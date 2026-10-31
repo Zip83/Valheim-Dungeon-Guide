@@ -69,6 +69,9 @@ internal sealed class FloorPlanRaster
     /// <summary>Candidate transition and special-passage nodes, indexed once during construction.</summary>
     public List<int> Features { get; } = new();
 
+    /// <summary>Connected stair regions prepared once so dynamic markers need not draw every vertical sample.</summary>
+    public List<StairMarkerGroup> StairGroups { get; } = new();
+
     /// <summary>Verified ordinary connections used to distinguish internal cell seams from walls.</summary>
     public HashSet<(int, int)> Connections { get; } = new();
 

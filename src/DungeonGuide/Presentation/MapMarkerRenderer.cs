@@ -272,6 +272,12 @@ internal sealed class MapMarkerRenderer : IDisposable
 
     private void DrawFeatures(DungeonSession session, int floor, bool reveal, FloorPlanRaster raster)
     {
+        DrawStairs(session, reveal, raster);
+        DrawUnverifiedPassages(session, floor, reveal, raster);
+    }
+
+    private void DrawUnverifiedPassages(DungeonSession session, int floor, bool reveal, FloorPlanRaster raster)
+    {
         var graph = session.Scan.Graph;
 
         foreach (var id in raster.Features)
@@ -282,8 +288,6 @@ internal sealed class MapMarkerRenderer : IDisposable
                 continue;
             }
 
-            DrawStairDirections(graph, id);
-
             if (node.Edges.Any(e => !e.Verified
                     && (e.Kind == PassageKind.Jump || e.Kind == PassageKind.Drop || e.Kind == PassageKind.Breakable)))
             {
@@ -292,14 +296,16 @@ internal sealed class MapMarkerRenderer : IDisposable
         }
     }
 
-    private void DrawStairDirections(NavGraph graph, int id)
+    private void DrawStairs(DungeonSession session, bool reveal, FloorPlanRaster raster)
     {
-        var directions = StairMarkerPolicy.Directions(graph, id);
-        var uv = UV(graph.Nodes[id].Position);
-        var x = (int)(uv.x * Size);
-        var y = (int)(uv.y * Size);
-        _stairs.Draw(x, y, directions.Up, directions.Down);
+        foreach (var group in raster.StairGroups)
+        {
+            var selected = StairMarkerSelection.Select(session.Scan.Graph, group, session.Exploration, reveal);
+            _stairs.DrawLandings(StairPixel(session.Scan.Graph, selected.Up), StairPixel(session.Scan.Graph, selected.Down));
+        }
     }
+
+    private Vector2? StairPixel(NavGraph graph, int id) => id < 0 ? null : UV(graph.Nodes[id].Position) * Size;
 
     private void DrawChests(DungeonSession session, int floor, bool reveal)
     {
