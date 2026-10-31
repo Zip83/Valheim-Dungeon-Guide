@@ -135,6 +135,9 @@ jobs:
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs
           cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
+          if [ -f src/DungeonGuide/bin/Release/net48/dungeonguide-ui ]; then
+            cp src/DungeonGuide/bin/Release/net48/dungeonguide-ui artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
+          fi
           cp LICENSE artifacts/DungeonGuide/
           cp packaging/README.md artifacts/DungeonGuide/README.md
           python3 - <<'PY'
