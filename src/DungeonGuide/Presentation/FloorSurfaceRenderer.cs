@@ -60,44 +60,44 @@ internal sealed class FloorSurfaceRenderer : IDisposable
     {
         if (_indexed)
         {
-            _fog.Observe(exploration);
-            ObserveLatency(exploration);
-            if (_reveal != reveal || _visits != visits.Generation)
-            {
-                _fog.InvalidateAll();
-                _visits = visits.Generation;
-                _visitCursor = 0;
-            }
-
-            while (_visitCursor < visits.Changes.Count)
-            {
-                _fog.Invalidate(visits.Changes[_visitCursor++].Key);
-            }
-
-            _reveal = reveal;
-
+            ObserveState(exploration, visits, reveal);
         }
 
+        AdvanceWork(exploration, visits, reveal, budget);
+        PublishChanges();
+    }
+
+    private void ObserveState(Exploration exploration, Exploration visits, bool reveal)
+    {
+        _fog.Observe(exploration);
+        ObserveLatency(exploration);
+        if (_reveal != reveal || _visits != visits.Generation)
+        {
+            _fog.InvalidateAll();
+            _visits = visits.Generation;
+            _visitCursor = 0;
+        }
+
+        while (_visitCursor < visits.Changes.Count)
+        {
+            _fog.Invalidate(visits.Changes[_visitCursor++].Key);
+        }
+
+        _reveal = reveal;
+    }
+
+    private void AdvanceWork(Exploration exploration, Exploration visits, bool reveal, FrameWorkBudget budget)
+    {
         while (budget.TryStartWork())
         {
-            if (_job != null)
+            if (_job != null && _job.MoveNext())
             {
-                if (_job.MoveNext())
-                {
-                    continue;
-                }
-
-                _job.Dispose();
-                _job = null;
+                continue;
             }
 
-            if (!_indexed)
-            {
-                _indexed = true;
-                _fog.Observe(exploration);
-                ObserveLatency(exploration);
-            }
-
+            _job?.Dispose();
+            _job = null;
+            ObserveInitialIndex(exploration);
             if (!_fog.TryTake(out var tile))
             {
                 break;
@@ -105,26 +105,46 @@ internal sealed class FloorSurfaceRenderer : IDisposable
 
             _job = UpdateTile(tile, exploration, visits, reveal).GetEnumerator();
         }
+    }
 
-        if (_uploaded)
+    private void ObserveInitialIndex(Exploration exploration)
+    {
+        if (!_indexed)
         {
-            Texture.Apply(false);
-            _uploaded = false;
-            if (Ready && _job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
-            {
-                var milliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - _oldestChange)
-                    * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-                Debug.Log("DungeonGuide fog batch published: floor=" + _raster.Floor
-                    + ", elapsedMilliseconds=" + milliseconds.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
-                    + ", gpu=" + (Material != null));
-                _nextDiagnostic = Time.unscaledTime + 5;
-            }
-
-            if (_job == null)
-            {
-                _oldestChange = 0;
-            }
+            _indexed = true;
+            _fog.Observe(exploration);
+            ObserveLatency(exploration);
         }
+    }
+
+    private void PublishChanges()
+    {
+        if (!_uploaded)
+        {
+            return;
+        }
+
+        Texture.Apply(false);
+        _uploaded = false;
+        if (Ready && _job == null && _oldestChange != 0 && Time.unscaledTime >= _nextDiagnostic)
+        {
+            LogLatency();
+        }
+
+        if (_job == null)
+        {
+            _oldestChange = 0;
+        }
+    }
+
+    private void LogLatency()
+    {
+        var milliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - _oldestChange)
+            * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        Debug.Log("DungeonGuide fog batch published: floor=" + _raster.Floor
+            + ", elapsedMilliseconds=" + milliseconds.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
+            + ", gpu=" + (Material != null));
+        _nextDiagnostic = Time.unscaledTime + 5;
     }
 
     private void ObserveLatency(Exploration exploration)
@@ -146,18 +166,30 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             yield return step;
         }
 
+        foreach (var step in PrepareTerrain())
+        {
+            yield return step;
+        }
+    }
+
+    private IEnumerable<byte> PrepareTerrain()
+    {
         for (var y = 0; y < _raster.Size; y++)
         {
             yield return 0;
-            for (var x = 0; x < _raster.Size; x++)
-            {
-                var i = y * _raster.Size + x;
-                _terrain[i] = _raster.Owners[i] == 0 ? MapPalette.TextureBackground
-                    : _raster.Boundary[i] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
-                _cloud[i] = MapPalette.Cloud(x, y);
-            }
+            PaintTerrainRow(y);
         }
+    }
 
+    private void PaintTerrainRow(int y)
+    {
+        for (var x = 0; x < _raster.Size; x++)
+        {
+            var index = y * _raster.Size + x;
+            _terrain[index] = _raster.Owners[index] == 0 ? MapPalette.TextureBackground
+                : _raster.Boundary[index] ? MapPalette.FloorOutline : MapPalette.ExploredFloor;
+            _cloud[index] = MapPalette.Cloud(x, y);
+        }
     }
 
     private IEnumerable<byte> UpdateTile(int tile, Exploration exploration, Exploration visits, bool reveal)
@@ -167,43 +199,58 @@ internal sealed class FloorSurfaceRenderer : IDisposable
             yield return step;
         }
 
-        var columns = (_raster.Size + IncrementalFloorFog.TileSize - 1) / IncrementalFloorFog.TileSize;
-        var x0 = tile % columns * IncrementalFloorFog.TileSize;
-        var y0 = tile / columns * IncrementalFloorFog.TileSize;
-        var width = Mathf.Min(IncrementalFloorFog.TileSize, _raster.Size - x0);
-        var height = Mathf.Min(IncrementalFloorFog.TileSize, _raster.Size - y0);
-        var pixels = new Color32[width * height];
-        for (var y = 0; y < height; y++)
+        var region = new FogTileRegion(_raster.Size, tile, IncrementalFloorFog.TileSize, 0);
+        var pixels = new Color32[region.Width * region.Height];
+        foreach (var step in PaintTile(region, visits, reveal, pixels))
+        {
+            yield return step;
+        }
+
+        UploadTile(tile, region, pixels);
+    }
+
+    private IEnumerable<byte> PaintTile(FogTileRegion region, Exploration visits, bool reveal, Color32[] pixels)
+    {
+        for (var y = 0; y < region.Height; y++)
         {
             yield return 0;
-            for (var x = 0; x < width; x++)
+            for (var x = 0; x < region.Width; x++)
             {
-                var i = (y0 + y) * _raster.Size + x0 + x;
-                var owner = _raster.Owners[i] - 1;
-                var visited = owner >= 0 && visits.Has(_raster.Graph.Nodes[owner]);
-                var boundary = _raster.Boundary[i];
-
-                var color = _terrain[i];
-                if (owner >= 0 && !boundary)
-                {
-                    color = visited ? MapPalette.VisitedRoom : reveal ? MapPalette.ScannedFloor : color;
-                }
-
-                pixels[y * width + x] = reveal ? color : Color32.Lerp(color, _cloud[i], _fog.Fog.Opacity[i] / 255f);
+                var index = (region.Y + y) * _raster.Size + region.X + x;
+                pixels[y * region.Width + x] = ComposePixel(index, visits, reveal);
             }
         }
+    }
 
-        Texture.SetPixels32(x0, y0, width, height, pixels);
-
-        for (var y = 0; y < height; y++)
+    private Color32 ComposePixel(int index, Exploration visits, bool reveal)
+    {
+        var owner = _raster.Owners[index] - 1;
+        var visited = owner >= 0 && visits.Has(_raster.Graph.Nodes[owner]);
+        var color = _terrain[index];
+        if (owner >= 0 && !_raster.Boundary[index])
         {
-            var offset = (y0 + y) * _raster.Size + x0;
-            Array.Copy(_fog.Fog.Opacity, offset, _publishedFog.Opacity, offset, width);
+            color = visited ? MapPalette.VisitedRoom : reveal ? MapPalette.ScannedFloor : color;
         }
 
+        return reveal ? color : Color32.Lerp(color, _cloud[index], _fog.Fog.Opacity[index] / 255f);
+    }
+
+    private void UploadTile(int tile, FogTileRegion region, Color32[] pixels)
+    {
+        Texture.SetPixels32(region.X, region.Y, region.Width, region.Height, pixels);
+        PublishFog(region);
         _uploaded = true;
         _completed.Add(tile);
-        Ready |= _completed.Count >= columns * columns;
+        Ready |= _completed.Count >= region.TotalTiles;
+    }
+
+    private void PublishFog(FogTileRegion region)
+    {
+        for (var y = 0; y < region.Height; y++)
+        {
+            var offset = (region.Y + y) * _raster.Size + region.X;
+            Array.Copy(_fog.Fog.Opacity, offset, _publishedFog.Opacity, offset, region.Width);
+        }
     }
 
     private static Texture2D CreateTexture(int size) => new(size, size, TextureFormat.RGBA32, false)

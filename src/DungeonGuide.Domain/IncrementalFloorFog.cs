@@ -118,54 +118,84 @@ internal sealed class IncrementalFloorFog
     /// <summary>Updates a tile with a halo so feathering is identical across tile boundaries.</summary>
     public IEnumerable<byte> Update(int tile, Exploration exploration)
     {
-        var x0 = tile % _columns * TileSize;
-        var y0 = tile / _columns * TileSize;
-        var width = Math.Min(TileSize, _raster.Size - x0);
-        var height = Math.Min(TileSize, _raster.Size - y0);
-        var stride = width + _feather * 2;
-        var rows = height + _feather * 2;
-        var distance = new byte[stride * rows];
-        for (var y = 0; y < rows; y++)
+        var region = new FogTileRegion(_raster.Size, tile, TileSize, _feather);
+        var distance = new byte[region.Stride * region.Rows];
+        foreach (var step in MeasureInterior(region, exploration, distance))
         {
-            yield return 0;
-            for (var x = 0; x < stride; x++)
-            {
-                var wx = x0 + x - _feather;
-                var wy = y0 + y - _feather;
-                if (wx < 0 || wy < 0 || wx >= _raster.Size || wy >= _raster.Size)
-                {
-                    continue;
-                }
-
-                var owner = _raster.Owners[wy * _raster.Size + wx] - 1;
-                if (owner >= 0 && exploration.Has(_raster.Graph.Nodes[owner]))
-                {
-                    var left = x > 0 ? distance[y * stride + x - 1] : 0;
-                    var down = y > 0 ? distance[(y - 1) * stride + x] : 0;
-                    distance[y * stride + x] = (byte)Math.Min(_feather, Math.Min(left, down) + 1);
-                }
-            }
+            yield return step;
         }
 
-        for (var y = rows - 1; y >= 0; y--)
+        foreach (var step in ApplyOpacity(region, distance))
+        {
+            yield return step;
+        }
+    }
+
+    private IEnumerable<byte> MeasureInterior(FogTileRegion region, Exploration exploration, byte[] distance)
+    {
+        for (var y = 0; y < region.Rows; y++)
         {
             yield return 0;
-            for (var x = stride - 1; x >= 0; x--)
+            for (var x = 0; x < region.Stride; x++)
             {
-                var i = y * stride + x;
-                if (distance[i] > 0)
-                {
-                    var right = x + 1 < stride ? distance[i + 1] : 0;
-                    var up = y + 1 < rows ? distance[i + stride] : 0;
-                    distance[i] = (byte)Math.Min(distance[i], Math.Min(right, up) + 1);
-                }
-
-                if (x >= _feather && x < _feather + width && y >= _feather && y < _feather + height)
-                {
-                    Fog.Opacity[(y0 + y - _feather) * _raster.Size + x0 + x - _feather] =
-                        (byte)(255 - distance[i] * 255 / _feather);
-                }
+                MeasurePixel(region, exploration, distance, x, y);
             }
+        }
+    }
+
+    private void MeasurePixel(FogTileRegion region, Exploration exploration, byte[] distance, int x, int y)
+    {
+        var wx = region.WorldX(x);
+        var wy = region.WorldY(y);
+        if (wx < 0 || wy < 0 || wx >= _raster.Size || wy >= _raster.Size)
+        {
+            return;
+        }
+
+        var owner = _raster.Owners[wy * _raster.Size + wx] - 1;
+        if (owner < 0 || !exploration.Has(_raster.Graph.Nodes[owner]))
+        {
+            return;
+        }
+
+        var index = y * region.Stride + x;
+        var left = x > 0 ? distance[index - 1] : 0;
+        var down = y > 0 ? distance[index - region.Stride] : 0;
+        distance[index] = (byte)Math.Min(_feather, Math.Min(left, down) + 1);
+    }
+
+    private IEnumerable<byte> ApplyOpacity(FogTileRegion region, byte[] distance)
+    {
+        for (var y = region.Rows - 1; y >= 0; y--)
+        {
+            yield return 0;
+            for (var x = region.Stride - 1; x >= 0; x--)
+            {
+                RefineDistance(region, distance, x, y);
+                PublishOpacity(region, distance[y * region.Stride + x], x, y);
+            }
+        }
+    }
+
+    private static void RefineDistance(FogTileRegion region, byte[] distance, int x, int y)
+    {
+        var index = y * region.Stride + x;
+        if (distance[index] == 0)
+        {
+            return;
+        }
+
+        var right = x + 1 < region.Stride ? distance[index + 1] : 0;
+        var up = y + 1 < region.Rows ? distance[index + region.Stride] : 0;
+        distance[index] = (byte)Math.Min(distance[index], Math.Min(right, up) + 1);
+    }
+
+    private void PublishOpacity(FogTileRegion region, byte distance, int x, int y)
+    {
+        if (region.ContainsInterior(x, y))
+        {
+            Fog.Opacity[region.WorldY(y) * _raster.Size + region.WorldX(x)] =
+                (byte)(255 - distance * 255 / _feather);
         }
     }
 
