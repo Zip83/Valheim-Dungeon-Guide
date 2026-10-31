@@ -8,12 +8,33 @@ internal sealed class StairMarkerRenderer
 {
     private const int HalfWidth = 5;
     private const int PairOffset = 8;
+    private const int MergeDistance = 24;
     private readonly Action<int, int, int, Color32> _brush;
 
     /// <summary>Reuses the map's pixel brush so fog clipping and dirty uploads remain authoritative.</summary>
     public StairMarkerRenderer(Action<int, int, int, Color32> brush)
     {
         _brush = brush;
+    }
+
+    /// <summary>Combines nearby landing symbols into one readable pair rather than overlapping their glyphs.</summary>
+    public void DrawLandings(Vector2? up, Vector2? down)
+    {
+        if (up.HasValue && down.HasValue && (up.Value - down.Value).sqrMagnitude < MergeDistance * MergeDistance)
+        {
+            Draw((int)up.Value.x, (int)up.Value.y, true, true);
+            return;
+        }
+
+        if (up.HasValue)
+        {
+            Draw((int)up.Value.x, (int)up.Value.y, true, false);
+        }
+
+        if (down.HasValue)
+        {
+            Draw((int)down.Value.x, (int)down.Value.y, false, true);
+        }
     }
 
     /// <summary>Separates simultaneous up/down arrows without hiding either direction at a landing.</summary>

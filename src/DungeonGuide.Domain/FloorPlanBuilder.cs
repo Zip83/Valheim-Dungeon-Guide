@@ -24,6 +24,11 @@ internal sealed class FloorPlanBuilder
         {
             yield return step;
         }
+
+        foreach (var step in new StairMarkerGrouping(graph, raster).Build())
+        {
+            yield return step;
+        }
     }
 
     private static bool Wall(FloorPlanRaster raster, int owner, int x, int y)
