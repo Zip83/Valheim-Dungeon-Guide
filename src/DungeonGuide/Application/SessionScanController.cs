@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using BepInEx.Logging;
 using UnityEngine;
 
@@ -16,6 +18,9 @@ internal sealed class SessionScanController
     private readonly FloorDetector _floors;
     private readonly ManualLogSource _log;
     private readonly Func<DungeonSession> _current;
+    private readonly Func<DungeonSession, byte[], CancellationToken, Task<bool>> _persist;
+    private CancellationTokenSource _cacheWrite;
+    private int _sampleVersion;
     private Coroutine _scanJob;
     private FloorAnalysisJob _floorAnalysis;
     private float _scanStarted;
@@ -25,6 +30,9 @@ internal sealed class SessionScanController
     /// <summary>Raised after a completed preview or full scan replaces the active session's geometry.</summary>
     public event Action ScanCompleted;
 
+    /// <summary>Signals that a full replacement starts sampling the latest world state.</summary>
+    public event Action FullScanStarted;
+
     /// <summary>Connects sampling, floor analysis, and the active-session publication guard.</summary>
     /// <param name="host">Game-thread coroutine owner.</param>
     /// <param name="settings">Sampling resolution and per-frame work limits.</param>
@@ -32,8 +40,10 @@ internal sealed class SessionScanController
     /// <param name="floors">Pure floor-analysis policy.</param>
     /// <param name="log">Sink for scan completion and failure diagnostics.</param>
     /// <param name="current">Returns the session currently owned by the runtime.</param>
+    /// <param name="persist">Queues sealed optional cache bytes for publication without blocking the game thread.</param>
     public SessionScanController(MonoBehaviour host, GuideSettings settings, GeometryScanner scanner,
-        FloorDetector floors, ManualLogSource log, Func<DungeonSession> current)
+        FloorDetector floors, ManualLogSource log, Func<DungeonSession> current,
+        Func<DungeonSession, byte[], CancellationToken, Task<bool>> persist)
     {
         _host = host;
         _settings = settings;
@@ -41,6 +51,7 @@ internal sealed class SessionScanController
         _floors = floors;
         _log = log;
         _current = current;
+        _persist = persist;
     }
 
     private DungeonSession Session => _current();
@@ -59,6 +70,8 @@ internal sealed class SessionScanController
             _log.LogInfo("Dungeon room bounds: size=" + room.size + ", center=" + room.center);
         }
 
+        _cacheWrite?.Dispose();
+        _cacheWrite = new CancellationTokenSource();
         session.Scanning = true;
         _scanStarted = Time.realtimeSinceStartup;
         _nextProgress = _scanStarted;
@@ -69,10 +82,16 @@ internal sealed class SessionScanController
     /// <summary>Cancels private floor analysis before the runtime saves and closes its session.</summary>
     public void CancelAnalysis()
     {
+        InvalidateCacheWrite();
+        _cacheWrite?.Dispose();
+        _cacheWrite = null;
         _scanner.CancelAnalysis();
         _floorAnalysis?.Dispose();
         _floorAnalysis = null;
     }
+
+    /// <summary>Revokes cache publication if geometry changed after this private scan had already sampled it.</summary>
+    public void InvalidateCacheWrite() => _cacheWrite?.Cancel();
 
     /// <summary>Stops the sampling coroutine after the runtime has saved the active session.</summary>
     public void Stop()
@@ -108,7 +127,7 @@ internal sealed class SessionScanController
 
     private IEnumerator BuildPass(DungeonSession session, DungeonArea area, bool preview)
     {
-        _preparingPreview = preview;
+        BeginPass(session, preview);
         ScanResult result = null;
         foreach (var pause in CoroutinePhase.Forward(SampleGeometry(area, completed => result = completed, preview)))
         {
@@ -122,14 +141,7 @@ internal sealed class SessionScanController
 
         if (preview)
         {
-            var player = Player.m_localPlayer;
-            var previewLayout = PreviewFloorClassifier.Classify(result.Graph,
-                player ? UnityPoints.P(player.transform.position) : session.Data.start);
-            if (previewLayout.Levels.Count > 0)
-            {
-                PublishScan(session, result, previewLayout, true);
-            }
-
+            PublishPreview(session, result);
             yield break;
         }
 
@@ -145,6 +157,30 @@ internal sealed class SessionScanController
         }
     }
 
+    private void BeginPass(DungeonSession session, bool preview)
+    {
+        if (!preview)
+        {
+            _cacheWrite?.Dispose();
+            _cacheWrite = new CancellationTokenSource();
+            _sampleVersion = session.GeometryMutationVersion;
+            FullScanStarted?.Invoke();
+        }
+
+        _preparingPreview = preview;
+    }
+
+    private void PublishPreview(DungeonSession session, ScanResult result)
+    {
+        var player = Player.m_localPlayer;
+        var layout = PreviewFloorClassifier.Classify(result.Graph,
+            player ? UnityPoints.P(player.transform.position) : session.Data.start);
+        if (layout.Levels.Count > 0)
+        {
+            PublishScan(session, result, layout, true);
+        }
+    }
+
     private void PublishScan(DungeonSession session, ScanResult result, FloorLayout layout, bool preview)
     {
         // Each published snapshot is exclusively owned and no longer changed by a scan or worker.
@@ -155,6 +191,8 @@ internal sealed class SessionScanController
         session.Floors = layout.Levels;
         session.GeometryRevision++;
         session.HasPartialGeometry = preview;
+        session.GeometryDirty = !preview && _sampleVersion != session.GeometryMutationVersion;
+        session.GeometryNeedsScan = preview || session.GeometryDirty;
         session.NavigationReady = !preview;
         session.Scanning = preview;
         _log.LogInfo((preview ? "Scan preview ready: " : "Scan complete: ") + session.Area.Id
@@ -200,24 +238,31 @@ internal sealed class SessionScanController
     private IEnumerator AnalyzeFloors(DungeonSession session, ScanResult result, Action<FloorLayout> completed)
     {
         // The new graph is private to this scan. Existing maps/navigation retain their previous graph.
-        using (var analysis = new FloorAnalysisJob(_floors, result.Graph, result.Spacing))
+        var detector = _floors;
+        var preparation = new GeometryCachePreparation(session.GeometryCacheKey, result.Spacing, result.Truncated,
+            session.Area.ObservedEntrance ? session.Area.Entrance : null);
+        using (var analysis = new FloorAnalysisJob(token => preparation.Analyze(detector, result.Graph, token)))
         {
             _floorAnalysis = analysis;
             try
             {
-                FloorLayout layout;
-                while (!analysis.TryComplete(out layout))
+                FloorLayout layout = null;
+                foreach (var pause in CoroutinePhase.Forward(AwaitAnalysis(analysis, session, value => layout = value)))
                 {
-                    yield return null;
-                    if (Session != session)
-                    {
-                        yield break;
-                    }
+                    yield return pause;
                 }
 
-                if (Session == session)
+                if (Session == session && layout != null)
                 {
-                    completed(layout);
+                    foreach (var pause in CoroutinePhase.Forward(PersistPrepared(session, preparation)))
+                    {
+                        yield return pause;
+                    }
+
+                    if (Session == session)
+                    {
+                        completed(layout);
+                    }
                 }
             }
             finally
@@ -227,6 +272,57 @@ internal sealed class SessionScanController
                     _floorAnalysis = null;
                 }
             }
+        }
+    }
+
+    private IEnumerator AwaitAnalysis(FloorAnalysisJob analysis, DungeonSession session, Action<FloorLayout> completed)
+    {
+        FloorLayout layout;
+        while (!analysis.TryComplete(out layout))
+        {
+            yield return null;
+            if (Session != session)
+            {
+                yield break;
+            }
+        }
+
+        completed(layout);
+    }
+
+    private IEnumerator PersistPrepared(DungeonSession session, GeometryCachePreparation preparation)
+    {
+        if (preparation.Error != null)
+        {
+            _log.LogWarning("Cannot prepare persistent geometry; keeping the live map: " + preparation.Error);
+            yield break;
+        }
+
+        var token = _cacheWrite?.Token ?? CancellationToken.None;
+        if (preparation.Payload == null || token.IsCancellationRequested)
+        {
+            yield break;
+        }
+
+        var task = _persist(session, preparation.Payload, token);
+        task.ContinueWith(failed => { _ = failed.Exception; }, CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+        while (!task.IsCompleted)
+        {
+            yield return null;
+            if (Session != session)
+            {
+                yield break;
+            }
+        }
+
+        if (task.IsFaulted && !(task.Exception.GetBaseException() is OperationCanceledException))
+        {
+            _log.LogWarning("Cannot persist completed geometry; keeping the live map: " + task.Exception.GetBaseException());
+        }
+        else if (!task.IsFaulted && !task.IsCanceled && !task.Result)
+        {
+            _log.LogWarning("Preserving a newer geometry cache; the live map remains available.");
         }
     }
 

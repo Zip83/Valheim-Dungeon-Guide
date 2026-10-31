@@ -53,6 +53,7 @@ internal sealed class GuideGameLoop : IDisposable
         runtime.Entered += Enter;
         runtime.Left += navigator.Stop;
         runtime.ScanCompleted += Scanned;
+        runtime.WorldChanged += texture.ClearWorld;
     }
 
     private void Enter()
@@ -153,6 +154,7 @@ internal sealed class GuideGameLoop : IDisposable
         _runtime.Entered -= Enter;
         _runtime.Left -= _navigator.Stop;
         _runtime.ScanCompleted -= Scanned;
+        _runtime.WorldChanged -= _texture.ClearWorld;
         _maps.Dispose();
         _overlay.Dispose();
         _texture.Dispose();

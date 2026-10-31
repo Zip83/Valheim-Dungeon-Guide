@@ -38,6 +38,7 @@ internal sealed class DungeonAreaFactory
         }
 
         var boxes = rooms.Select(DungeonRoomGeometry.WorldBounds).ToArray();
+        var observed = _entrances.Find(rooms);
         return new DungeonArea
         {
             Id = "dungeon_" + UnityPoints.PositionId(generator.transform.position) + "_" + generator.m_themes,
@@ -45,7 +46,8 @@ internal sealed class DungeonAreaFactory
             Bounds = DungeonRoomGeometry.Enclose(boxes),
             Rooms = boxes,
             RoomVolumes = rooms.Select(room => new DungeonRoom(room)).ToArray(),
-            Entrance = _entrances.Find(rooms) ?? FindEntrance(rooms)
+            Entrance = observed ?? FindEntrance(rooms),
+            ObservedEntrance = observed.HasValue
         };
     }
 

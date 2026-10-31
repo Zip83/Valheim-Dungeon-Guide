@@ -112,12 +112,23 @@ previous-file `.bak`. Corrupt or future-version data makes that session read-onl
 rather than overwriting the existing file. Existing version 1 records are migrated
 without changing their established field names.
 
+Completed floor geometry is also retained across dungeon exits and game restarts.
+Returning to a recently visited dungeon reuses its live session and prepared
+detail/minimap textures. A fresh game loads the separately checksummed geometry
+cache asynchronously; it does not repeat floor sampling for an unchanged layout.
+Observed doorway arrivals are retained with that geometry. Door permissions and
+special traversal evidence still need current-world validation before navigation.
+Incomplete or structurally changed layouts resume automatic scanning while the
+previous map remains visible. Cache files live in `DungeonGuide/Geometry/` beside
+the JSON saves; see [the format and recovery rules](docs/geometry-cache-format.md).
+
 ## Limits and verification
 
 Maps are sampled from loaded collision geometry; a full scanned view does not
 promise that every room in the dungeon was loaded or captured. Narrow floors,
-complex staircases, and balconies can be ambiguous. Rescan after opening or
-breaking a passage. Large scans are spread over frames and have a configurable cap.
+complex staircases, and balconies can be ambiguous. Door interactions refresh
+passage permissions; observed structural destruction schedules an automatic
+replacement. Large scans are spread over frames and have a configurable cap.
 
 Scanning yields between individual samples and passage candidates, with a default
 soft budget of **1 ms per frame** (`Scan.MillisecondsPerFrame`). It does not pause

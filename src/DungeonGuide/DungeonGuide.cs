@@ -33,6 +33,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
         var lifecycle = CreateSessionLifecycle(notice, text);
         var entrances = new DungeonEntranceRecorder();
         var runtime = CreateRuntime(settings, physics, locator, lifecycle, notice, text, entrances);
+        entrances.Observed += runtime.EntranceObserved;
 
         var floorPolicy = new FloorNavigationPolicy();
         var numbering = new FloorNumbering(language.Current);
@@ -170,7 +171,11 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new ExplorationRecorder(physics, settings),
             new TraversalRecorder(locator, new TraversalProofVerifier()),
             Logger,
-            notice);
+            notice,
+            new DungeonGeometrySessions(settings,
+                new GeometryCacheRepository(Path.Combine(Paths.ConfigPath, "DungeonGuide", "Geometry")), Logger,
+                new RestoredPassageValidation(physics, new DoorPassageVerifier(),
+                    new BreakablePassageVerifier(settings.Approved))));
     }
 
     private static ChestActions CreateChestActions(GraphLocator locator, SessionLifecycle lifecycle,
@@ -196,7 +201,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
 
     private void InstallWorldChangeHooks(GuideRuntime runtime, GuideSettings settings)
     {
-        var destruction = new DestructionRecorder(settings, () => runtime.Session?.Area, runtime.DoorChanged);
+        var destruction = new DestructionRecorder(settings, () => runtime.Session?.Area, runtime.GeometryChanged);
         _changes = new WorldChangeHooks(runtime.DoorChanged, destruction.Observe, e => Logger.LogError(e));
     }
 }

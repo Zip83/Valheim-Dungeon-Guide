@@ -19,7 +19,9 @@ internal sealed class GuideRuntime : IDisposable
     private readonly SessionLifecycle _lifecycle;
     private readonly ExplorationRecorder _exploration;
     private readonly TraversalRecorder _traversals;
+    private readonly DungeonGeometrySessions _geometry;
     private float _nextDetect;
+    private bool _entrancePending;
     private readonly RoomVisitRecorder _rooms = new();
     private float _nextSave;
     private float _doorRescan = float.PositiveInfinity;
@@ -47,6 +49,9 @@ internal sealed class GuideRuntime : IDisposable
     /// </summary>
     public event Action ScanCompleted;
 
+    /// <summary>Signals actual world/connection changes so retained presentation resources can be released.</summary>
+    public event Action WorldChanged;
+
     /// <summary>
     /// Connects session lifecycle, bounded scanning, floor detection, and exploration/traversal observation.
     /// </summary>
@@ -61,7 +66,8 @@ internal sealed class GuideRuntime : IDisposable
         ExplorationRecorder exploration,
         TraversalRecorder traversals,
         ManualLogSource log,
-        UserNotice notice)
+        UserNotice notice,
+        DungeonGeometrySessions geometry)
     {
         _settings = settings;
         _locator = locator;
@@ -69,8 +75,14 @@ internal sealed class GuideRuntime : IDisposable
         _lifecycle = lifecycle;
         _exploration = exploration;
         _traversals = traversals;
-        _scans = new SessionScanController(host, settings, scanner, floors, log, () => Session);
-        _scans.ScanCompleted += () => ScanCompleted?.Invoke();
+        _geometry = geometry;
+        _geometry.Restored += () => ScanCompleted?.Invoke();
+        _geometry.PermissionsChanged += () => ScanCompleted?.Invoke();
+        _geometry.WorldChanged += () => WorldChanged?.Invoke();
+        _geometry.NeedsScan += ScanMissing;
+        _scans = new SessionScanController(host, settings, scanner, floors, log, () => Session, _geometry.StorePrepared);
+        _scans.ScanCompleted += GeometryPublished;
+        _scans.FullScanStarted += BeginFullScan;
     }
 
     private string World => ZNet.instance ? ZNet.instance.GetWorldUID().ToString(CultureInfo.InvariantCulture) : null;
@@ -81,7 +93,9 @@ internal sealed class GuideRuntime : IDisposable
     public void Tick()
     {
         var player = Player.m_localPlayer;
-        if (!player || World == null)
+        var world = World;
+        _geometry.Tick(Session, world);
+        if (!player || world == null)
         {
             Close();
             return;
@@ -156,20 +170,70 @@ internal sealed class GuideRuntime : IDisposable
             _settings.AllowOutdoorMapping.Value);
     }
 
-    /// <summary>
-    /// Debounces a geometry rescan after a relevant door or destructible change.
-    /// </summary>
+    /// <summary>Refreshes door permissions without rebuilding unchanged floor geometry.</summary>
     public void DoorChanged()
     {
         if (Session != null)
         {
+            _geometry.RefreshPermissions(Session);
+        }
+    }
+
+    /// <summary>Debounces automatic replacement after a change to actual sampled geometry.</summary>
+    public void GeometryChanged()
+    {
+        if (Session != null)
+        {
+            _scans.InvalidateCacheWrite();
+            _geometry.Invalidate(Session, true);
             _doorRescan = Time.unscaledTime + 1;
         }
     }
 
     private void StartScan()
     {
+        if (Session == null || Session.Scanning)
+        {
+            return;
+        }
+
+        if (_geometry.RefreshArea(Session, Session.Area))
+        {
+            _geometry.Open(Session);
+            return;
+        }
+
+        if (!Session.GeometryNeedsScan)
+        {
+            _geometry.Invalidate(Session);
+        }
+
         _scans.Start(Session);
+    }
+
+    private void BeginFullScan()
+    {
+        _geometry.RefreshArea(Session, Session.Area);
+        _doorRescan = float.PositiveInfinity;
+    }
+
+    private void ScanMissing(DungeonSession session)
+    {
+        if (Session == session)
+        {
+            StartScan();
+        }
+    }
+
+    private void GeometryPublished()
+    {
+        if (!Session.HasPartialGeometry && !float.IsPositiveInfinity(_doorRescan))
+        {
+            Session.GeometryNeedsScan = true;
+        }
+
+        _geometry.Published(Session);
+        ScanCompleted?.Invoke();
     }
 
     private void Close()
@@ -182,6 +246,8 @@ internal sealed class GuideRuntime : IDisposable
         _scans.CancelAnalysis();
         _lifecycle.Save(Session);
         _scans.Stop();
+        Session.Scanning = false;
+        _geometry.Leave(Session);
 
         Session = null;
         _traversals.Reset();
@@ -192,7 +258,11 @@ internal sealed class GuideRuntime : IDisposable
     }
 
     /// <inheritdoc/>
-    public void Dispose() => Close();
+    public void Dispose()
+    {
+        Close();
+        _geometry.Dispose();
+    }
 
     private bool RetainSession(Vector3 position)
     {
@@ -210,12 +280,23 @@ internal sealed class GuideRuntime : IDisposable
         return true;
     }
 
+    /// <summary>Starts short discovery retries while the native doorway transfer loads its dungeon rooms.</summary>
+    public void EntranceObserved()
+    {
+        _entrancePending = true;
+        _nextDetect = 0;
+    }
+
     private void DetectIfDue()
     {
         if (Time.unscaledTime >= _nextDetect)
         {
-            _nextDetect = Time.unscaledTime + 3;
+            _nextDetect = Time.unscaledTime + (_entrancePending ? 0.25f : 3);
             Detect(false);
+            if (Session != null)
+            {
+                _entrancePending = false;
+            }
         }
     }
 
@@ -279,7 +360,14 @@ internal sealed class GuideRuntime : IDisposable
     {
         if (Session?.Area.Id == area.Id)
         {
-            if (manual)
+            if (_geometry.RefreshArea(Session, area))
+            {
+                _scans.CancelAnalysis();
+                _scans.Stop();
+                Session.Scanning = false;
+                _geometry.Open(Session);
+            }
+            else if (manual)
             {
                 StartScan();
             }
@@ -288,8 +376,21 @@ internal sealed class GuideRuntime : IDisposable
         }
 
         Close();
+        Session = _geometry.Resume(area, World);
+        if (Session != null)
+        {
+            Entered?.Invoke();
+            ScanCompleted?.Invoke();
+            if (Session.GeometryNeedsScan)
+            {
+                _geometry.Open(Session);
+            }
+
+            return;
+        }
+
         Session = _lifecycle.Open(area, World, UnityPoints.P(player.transform.position));
         Entered?.Invoke();
-        StartScan();
+        _geometry.Open(Session);
     }
 }
