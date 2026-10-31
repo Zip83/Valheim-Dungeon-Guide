@@ -16,13 +16,10 @@ internal sealed class MapControlsView : IDisposable
     private readonly TMP_Text _floorLabel;
     private readonly TMP_Text _revealLabel;
     private readonly TMP_Text _worldLabel;
-    private readonly TMP_Text _breakLabel;
     private readonly TMP_Text _moreLabel;
     private readonly TMP_Text _overviewLabel;
-    private readonly UnityEngine.UI.Button _rescanButton;
     private readonly List<(RectTransform Rect, float Weight)> _first = new();
     private readonly List<(RectTransform Rect, float Weight)> _second = new();
-    private readonly List<(RectTransform Rect, float Weight)> _extra = new();
     private readonly TMP_Text _hints;
     private float _hintWidth = -1;
     private float _hintHeight;
@@ -56,10 +53,10 @@ internal sealed class MapControlsView : IDisposable
 
         _legend = new MapLegendView(parent, style, text);
         (_floorLabel, _moreLabel, _overviewLabel) = CreateFloorControls(command, style);
-        CreateNavigationControls(command, style);
+        _revealLabel = CreateNavigationControls(command, style);
 
         _advanced = CreateContainer("AdvancedControls", _details);
-        (_revealLabel, _rescanButton, _breakLabel, _hints) = CreateAdvancedControls(command, style);
+        _hints = CreateHints(style);
         _advanced.gameObject.SetActive(false);
     }
 
@@ -131,11 +128,9 @@ internal sealed class MapControlsView : IDisposable
         _floorLabel.text = FloorCaption(session, view, displayedFloor);
         _overviewLabel.text = view.Overview ? _text.FloorDetail : _text.Overview;
 
-        _rescanButton.interactable = !session.Scanning;
         _moreLabel.text = _state.Expanded ? _text.Less : _text.More;
 
         _revealLabel.text = view.RevealAll ? _text.FullDungeon : _text.Explored;
-        _breakLabel.text = _text.BreakablePassages + (view.AllowBreakables ? _text.Yes : _text.No);
     }
 
     private string FloorCaption(DungeonSession session, MapViewState view, int displayedFloor)
@@ -159,15 +154,14 @@ internal sealed class MapControlsView : IDisposable
         var parent = Root.parent as RectTransform;
         var width = Mathf.Max(240, Mathf.Min(960, parent.rect.width - 24));
         var hintsHeight = HintHeight(width - 16);
-        var controlsHeight = _state.Expanded ? 116 + hintsHeight : 82;
+        var controlsHeight = _state.Expanded ? 80 + hintsHeight : 82;
         Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + 4 : 46);
         if (dungeon)
         {
             Layout(_first, width, -8);
             Layout(_second, width, -44);
-            Layout(_extra, width, -80);
 
-            _hints.rectTransform.anchoredPosition = new Vector2(8, -116);
+            _hints.rectTransform.anchoredPosition = new Vector2(8, -80);
             _hints.rectTransform.sizeDelta = new Vector2(width - 16, hintsHeight);
         }
         else
@@ -224,7 +218,7 @@ internal sealed class MapControlsView : IDisposable
         return (floorLabel, moreLabel, overviewLabel);
     }
 
-    private void CreateNavigationControls(Action<GuideCommand> command, GameUiStyle style)
+    private TMP_Text CreateNavigationControls(Action<GuideCommand> command, GameUiStyle style)
     {
         Add(_second, _details, style, _text.NavigateUp, 140, () => command(GuideCommand.NavigateUp));
         Add(_second, _details, style, _text.NavigateDown, 140, () => command(GuideCommand.NavigateDown));
@@ -232,21 +226,18 @@ internal sealed class MapControlsView : IDisposable
         Add(_second, _details, style, _text.Entrance, 110, () => command(GuideCommand.Entrance));
         Add(_second, _details, style, _text.Stop, 110, () => command(GuideCommand.Stop));
         Add(_second, _details, style, _text.Chests, 180, () => command(GuideCommand.NextChest));
+
+        return Add(_second, _details, style, _text.Explored, 160, () => command(GuideCommand.ToggleReveal));
     }
 
-    private (TMP_Text Reveal, UnityEngine.UI.Button Rescan, TMP_Text Break, TMP_Text Hints)
-        CreateAdvancedControls(Action<GuideCommand> command, GameUiStyle style)
+    private TMP_Text CreateHints(GameUiStyle style)
     {
-        var revealLabel = Add(_extra, _advanced, style, _text.Explored, 210, () => command(GuideCommand.ToggleReveal));
-        var rescan = Add(_extra, _advanced, style, _text.Rescan, 160, () => command(GuideCommand.Rescan));
-        var rescanButton = rescan.transform.parent.GetComponent<UnityEngine.UI.Button>();
-        var breakLabel = Add(_extra, _advanced, style, "", 260, () => command(GuideCommand.ToggleBreakables));
         var hints = NativeUi.Label(_advanced, style, _text.ChestControls + "\n" + _text.WaypointControls
             + "\n" + _text.WaypointMapControls, Vector2.zero, Vector2.zero, 13);
         hints.enableAutoSizing = false;
         hints.textWrappingMode = TextWrappingModes.Normal;
         hints.overflowMode = TextOverflowModes.Overflow;
 
-        return (revealLabel, rescanButton, breakLabel, hints);
+        return hints;
     }
 }

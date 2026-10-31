@@ -12,7 +12,6 @@ namespace DungeonGuide;
 /// </summary>
 internal sealed class GuideRuntime : IDisposable
 {
-    private readonly GuideSettings _settings;
     private readonly SessionScanController _scans;
     private readonly DungeonLocator _locator;
     private readonly DungeonActivationPolicy _activation;
@@ -26,7 +25,7 @@ internal sealed class GuideRuntime : IDisposable
     private readonly PassageEquipmentWatch _equipment = new();
     private float _nextEquipment;
     private float _nextSave;
-    private float _doorRescan = float.PositiveInfinity;
+    private float _geometryRefresh = float.PositiveInfinity;
 
     /// <summary>
     /// Currently active dungeon session, or null when no usable dungeon is active.
@@ -71,7 +70,6 @@ internal sealed class GuideRuntime : IDisposable
         UserNotice notice,
         DungeonGeometrySessions geometry)
     {
-        _settings = settings;
         _locator = locator;
         _activation = activation;
         _lifecycle = lifecycle;
@@ -116,12 +114,12 @@ internal sealed class GuideRuntime : IDisposable
 
         _rooms.Track(Session, player.transform.position);
         RefreshEquipmentIfDue(player);
-        RescanIfDue();
+        RefreshGeometryIfDue();
         TrackMovement(player);
         SaveIfDue();
     }
 
-    private void Detect(bool manual)
+    private void Detect()
     {
         var p = Player.m_localPlayer;
         if (!p)
@@ -129,7 +127,7 @@ internal sealed class GuideRuntime : IDisposable
             return;
         }
 
-        var area = LocateArea(p, manual);
+        var area = _locator.Locate(p.transform.position);
 
         if (area == null)
         {
@@ -141,27 +139,7 @@ internal sealed class GuideRuntime : IDisposable
             return;
         }
 
-        ActivateArea(area, p, manual);
-    }
-
-    /// <summary>
-    /// Schedules a replacement scan without assuming the player position is the dungeon entrance.
-    /// </summary>
-    public void Rescan()
-    {
-        if (Session?.Scanning == true)
-        {
-            return;
-        }
-
-        var player = Player.m_localPlayer;
-        if (Session != null && player && CanRetainSession(player.transform.position))
-        {
-            StartScan();
-            return;
-        }
-
-        Detect(true);
+        ActivateArea(area, p);
     }
 
     private bool CanRetainSession(Vector3 position)
@@ -169,8 +147,7 @@ internal sealed class GuideRuntime : IDisposable
         return _activation.CanRetainSession(
             Session.Area.IsManual,
             Session.Area.Bounds.Contains(position),
-            Character.InInterior(position),
-            _settings.AllowOutdoorMapping.Value);
+            Character.InInterior(position));
     }
 
     /// <summary>Refreshes door permissions without rebuilding unchanged floor geometry.</summary>
@@ -198,7 +175,7 @@ internal sealed class GuideRuntime : IDisposable
         {
             _scans.InvalidateCacheWrite();
             _geometry.Invalidate(Session, true);
-            _doorRescan = Time.unscaledTime + 1;
+            _geometryRefresh = Time.unscaledTime + 1;
         }
     }
 
@@ -226,7 +203,7 @@ internal sealed class GuideRuntime : IDisposable
     private void BeginFullScan()
     {
         _geometry.RefreshArea(Session, Session.Area);
-        _doorRescan = float.PositiveInfinity;
+        _geometryRefresh = float.PositiveInfinity;
     }
 
     private void ScanMissing(DungeonSession session)
@@ -239,7 +216,7 @@ internal sealed class GuideRuntime : IDisposable
 
     private void GeometryPublished()
     {
-        if (!Session.HasPartialGeometry && !float.IsPositiveInfinity(_doorRescan))
+        if (!Session.HasPartialGeometry && !float.IsPositiveInfinity(_geometryRefresh))
         {
             Session.GeometryNeedsScan = true;
         }
@@ -266,7 +243,7 @@ internal sealed class GuideRuntime : IDisposable
         _rooms.Reset();
         _equipment.Reset();
         _exploration.Reset();
-        _doorRescan = float.PositiveInfinity;
+        _geometryRefresh = float.PositiveInfinity;
         Left?.Invoke();
     }
 
@@ -305,7 +282,7 @@ internal sealed class GuideRuntime : IDisposable
         if (Time.unscaledTime >= _nextDetect)
         {
             _nextDetect = Time.unscaledTime + (_entrancePending ? 0.25f : 3);
-            Detect(false);
+            Detect();
             if (Session != null)
             {
                 _entrancePending = false;
@@ -313,18 +290,18 @@ internal sealed class GuideRuntime : IDisposable
         }
     }
 
-    private void RescanIfDue()
+    private void RefreshGeometryIfDue()
     {
-        if (Time.unscaledTime >= _doorRescan)
+        if (Time.unscaledTime >= _geometryRefresh)
         {
             if (Session.Scanning)
             {
-                _doorRescan = Time.unscaledTime + 0.5f;
+                _geometryRefresh = Time.unscaledTime + 0.5f;
             }
             else
             {
-                _doorRescan = float.PositiveInfinity;
-                Rescan();
+                _geometryRefresh = float.PositiveInfinity;
+                StartScan();
             }
         }
     }
@@ -365,23 +342,7 @@ internal sealed class GuideRuntime : IDisposable
         }
     }
 
-    private DungeonArea LocateArea(Player player, bool manual)
-    {
-        var area = _locator.Locate(player.transform.position);
-        if (area == null && manual && _activation.CanScanManually(
-            Character.InInterior(player.transform.position),
-            _settings.AllowOutdoorMapping.Value))
-        {
-            area = _locator.Manual(
-                player.transform.position,
-                Mathf.Clamp(_settings.Radius.Value, 10, 150),
-                Mathf.Clamp(_settings.Height.Value, 10, 300));
-        }
-
-        return area;
-    }
-
-    private void ActivateArea(DungeonArea area, Player player, bool manual)
+    private void ActivateArea(DungeonArea area, Player player)
     {
         if (Session?.Area.Id == area.Id)
         {
@@ -391,10 +352,6 @@ internal sealed class GuideRuntime : IDisposable
                 _scans.Stop();
                 Session.Scanning = false;
                 _geometry.Open(Session);
-            }
-            else if (manual)
-            {
-                StartScan();
             }
 
             return;

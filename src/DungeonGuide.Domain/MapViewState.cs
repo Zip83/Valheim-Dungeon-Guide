@@ -37,11 +37,6 @@ public sealed class MapViewState
     private int? _manualFloor;
 
     /// <summary>
-    /// Whether verified breakable passages may be considered by navigation.
-    /// </summary>
-    public bool AllowBreakables;
-
-    /// <summary>
     /// Manual browsing selection when present, otherwise the tracked player floor.
     /// </summary>
     public int SelectedFloor => _manualFloor ?? CurrentFloor;

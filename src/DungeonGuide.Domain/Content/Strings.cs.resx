@@ -81,9 +81,6 @@
     <data name="Stop" xml:space="preserve">
         <value>Zastavit</value>
     </data>
-    <data name="Rescan" xml:space="preserve">
-        <value>Obnovit sken</value>
-    </data>
     <data name="Chests" xml:space="preserve">
         <value>Truhly · F8</value>
     </data>
@@ -98,9 +95,6 @@
     </data>
     <data name="FullDungeon" xml:space="preserve">
         <value>Celý dungeon</value>
-    </data>
-    <data name="BreakablePassages" xml:space="preserve">
-        <value>Rozbitné průchody: </value>
     </data>
     <data name="Yes" xml:space="preserve">
         <value>ANO</value>
