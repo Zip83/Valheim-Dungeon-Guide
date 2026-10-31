@@ -131,10 +131,6 @@ internal sealed class CommandDispatcher
                 _view.AllowBreakables = !_view.AllowBreakables;
                 _settings.SaveView(_view);
                 return true;
-            case GuideCommand.ToggleJumps:
-                _view.AllowJumps = !_view.AllowJumps;
-                _settings.SaveView(_view);
-                return true;
             case GuideCommand.FloorUp:
                 _view.Overview = false;
                 _view.ChangeFloor(1, session.Floors.Count);

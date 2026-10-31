@@ -60,10 +60,6 @@ internal enum GuideCommand
     /// </summary>
     ToggleBreakables,
     /// <summary>
-    /// Enable or disable verified jumps and directional drops.
-    /// </summary>
-    ToggleJumps,
-    /// <summary>
     /// Mark the actual interactive chest for collection.
     /// </summary>
     MarkChest,

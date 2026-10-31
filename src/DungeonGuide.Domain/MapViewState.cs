@@ -42,11 +42,6 @@ public sealed class MapViewState
     public bool AllowBreakables;
 
     /// <summary>
-    /// Whether previously verified jump and drop passages may be considered by navigation.
-    /// </summary>
-    public bool AllowJumps;
-
-    /// <summary>
     /// Manual browsing selection when present, otherwise the tracked player floor.
     /// </summary>
     public int SelectedFloor => _manualFloor ?? CurrentFloor;

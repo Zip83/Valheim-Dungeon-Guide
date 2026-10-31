@@ -14,17 +14,11 @@ public sealed class RoutePolicy
     public bool Breakables;
 
     /// <summary>
-    /// Whether verified jump and drop transitions are allowed; disabled by default.
-    /// </summary>
-    public bool Jumps;
-
-    /// <summary>
     /// Rejects unverified passages and optional actions that the player has not enabled.
     /// </summary>
     /// <param name="e">Directed passage being checked against route permissions or cost.</param>
     /// <returns>True when verification and optional traversal permissions permit this edge.</returns>
-    public bool Allows(NavEdge e) => e.Verified && (e.Kind != PassageKind.Breakable || Breakables)
-        && ((e.Kind != PassageKind.Jump && e.Kind != PassageKind.Drop) || Jumps);
+    public bool Allows(NavEdge e) => e.Verified && (e.Kind != PassageKind.Breakable || Breakables);
 
     /// <summary>
     /// Adds a cost for special traversal so an ordinary route is preferred when practical.

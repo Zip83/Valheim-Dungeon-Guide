@@ -61,11 +61,6 @@ internal sealed class GuideSettings
     public readonly ConfigEntry<bool> Breakables;
 
     /// <summary>
-    /// Whether previously verified directional jumps and drops may be used in routes.
-    /// </summary>
-    public readonly ConfigEntry<bool> Jumps;
-
-    /// <summary>
     /// Comma-separated exact prefab identities approved as breakable passages.
     /// </summary>
     public readonly ConfigEntry<string> ApprovedPrefabs;
@@ -169,11 +164,6 @@ internal sealed class GuideSettings
             "AllowBreakables",
             false,
             "Allow only approved, geometrically checked breakable passages.");
-        Jumps = file.Bind(
-            "Routes",
-            "AllowJumps",
-            false,
-            "Allow only previously observed and geometry-checked jump/drop transitions.");
         ApprovedPrefabs = file.Bind(
             "Routes",
             "ApprovedBreakablePrefabs",
@@ -234,7 +224,6 @@ internal sealed class GuideSettings
     {
         RevealAll.Value = state.RevealAll;
         Breakables.Value = state.AllowBreakables;
-        Jumps.Value = state.AllowJumps;
         _file.Save();
     }
 }

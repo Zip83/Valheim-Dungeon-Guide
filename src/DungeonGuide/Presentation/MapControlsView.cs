@@ -17,7 +17,6 @@ internal sealed class MapControlsView : IDisposable
     private readonly TMP_Text _revealLabel;
     private readonly TMP_Text _worldLabel;
     private readonly TMP_Text _breakLabel;
-    private readonly TMP_Text _jumpLabel;
     private readonly TMP_Text _moreLabel;
     private readonly TMP_Text _overviewLabel;
     private readonly UnityEngine.UI.Button _rescanButton;
@@ -56,7 +55,7 @@ internal sealed class MapControlsView : IDisposable
         CreateNavigationControls(command, style);
 
         _advanced = CreateContainer("AdvancedControls", _details);
-        (_revealLabel, _rescanButton, _breakLabel, _jumpLabel, _hints) = CreateAdvancedControls(command, style);
+        (_revealLabel, _rescanButton, _breakLabel, _hints) = CreateAdvancedControls(command, style);
         _advanced.gameObject.SetActive(false);
         _legend = new MapLegendView(_details, style, text);
     }
@@ -132,7 +131,6 @@ internal sealed class MapControlsView : IDisposable
 
         _revealLabel.text = view.RevealAll ? _text.FullDungeon : _text.Explored;
         _breakLabel.text = _text.BreakablePassages + (view.AllowBreakables ? _text.Yes : _text.No);
-        _jumpLabel.text = _text.VerifiedJumps + (view.AllowJumps ? _text.Yes : _text.No);
     }
 
     private string FloorCaption(DungeonSession session, MapViewState view, int displayedFloor)
@@ -231,20 +229,19 @@ internal sealed class MapControlsView : IDisposable
         Add(_second, _details, style, _text.Chests, 180, () => command(GuideCommand.NextChest));
     }
 
-    private (TMP_Text Reveal, UnityEngine.UI.Button Rescan, TMP_Text Break, TMP_Text Jump, TMP_Text Hints)
+    private (TMP_Text Reveal, UnityEngine.UI.Button Rescan, TMP_Text Break, TMP_Text Hints)
         CreateAdvancedControls(Action<GuideCommand> command, GameUiStyle style)
     {
         var revealLabel = Add(_extra, _advanced, style, _text.Explored, 210, () => command(GuideCommand.ToggleReveal));
         var rescan = Add(_extra, _advanced, style, _text.Rescan, 160, () => command(GuideCommand.Rescan));
         var rescanButton = rescan.transform.parent.GetComponent<UnityEngine.UI.Button>();
         var breakLabel = Add(_extra, _advanced, style, "", 260, () => command(GuideCommand.ToggleBreakables));
-        var jumpLabel = Add(_extra, _advanced, style, "", 230, () => command(GuideCommand.ToggleJumps));
         var hints = NativeUi.Label(_advanced, style, _text.ChestControls + "\n" + _text.WaypointControls
             + "\n" + _text.WaypointMapControls, Vector2.zero, Vector2.zero, 13);
         hints.enableAutoSizing = false;
         hints.textWrappingMode = TextWrappingModes.Normal;
         hints.overflowMode = TextOverflowModes.Overflow;
 
-        return (revealLabel, rescanButton, breakLabel, jumpLabel, hints);
+        return (revealLabel, rescanButton, breakLabel, hints);
     }
 }

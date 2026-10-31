@@ -38,7 +38,7 @@ exploration reveals nearby visible floor within the configured radius (25 metres
 and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
 
 The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
-controls: rescan, reveal mode, breakable passages, and verified jumps. It starts
+controls: rescan, reveal mode, breakable passages. Verified jumps are automatic. It starts
 closed whenever the large map opens. Full scanned geometry temporarily removes
 fog on the selected floor without adding exploration to your save.
 
@@ -105,7 +105,7 @@ The interface defaults to English and uses Czech only when Valheim is set to Cze
 Other game languages fall back to English. Existing chest names and notes stay unchanged.
 
 Maps depend on loaded geometry. Routes and detected floors may be incomplete.
-Optional breakable/jump routes are disabled by default. The guide never controls
+Verified jumps are automatic; breakable routes are disabled by default. The guide never controls
 your character or transfers inventory items.
 
 [Full documentation and source](https://github.com/Zip83/Valheim-Dungeon-Guide)
