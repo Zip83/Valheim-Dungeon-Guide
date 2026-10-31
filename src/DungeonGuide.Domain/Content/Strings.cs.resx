@@ -210,4 +210,37 @@
     <data name="OverviewHint" xml:space="preserve">
         <value>Kolečkem procházej patra, kliknutím otevři mapu. End: přehled / patro.</value>
     </data>
+    <data name="LegendExplored" xml:space="preserve">
+        <value>Podlaha</value>
+    </data>
+    <data name="LegendVisited" xml:space="preserve">
+        <value>Navštívená místnost</value>
+    </data>
+    <data name="LegendFog" xml:space="preserve">
+        <value>Neprozkoumané</value>
+    </data>
+    <data name="LegendWalls" xml:space="preserve">
+        <value>Zdi</value>
+    </data>
+    <data name="LegendPlayer" xml:space="preserve">
+        <value>Ty</value>
+    </data>
+    <data name="LegendRoute" xml:space="preserve">
+        <value>Trasa</value>
+    </data>
+    <data name="LegendStairs" xml:space="preserve">
+        <value>Schody ↑ / ↓</value>
+    </data>
+    <data name="LegendEntrance" xml:space="preserve">
+        <value>Vstup</value>
+    </data>
+    <data name="LegendChest" xml:space="preserve">
+        <value>Truhla</value>
+    </data>
+    <data name="LegendCollection" xml:space="preserve">
+        <value>Cíl sběru</value>
+    </data>
+    <data name="LegendUnverified" xml:space="preserve">
+        <value>Neověřený průchod</value>
+    </data>
 </root>

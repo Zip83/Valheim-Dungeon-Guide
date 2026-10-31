@@ -48,6 +48,8 @@ internal sealed class OverlayPresenter : IDisposable
         CreateMapLayers();
 
         _footer = NativeUi.Label(_root, style, "", new Vector2(12, -495), new Vector2(446, 24), 14);
+        var legend = new MapLegendView(_root, style, _text);
+        _root.sizeDelta = new Vector2(470, 525 + legend.Layout(470, 525));
     }
 
     /// <summary>Updates the optional panel after game UI logic, without consuming pointer or keyboard input.</summary>

@@ -25,6 +25,7 @@ internal sealed class MapControlsView : IDisposable
     private readonly List<(RectTransform Rect, float Weight)> _second = new();
     private readonly List<(RectTransform Rect, float Weight)> _extra = new();
     private readonly RectTransform _hints;
+    private readonly MapLegendView _legend;
 
     /// <summary>Root rectangle defining the map area owned by controls and pointer interaction.</summary>
     public RectTransform Root
@@ -55,6 +56,7 @@ internal sealed class MapControlsView : IDisposable
         _advanced = CreateContainer("AdvancedControls", _details);
         (_revealLabel, _rescanButton, _breakLabel, _jumpLabel, _hints) = CreateAdvancedControls(command, style);
         _advanced.gameObject.SetActive(false);
+        _legend = new MapLegendView(_details, style, text);
     }
 
     private static TMP_Text Add(List<(RectTransform Rect, float Weight)> row, Transform parent,
@@ -151,7 +153,9 @@ internal sealed class MapControlsView : IDisposable
     {
         var parent = Root.parent as RectTransform;
         var width = Mathf.Max(240, Mathf.Min(960, parent.rect.width - 24));
-        Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? (_state.Expanded ? 152 : 82) : 46);
+        var controlsHeight = _state.Expanded ? 152 : 82;
+        var legendHeight = dungeon ? _legend.Layout(width, controlsHeight) : 0;
+        Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + legendHeight + 4 : 46);
         if (dungeon)
         {
             Layout(_first, width, -8);

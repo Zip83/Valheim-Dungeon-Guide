@@ -155,6 +155,28 @@ internal sealed class GuideText
 
     internal string PreviewSuffix => Get(nameof(PreviewSuffix));
 
+    internal string LegendExplored => Get(nameof(LegendExplored));
+
+    internal string LegendVisited => Get(nameof(LegendVisited));
+
+    internal string LegendFog => Get(nameof(LegendFog));
+
+    internal string LegendWalls => Get(nameof(LegendWalls));
+
+    internal string LegendPlayer => Get(nameof(LegendPlayer));
+
+    internal string LegendRoute => Get(nameof(LegendRoute));
+
+    internal string LegendStairs => Get(nameof(LegendStairs));
+
+    internal string LegendEntrance => Get(nameof(LegendEntrance));
+
+    internal string LegendChest => Get(nameof(LegendChest));
+
+    internal string LegendCollection => Get(nameof(LegendCollection));
+
+    internal string LegendUnverified => Get(nameof(LegendUnverified));
+
     private string Get(string key) =>
         s_resources.GetString(key, IsCzech ? s_czech : CultureInfo.InvariantCulture)
         ?? throw new MissingManifestResourceException($"Missing localized text: {key}");

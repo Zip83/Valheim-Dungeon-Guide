@@ -210,4 +210,37 @@
     <data name="OverviewHint" xml:space="preserve">
         <value>Scroll to browse floors; select one to open it. End: overview / floor.</value>
     </data>
+    <data name="LegendExplored" xml:space="preserve">
+        <value>Floor</value>
+    </data>
+    <data name="LegendVisited" xml:space="preserve">
+        <value>Visited room</value>
+    </data>
+    <data name="LegendFog" xml:space="preserve">
+        <value>Unexplored</value>
+    </data>
+    <data name="LegendWalls" xml:space="preserve">
+        <value>Walls</value>
+    </data>
+    <data name="LegendPlayer" xml:space="preserve">
+        <value>You</value>
+    </data>
+    <data name="LegendRoute" xml:space="preserve">
+        <value>Route</value>
+    </data>
+    <data name="LegendStairs" xml:space="preserve">
+        <value>Stairs ↑ / ↓</value>
+    </data>
+    <data name="LegendEntrance" xml:space="preserve">
+        <value>Entrance</value>
+    </data>
+    <data name="LegendChest" xml:space="preserve">
+        <value>Chest</value>
+    </data>
+    <data name="LegendCollection" xml:space="preserve">
+        <value>Collection target</value>
+    </data>
+    <data name="LegendUnverified" xml:space="preserve">
+        <value>Unverified passage</value>
+    </data>
 </root>
