@@ -10,7 +10,7 @@ internal static class ExplorationRevealPolicy
     /// The visibility callback is not invoked for known or out-of-range samples.
     /// </summary>
     public static bool TryReveal(Exploration exploration, NavNode node, Point player, int physicalFloor,
-        Func<Point, Point, bool> visible, float radius = 30)
+        Func<Point, Point, bool> visible, float radius = 25)
     {
         if (physicalFloor < 0 || node.Floor != physicalFloor || exploration.Has(node)
             || HorizontalSquared(player, node.Position) > radius * radius)

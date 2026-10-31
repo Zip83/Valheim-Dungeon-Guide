@@ -34,7 +34,7 @@ its numeric equivalent. Include the development version in bug reports.
 - **Insert** — Rescan dungeon geometry.
 
 The map shows explored areas by default. Cloud fog completely hides unknown rooms;
-exploration reveals nearby visible floor within the configured radius (30 metres by default), stopping at walls
+exploration reveals nearby visible floor within the configured radius (25 metres by default), stopping at walls
 and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
 
 The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
@@ -107,6 +107,6 @@ License: MIT; see LICENSE.
 
 ## Responsive maps
 
-Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to 30 m,
+Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to 25 m,
 limited by walls and physical floors. The package contains the plugin DLLs, Czech translations,
 installation notes and exact build identity. Preserve the cs translation directory when installing.
