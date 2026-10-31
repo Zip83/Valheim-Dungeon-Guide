@@ -51,6 +51,12 @@ internal sealed class DoorPassageVerifier
             return true;
         }
 
-        return _haveKey != null && (bool)_haveKey.Invoke(door, new object[] { Player.m_localPlayer, false });
+        var view = door.GetComponent<ZNetView>();
+        if (view && view.IsValid() && view.GetZDO().GetInt(ZDOVars.s_state) != 0)
+        {
+            return true;
+        }
+
+        return _haveKey != null && (bool)_haveKey.Invoke(door, new object[] { Player.m_localPlayer, true });
     }
 }

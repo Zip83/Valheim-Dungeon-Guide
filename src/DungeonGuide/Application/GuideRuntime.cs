@@ -23,6 +23,8 @@ internal sealed class GuideRuntime : IDisposable
     private float _nextDetect;
     private bool _entrancePending;
     private readonly RoomVisitRecorder _rooms = new();
+    private readonly PassageEquipmentWatch _equipment = new();
+    private float _nextEquipment;
     private float _nextSave;
     private float _doorRescan = float.PositiveInfinity;
 
@@ -113,6 +115,7 @@ internal sealed class GuideRuntime : IDisposable
         }
 
         _rooms.Track(Session, player.transform.position);
+        RefreshEquipmentIfDue(player);
         RescanIfDue();
         TrackMovement(player);
         SaveIfDue();
@@ -176,6 +179,15 @@ internal sealed class GuideRuntime : IDisposable
         if (Session != null)
         {
             _geometry.RefreshPermissions(Session);
+        }
+    }
+
+    /// <summary>Accepts native local or replicated door-state changes only within the active dungeon.</summary>
+    public void DoorObserved(Door door)
+    {
+        if (Session != null && door && Session.Area.Bounds.Contains(door.transform.position))
+        {
+            DoorChanged();
         }
     }
 
@@ -252,6 +264,7 @@ internal sealed class GuideRuntime : IDisposable
         Session = null;
         _traversals.Reset();
         _rooms.Reset();
+        _equipment.Reset();
         _exploration.Reset();
         _doorRescan = float.PositiveInfinity;
         Left?.Invoke();
@@ -337,6 +350,18 @@ internal sealed class GuideRuntime : IDisposable
         {
             _nextSave = Time.unscaledTime + 15;
             _lifecycle.Save(Session);
+        }
+    }
+
+    private void RefreshEquipmentIfDue(Player player)
+    {
+        if (Time.unscaledTime >= _nextEquipment)
+        {
+            _nextEquipment = Time.unscaledTime + 1;
+            if (_equipment.Changed(player))
+            {
+                DoorChanged();
+            }
         }
     }
 

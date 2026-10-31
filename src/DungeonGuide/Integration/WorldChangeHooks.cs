@@ -1,23 +1,25 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 
 namespace DungeonGuide;
 
 /// <summary>
-/// Observes door interaction and destruction to invalidate affected navigation geometry.
+/// Observes native door states and destruction without mutating game behavior.
 /// </summary>
 internal sealed class WorldChangeHooks : IDisposable
 {
     private readonly Harmony _harmony = new("zip.dungeonguide.geometry");
-    private static Action s_doorChanged;
+    private static Action<Door> s_doorChanged;
     private static Action<Destructible> s_destroyed;
     private static Action<Exception> s_report;
+    private static ConditionalWeakTable<Door, StrongBox<int>> s_doorStates = new();
 
     /// <summary>
     /// Installs door and destruction callbacks and forwards patch errors to the supplied logger.
     /// </summary>
-    public WorldChangeHooks(Action door, Action<Destructible> destruction, Action<Exception> error)
+    public WorldChangeHooks(Action<Door> door, Action<Destructible> destruction, Action<Exception> error)
     {
         s_doorChanged = door;
         s_destroyed = destruction;
@@ -27,28 +29,35 @@ internal sealed class WorldChangeHooks : IDisposable
         InstallDestructionHook();
     }
 
-    [SuppressMessage("Style", "IDE1006", Justification = "Harmony binds the original return value through the exact __result parameter name.")]
-    private static void DoorInteraction(bool __result)
-    {
-        if (__result)
-        {
-            try
-            {
-                s_doorChanged?.Invoke();
-            }
-            catch (Exception e)
-            {
-                s_report?.Invoke(e);
-            }
-        }
-    }
-
-    [SuppressMessage("Style", "IDE1006", Justification = "Harmony requires __instance and __0 to inject the original instance and first argument.")]
-    private static void Destruction(Destructible __instance, HitData __0)
+    [SuppressMessage("Style", "IDE1006", Justification = "Harmony requires __instance and __0 for the original door and state.")]
+    private static void DoorStateChanged(Door __instance, int __0)
     {
         try
         {
-            if (__0 != null && Player.m_localPlayer && __0.GetAttacker() == Player.m_localPlayer)
+            if (!s_doorStates.TryGetValue(__instance, out var previous))
+            {
+                s_doorStates.Add(__instance, new StrongBox<int>(__0));
+                return;
+            }
+
+            if (previous.Value != __0)
+            {
+                previous.Value = __0;
+                s_doorChanged?.Invoke(__instance);
+            }
+        }
+        catch (Exception e)
+        {
+            s_report?.Invoke(e);
+        }
+    }
+
+    [SuppressMessage("Style", "IDE1006", Justification = "Harmony requires __instance to inject the destructible being removed.")]
+    private static void Destruction(Destructible __instance)
+    {
+        try
+        {
+            if (__instance)
             {
                 s_destroyed?.Invoke(__instance);
             }
@@ -66,16 +75,21 @@ internal sealed class WorldChangeHooks : IDisposable
         s_doorChanged = null;
         s_destroyed = null;
         s_report = null;
+        s_doorStates = new ConditionalWeakTable<Door, StrongBox<int>>();
     }
 
     private void InstallDoorHook()
     {
-        var interact = AccessTools.Method(typeof(Door), "Interact");
-        if (interact != null)
+        var state = AccessTools.Method(typeof(Door), "SetState", new[] { typeof(int) });
+        if (state != null)
         {
             _harmony.Patch(
-                interact,
-                postfix: new HarmonyMethod(typeof(WorldChangeHooks), nameof(DoorInteraction)));
+                state,
+                postfix: new HarmonyMethod(typeof(WorldChangeHooks), nameof(DoorStateChanged)));
+        }
+        else
+        {
+            s_report?.Invoke(new MissingMethodException(typeof(Door).FullName, "SetState(int)"));
         }
     }
 
@@ -85,6 +99,10 @@ internal sealed class WorldChangeHooks : IDisposable
         if (destroy != null)
         {
             _harmony.Patch(destroy, prefix: new HarmonyMethod(typeof(WorldChangeHooks), nameof(Destruction)));
+        }
+        else
+        {
+            s_report?.Invoke(new MissingMethodException(typeof(Destructible).FullName, "Destroy(HitData)"));
         }
     }
 }

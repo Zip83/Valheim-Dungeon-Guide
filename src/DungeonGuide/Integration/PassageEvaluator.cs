@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DungeonGuide;
 
 /// <summary>
-/// Adds supported ordinary, stair, door, and approved-breakable graph connections.
+/// Adds supported ordinary, stair, door, and natively verified destructible graph connections.
 /// </summary>
 internal sealed class PassageEvaluator
 {
@@ -14,11 +14,11 @@ internal sealed class PassageEvaluator
     private readonly BreakablePassageVerifier _breakables;
 
     /// <summary>
-    /// Connects collision, door, and approved-breakable checks without approving unknown traversal.
+    /// Connects collision, door, and native damage checks without approving unknown traversal.
     /// </summary>
     /// <param name="physics">Shared support checks and reusable collision-query buffers.</param>
     /// <param name="doors">Door recognition and actual player-key checks.</param>
-    /// <param name="breakables">Recognition and approval of breakable blockers.</param>
+    /// <param name="breakables">Barrier recognition and actual equipment damage feasibility.</param>
     public PassageEvaluator(GeometryPhysics physics, DoorPassageVerifier doors, BreakablePassageVerifier breakables)
     {
         _physics = physics;

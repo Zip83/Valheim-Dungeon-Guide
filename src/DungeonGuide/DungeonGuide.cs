@@ -72,7 +72,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
         commands.FitRequested += maps.Center;
 
         InstallMapHooks(maps, view, runtime, settings);
-        InstallWorldChangeHooks(runtime, settings);
+        InstallWorldChangeHooks(runtime);
         _entranceHooks = new DungeonEntranceHooks(entrances.Observe, e => Logger.LogError(e));
 
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.DisplayVersion} loaded. "
@@ -139,14 +139,14 @@ public sealed class DungeonGuide : BaseUnityPlugin
         };
     }
 
-    private static GeometryScanner CreateScanner(GeometryPhysics physics, GuideSettings settings)
+    private static GeometryScanner CreateScanner(GeometryPhysics physics)
     {
         return new GeometryScanner(
             physics,
             new PassageEvaluator(
                 physics,
                 new DoorPassageVerifier(),
-                new BreakablePassageVerifier(settings.Approved)),
+                new BreakablePassageVerifier(new DestructibleDamageProbe())),
             new JumpEvaluator(physics));
     }
 
@@ -165,7 +165,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             settings,
             new DungeonLocator(text, entrances),
             new DungeonActivationPolicy(),
-            CreateScanner(physics, settings),
+            CreateScanner(physics),
             new FloorDetector(new FloorLandingDetector()),
             lifecycle,
             new ExplorationRecorder(physics, settings),
@@ -175,7 +175,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new DungeonGeometrySessions(settings,
                 new GeometryCacheRepository(Path.Combine(Paths.ConfigPath, "DungeonGuide", "Geometry")), Logger,
                 new RestoredPassageValidation(physics, new DoorPassageVerifier(),
-                    new BreakablePassageVerifier(settings.Approved))));
+                    new BreakablePassageVerifier(new DestructibleDamageProbe()))));
     }
 
     private static ChestActions CreateChestActions(GraphLocator locator, SessionLifecycle lifecycle,
@@ -199,9 +199,9 @@ public sealed class DungeonGuide : BaseUnityPlugin
             () => runtime.Session != null && settings.World.Value.IsDown());
     }
 
-    private void InstallWorldChangeHooks(GuideRuntime runtime, GuideSettings settings)
+    private void InstallWorldChangeHooks(GuideRuntime runtime)
     {
-        var destruction = new DestructionRecorder(settings, () => runtime.Session?.Area, runtime.GeometryChanged);
-        _changes = new WorldChangeHooks(runtime.DoorChanged, destruction.Observe, e => Logger.LogError(e));
+        var destruction = new DestructionRecorder(() => runtime.Session, runtime.GeometryChanged, runtime.DoorChanged);
+        _changes = new WorldChangeHooks(runtime.DoorObserved, destruction.Observe, e => Logger.LogError(e));
     }
 }

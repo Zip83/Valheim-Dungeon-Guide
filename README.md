@@ -138,8 +138,13 @@ until a replacement is complete. Unity physics stays on the game thread: an
 individual engine query cannot be interrupted, so the budget is not a hard frame-time
 guarantee. Actual frame times and compatibility with other mods require in-game checks.
 
-Ordinary walking routes are preferred. Optional breakable routes require an
-approved exact prefab and geometry checks. Jumps and drops are always permitted after a
+Ordinary walking routes are preferred. Breakable candidates require an actual
+native destructible, a thin barrier and floor support on both sides. Verification
+checks positive current health, carried usable weapons/tools, matching ammunition,
+damage resistances and the game's tool/world-level rules. No prefab approval list
+or prior destruction is needed. Equipment/key changes refresh permissions without
+resampling floors. Player-built pieces and unknown destructible implementations
+remain conservative exclusions. Jumps and drops are always permitted after a
 previously observed directional traversal and current geometry/capability checks.
 If ordinary routing fails, navigation can check a single grappling-hook crossing.
 The hook section is orange, its attachment surface is marked with an orange cross,
