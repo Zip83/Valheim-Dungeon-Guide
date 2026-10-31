@@ -3,7 +3,7 @@
 A client-side BepInEx mod for navigating Valheim's dungeons, exploring their floors,
 and finding your way back to chests left behind.
 
-**Version:** 0.1.0 | **Development target:** Valheim **1.0.21** with
+**Version:** 0.1.1 | **Development target:** Valheim **1.0.21** with
 BepInExPack Valheim **5.4.2351**.
 See [compatibility and verification](docs/development.md#compatibility-and-verification)
 for the recorded environment and verification status. Gameplay verification of
@@ -48,7 +48,7 @@ Copy the `cs/` subdirectory alongside them as well; it contains
 `DungeonGuide.Domain.resources.dll`, the Czech translation satellite.
 
 Development artifacts are named `DungeonGuide-<major.minor.patch>.<run>-dev.<attempt>`,
-for example `DungeonGuide-0.1.0.83-dev.1`. The CI run name includes the full `0.1.0.83` version;
+for example `DungeonGuide-0.1.1.83-dev.1`. The CI run name includes the full `0.1.1.83` version;
 its summary shows the assembled version and a package download link.
 Their `build-info.json` records the exact commit, CI run, PR, and Valheim target;
 startup logging reports that same build identity. Include it when reporting an issue.

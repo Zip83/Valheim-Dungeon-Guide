@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.1
+
+Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
+
+- Fix the dungeon map pointer guard incorrectly suppressing native `CreateMapNamePin`.
+  Native `UpdatePins` must create name UI before updating its RectTransform; suppressing it
+  could flood the log with NullReferenceException and disrupt shared map updates.
+- Keep native marker creation, removal and updates available to the game and other map mods.
+- Display an initial local map before navigation linking. Preselect possible passage pairs
+  on a worker and update fog tiles incrementally, with a configurable 30 m discovery default.
+- Track entered room layers independently and highlight them in the floor overview.
+- Prepare an optional isolated UI shader with an incremental CPU fallback. The provided
+  development package uses CPU rendering; the Unity 6000.0.75 shader bundle is not built here.
+
+Save schema 3 migrates schemas 1/2 without inferring room visits from previously revealed fog.
+Release compilation and 227 domain tests pass; gameplay and graphics API checks remain pending.
+The independent ShowPlantProgress missing-field error reported in the same log is not fixed by this patch.
+
 ## 0.1.0
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
