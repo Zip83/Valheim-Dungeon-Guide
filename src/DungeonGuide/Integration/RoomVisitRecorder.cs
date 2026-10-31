@@ -20,6 +20,12 @@ internal sealed class RoomVisitRecorder
     public void Track(DungeonSession session, Vector3 player)
     {
         RoomEntryRecorder.Track(session, player);
+        EnsureGraph(session);
+        AdvanceCoverage(session);
+    }
+
+    private void EnsureGraph(DungeonSession session)
+    {
         if (_session != session || _graph != session.Scan?.Graph)
         {
             _work?.Dispose();
@@ -29,9 +35,13 @@ internal sealed class RoomVisitRecorder
             _rooms.Clear();
             _nodes.Clear();
             _visits = _cursor = 0;
-            _work = BuildIndex(session).GetEnumerator();
+            _work = InitializeCoverage(session).GetEnumerator();
         }
 
+    }
+
+    private void AdvanceCoverage(DungeonSession session)
+    {
         if (_work == null)
         {
             _work = AddCoverage(session).GetEnumerator();
@@ -60,6 +70,19 @@ internal sealed class RoomVisitRecorder
         _nodes.Clear();
     }
 
+    private IEnumerable<byte> InitializeCoverage(DungeonSession session)
+    {
+        foreach (var step in BuildIndex(session))
+        {
+            yield return step;
+        }
+
+        foreach (var step in RestoreKnownCoverage(session))
+        {
+            yield return step;
+        }
+    }
+
     private IEnumerable<byte> BuildIndex(DungeonSession session)
     {
         foreach (var room in session.Area.RoomVolumes)
@@ -76,37 +99,84 @@ internal sealed class RoomVisitRecorder
         {
             yield return 0;
             _nodes[node.Key] = node;
+            foreach (var step in IndexRoomLayers(session.Area, node))
+            {
+                yield return step;
+            }
+        }
+    }
+
+    private IEnumerable<byte> IndexRoomLayers(DungeonArea area, NavNode node)
+    {
+        if (node.Floor < 0)
+        {
+            yield break;
+        }
+
+        foreach (var room in area.RoomVolumes)
+        {
+            yield return 0;
+            if (room.Contains(UnityPoints.V(node.Position)))
+            {
+                AddLayerNode(room.Id, node);
+            }
+        }
+    }
+
+    private void AddLayerNode(string room, NavNode node)
+    {
+        var key = (room, node.Floor);
+        if (!_layers.TryGetValue(key, out var nodes))
+        {
+            nodes = new List<NavNode>();
+            _layers.Add(key, nodes);
+        }
+
+        nodes.Add(node);
+    }
+
+    private IEnumerable<byte> RestoreKnownCoverage(DungeonSession session)
+    {
+        if (_graph == null)
+        {
+            yield break;
+        }
+
+        foreach (var node in _graph.Nodes)
+        {
+            yield return 0;
             if (session.Exploration.Has(node))
             {
                 session.OverviewExploration.Reveal(node);
-            }
-
-            if (node.Floor < 0)
-            {
-                continue;
-            }
-
-            foreach (var room in session.Area.RoomVolumes)
-            {
-                yield return 0;
-                if (room.Contains(UnityPoints.V(node.Position)))
-                {
-                    var key = (room.Id, node.Floor);
-                    if (!_layers.TryGetValue(key, out var nodes))
-                    {
-                        nodes = new List<NavNode>();
-                        _layers.Add(key, nodes);
-                    }
-
-                    nodes.Add(node);
-                }
             }
         }
     }
 
     private IEnumerable<byte> AddCoverage(DungeonSession session)
     {
-        while (_cursor < session.Exploration.Changes.Count)
+        foreach (var step in CopyExplorationAdditions(session))
+        {
+            yield return step;
+        }
+
+        var count = session.Data.visitedRooms.Count;
+        while (_visits < count)
+        {
+            yield return 0;
+            var visit = session.Data.visitedRooms[_visits++];
+            foreach (var node in FindVisitedLayer(session, visit))
+            {
+                yield return 0;
+                session.VisitedRoomCoverage.Reveal(node);
+                session.OverviewExploration.Reveal(node);
+            }
+        }
+    }
+
+    private IEnumerable<byte> CopyExplorationAdditions(DungeonSession session)
+    {
+        var count = session.Exploration.Changes.Count;
+        while (_cursor < count)
         {
             yield return 0;
             if (_nodes.TryGetValue(session.Exploration.Changes[_cursor++].Key, out var node))
@@ -114,37 +184,17 @@ internal sealed class RoomVisitRecorder
                 session.OverviewExploration.Reveal(node);
             }
         }
+    }
 
-        if (_graph == null || session.Floors.Count == 0)
+    private IEnumerable<NavNode> FindVisitedLayer(DungeonSession session, RoomVisit visit)
+    {
+        if (_graph == null || visit == null || visit.room == null || !_rooms.TryGetValue(visit.room, out var room))
         {
-            yield break;
+            return System.Array.Empty<NavNode>();
         }
 
-        while (_visits < session.Data.visitedRooms.Count)
-        {
-            yield return 0;
-            var visit = session.Data.visitedRooms[_visits++];
-            if (visit == null || visit.room == null || !_rooms.TryGetValue(visit.room, out var room))
-            {
-                continue;
-            }
-
-            var height = room.Height(visit.local);
-            var floor = RoomVisitLayerPolicy.Resolve(session.Floors, height, session.HasPartialGeometry);
-            if (floor < 0)
-            {
-                continue;
-            }
-
-            if (_layers.TryGetValue((visit.room, floor), out var nodes))
-            {
-                foreach (var node in nodes)
-                {
-                    yield return 0;
-                    session.VisitedRoomCoverage.Reveal(node);
-                    session.OverviewExploration.Reveal(node);
-                }
-            }
-        }
+        var floor = RoomVisitLayerPolicy.Resolve(session.Floors, room.Height(visit.local), session.HasPartialGeometry);
+        return floor >= 0 && _layers.TryGetValue((visit.room, floor), out var nodes)
+            ? nodes : System.Array.Empty<NavNode>();
     }
 }
