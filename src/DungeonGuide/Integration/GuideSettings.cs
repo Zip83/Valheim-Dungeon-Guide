@@ -101,8 +101,10 @@ internal sealed class GuideSettings
     public GuideSettings(ConfigFile file)
     {
         _file = file;
-        ExploreRadius = file.Bind("Exploration", "Radius", 25f,
-            "Horizontal discovery radius in metres, clamped to 1-100. Walls and physical floors still limit discovery.");
+        ExploreRadius = file.Bind("Exploration", "Radius", ExplorationRevealPolicy.MaximumRadius,
+            new ConfigDescription(
+                "Circular horizontal discovery radius in metres, clamped to 1-10. Walls and physical floors still limit discovery.",
+                new AcceptableValueRange<float>(1, ExplorationRevealPolicy.MaximumRadius)));
         Spacing = file.Bind("Scan", "GridSpacing", 1.25f, "Sampling grid, metres.");
         Columns = file.Bind("Scan", "MaxColumns", 40000, "Maximum columns; reaching the cap is logged as incomplete.");
         Budget = file.Bind(
