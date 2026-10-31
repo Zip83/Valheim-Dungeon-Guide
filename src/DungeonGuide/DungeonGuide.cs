@@ -50,7 +50,7 @@ public sealed class DungeonGuide : BaseUnityPlugin
             new MapViewportController(),
             numbering,
             commands.Execute,
-            navigator.ToChest,
+            new MapTargetSelector(navigator.ToChest, waypoints),
             text);
 
         _loop = new GuideGameLoop(
