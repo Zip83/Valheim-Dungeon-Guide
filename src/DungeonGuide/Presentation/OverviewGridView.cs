@@ -133,26 +133,50 @@ internal sealed class OverviewGridView : IDisposable
         }
 
         _revision = renderer.Revision;
-        var visible = new HashSet<int>(renderer.Floors.Select(floor => floor.Floor));
+        RemoveObsoleteCards(new HashSet<int>(renderer.AllFloors.Select(floor => floor.Floor)));
+        SetCardVisibility(new HashSet<int>(renderer.Floors.Select(floor => floor.Floor)));
+    }
 
-        foreach (var floor in _cards.Keys.Where(floor => !visible.Contains(floor)).ToArray())
+    private void RemoveObsoleteCards(HashSet<int> available)
+    {
+        foreach (var floor in _cards.Keys.Where(floor => !available.Contains(floor)).ToArray())
         {
             _cards[floor].Dispose();
             _cards.Remove(floor);
         }
     }
 
+    private void SetCardVisibility(HashSet<int> visible)
+    {
+        foreach (var pair in _cards)
+        {
+            pair.Value.SetVisible(visible.Contains(pair.Key));
+        }
+    }
+
     private void AddNextCard(DungeonOverviewRenderer renderer)
     {
-        foreach (var floor in renderer.Floors)
+        if (!TryAddCard(renderer.Floors, true))
+        {
+            TryAddCard(renderer.AllFloors, false);
+        }
+    }
+
+    private bool TryAddCard(IReadOnlyList<OverviewFloor> floors, bool visible)
+    {
+        foreach (var floor in floors)
         {
             if (!_cards.ContainsKey(floor.Floor))
             {
                 var selected = floor.Floor;
-                _cards.Add(selected, new OverviewFloorCard(_grid.transform, _style, () => _select(selected)));
-                break;
+                var card = new OverviewFloorCard(_grid.transform, _style, () => _select(selected));
+                card.SetVisible(visible);
+                _cards.Add(selected, card);
+                return true;
             }
         }
+
+        return false;
     }
 
     private void RefreshCards(DungeonSession session, DungeonOverviewRenderer renderer)
@@ -164,7 +188,7 @@ internal sealed class OverviewGridView : IDisposable
             if (_cards.TryGetValue(floor.Floor, out var card))
             {
                 card.Refresh(_numbering.Label(session.Floors, floor.Floor, session.Area.Entrance?.y),
-                    renderer.Texture(floor.Floor));
+                    renderer.Texture(floor.Floor), renderer.Viewport(floor.Floor));
                 card.SetOrder(order++);
             }
         }
