@@ -214,7 +214,7 @@
         <value>Floor</value>
     </data>
     <data name="LegendVisited" xml:space="preserve">
-        <value>Visited room (FULL)</value>
+        <value>Visited room</value>
     </data>
     <data name="LegendFog" xml:space="preserve">
         <value>Unexplored</value>
