@@ -14,7 +14,7 @@ internal sealed class ScanResult
     /// <summary>
     /// Completed sampled geometry and its directed passages.
     /// </summary>
-    public readonly NavGraph Graph = new();
+    public readonly NavGraph Graph;
 
     /// <summary>
     /// Horizontal grid index grouping vertically stacked samples for lookup.
@@ -31,6 +31,9 @@ internal sealed class ScanResult
     /// </summary>
     public float Spacing;
 
+    /// <summary>Recognized destructible identities used to refresh opened passages without a full floor scan.</summary>
+    public readonly SpecialPassageIndex SpecialPassages = new();
+
     /// <summary>Worker-selected endpoint candidates, consumed only by the private linking phase.</summary>
     public PassagePairCatalog Pairs;
 
@@ -38,4 +41,11 @@ internal sealed class ScanResult
     /// Whether a work cap or saturated physics query made the scan potentially incomplete.
     /// </summary>
     public bool Truncated;
+
+    /// <summary>Creates private scan indexes around a new or exclusively owned restored graph.</summary>
+    public ScanResult(NavGraph graph = null)
+    {
+        Graph = graph ?? new NavGraph();
+    }
+
 }
