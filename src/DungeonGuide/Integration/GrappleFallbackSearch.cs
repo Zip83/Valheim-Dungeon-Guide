@@ -13,7 +13,6 @@ internal sealed class GrappleFallbackSearch
     private ScanResult _scan;
     private GrappleEquipment _hook;
     private int _start = -1;
-    private bool _breakables;
     private float _retry;
     private Predicate<int> _target;
     private RoutePolicy _policy;
@@ -72,7 +71,6 @@ internal sealed class GrappleFallbackSearch
         Reset();
         _scan = scan;
         _start = start;
-        _breakables = policy.Breakables;
         _hook = hook;
         _target = target;
         _policy = policy;
@@ -81,7 +79,7 @@ internal sealed class GrappleFallbackSearch
 
     private bool TryRetain(ScanResult scan, int start, Predicate<int> target, RoutePolicy policy, GrappleEquipment hook)
     {
-        if (_scan == scan && _breakables == policy.Breakables && _hook?.Item == hook.Item)
+        if (_scan == scan && _hook?.Item == hook.Item)
         {
             if (Pending || Route.Count > 0 && _probe.Rebase(scan.Graph, start, policy)
                 || Route.Count == 0 && _start == start && Time.unscaledTime < _retry)

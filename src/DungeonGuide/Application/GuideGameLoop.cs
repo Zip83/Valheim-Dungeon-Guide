@@ -175,7 +175,7 @@ internal sealed class GuideGameLoop : IDisposable
         {
             _nextRoute = Time.unscaledTime + 1;
             _blockedHint = session.NavigationReady ? _validator.Inspect(session, _navigator, player) : null;
-            _navigator.Recalculate(session, _view, player.transform.position);
+            _navigator.Recalculate(session, player.transform.position);
         }
     }
 
