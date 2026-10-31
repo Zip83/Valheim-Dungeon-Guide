@@ -65,74 +65,107 @@ internal sealed class MapTextureRenderer : IDisposable
     /// <summary>Advances raster construction and dirty fog tiles under a shared presentation budget.</summary>
     public void Tick(DungeonSession session, MapViewState view)
     {
+        EnsureSession(session);
+        if (session?.Scan == null)
+        {
+            return;
+        }
+
+        ResetChangedMode(view.RevealAll);
+        _budget.BeginFrame();
+        var raster = PrepareRaster(session, view.SelectedFloor);
+        if (raster != null)
+        {
+            AdvanceSurface(session, raster, view.RevealAll);
+        }
+
+        _reveal = view.RevealAll;
+    }
+
+    private void EnsureSession(DungeonSession session)
+    {
         if (_session != session)
         {
             Reset();
             _session = session;
             _firstStarted = Time.realtimeSinceStartup;
         }
+    }
 
-        if (session?.Scan == null)
+    private void ResetChangedMode(bool reveal)
+    {
+        if (_surface == null || _reveal == reveal)
         {
             return;
         }
 
-        if (_surface != null && _reveal != view.RevealAll)
-        {
-            // A full-map texture must never remain visible while explored-mode tiles catch up.
-            _surface?.Dispose();
-            _surface = null;
-            Published = null;
-            _pending?.Dispose();
-            _pending = null;
-            _pendingRaster = null;
-        }
+        // Discard full-map pixels before preparing explored-mode coverage.
+        _surface.Dispose();
+        _surface = null;
+        Published = null;
+        _pending?.Dispose();
+        _pending = null;
+        _pendingRaster = null;
+    }
 
-        _budget.BeginFrame();
+    private FloorPlanRaster PrepareRaster(DungeonSession session, int floor)
+    {
         var span = Mathf.Max(1, Mathf.Max(session.Area.Bounds.size.x, session.Area.Bounds.size.z) + 3);
-        _cache.Tick(session.Scan.Graph, view.SelectedFloor, session.Scan.Spacing, Size,
+        _cache.Tick(session.Scan.Graph, floor, session.Scan.Spacing, Size,
             UnityPoints.P(session.Area.Bounds.center), span, _budget);
-        var raster = _cache.Ready;
-        if (raster == null)
+        return _cache.Ready;
+    }
+
+    private void AdvanceSurface(DungeonSession session, FloorPlanRaster raster, bool reveal)
+    {
+        if (raster == Published)
+        {
+            _surface.Tick(session.Exploration, _noVisits, reveal, _budget);
+            return;
+        }
+
+        PrepareReplacement(session, raster);
+        _pending.Tick(session.Exploration, _noVisits, reveal, _budget);
+        if (_pending.Ready)
+        {
+            PublishReplacement(raster, session.NavigationReady);
+        }
+    }
+
+    private void PrepareReplacement(DungeonSession session, FloorPlanRaster raster)
+    {
+        if (_pendingRaster == raster)
         {
             return;
         }
 
-        if (raster != Published)
-        {
-            if (_pendingRaster != raster)
-            {
-                _pending?.Dispose();
-                _pending = new FloorSurfaceRenderer(raster);
-                _pendingRaster = raster;
-                _pendingHeight = raster.Graph == session.Scan.Graph && raster.Floor < session.Floors.Count
-                    ? session.Floors[raster.Floor] : DisplayedHeight;
-            }
+        _pending?.Dispose();
+        _pending = new FloorSurfaceRenderer(raster);
+        _pendingRaster = raster;
+        _pendingHeight = raster.Graph == session.Scan.Graph && raster.Floor < session.Floors.Count
+            ? session.Floors[raster.Floor] : DisplayedHeight;
+    }
 
-            _pending.Tick(session.Exploration, _noVisits, view.RevealAll, _budget);
-            if (_pending.Ready)
-            {
-                var first = Published == null;
-                _surface?.Dispose();
-                _surface = _pending;
-                _pending = null;
-                _pendingRaster = null;
-                Published = raster;
-                DisplayedHeight = _pendingHeight;
-                if (first)
-                {
-                    Debug.Log("DungeonGuide first floor image: elapsedSeconds="
-                        + (Time.realtimeSinceStartup - _firstStarted).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + ", navigationReady=" + session.NavigationReady);
-                }
-            }
-        }
-        else
+    private void PublishReplacement(FloorPlanRaster raster, bool navigationReady)
+    {
+        var first = Published == null;
+        _surface?.Dispose();
+        _surface = _pending;
+        _pending = null;
+        _pendingRaster = null;
+        Published = raster;
+        DisplayedHeight = _pendingHeight;
+        if (first)
         {
-            _surface.Tick(session.Exploration, _noVisits, view.RevealAll, _budget);
+            LogFirstImage(navigationReady);
         }
+    }
 
-        _reveal = view.RevealAll;
+    private void LogFirstImage(bool navigationReady)
+    {
+        Debug.Log("DungeonGuide first floor image: elapsedSeconds="
+            + (Time.realtimeSinceStartup - _firstStarted).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+            + ", navigationReady=" + navigationReady);
     }
 
     /// <summary>Uses current displayed fog for pointer selection.</summary>

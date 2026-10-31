@@ -20,6 +20,25 @@ internal readonly struct FogTileRegion
         _width = Math.Min(tileSize, size - _x);
         _height = Math.Min(tileSize, size - _y);
         _halo = halo;
+        TotalTiles = columns * columns;
+    }
+
+    /// <summary>World-raster X coordinate of the tile interior.</summary>
+    public int X => _x;
+
+    /// <summary>World-raster Y coordinate of the tile interior.</summary>
+    public int Y => _y;
+
+    /// <summary>Clipped width of the tile interior.</summary>
+    public int Width => _width;
+
+    /// <summary>Clipped height of the tile interior.</summary>
+    public int Height => _height;
+
+    /// <summary>Number of tiles covering the complete square raster.</summary>
+    public int TotalTiles
+    {
+        get;
     }
 
     /// <summary>Width of each working row, including halo pixels.</summary>
