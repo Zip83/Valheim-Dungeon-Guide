@@ -26,3 +26,11 @@ The player pointer is larger, with a dark outline, softly shaded white fill and 
 It is centered at the player's position and follows the original character heading. Detail, minimap
 and overlay share this marker layer. Glyph pixels are cached until heading changes by one degree;
 movement only stamps the existing glyph at its new position. Other-floor browsing still hides it.
+
+A successful local-player transfer through a native dungeon doorway records its interior
+arrival point before scanning or navigation completes. This observed entrance overrides
+room connector metadata for the matching world and room. The known entrance marker stays
+visible on its own physical floor even over an unsampled gap or opaque fog; it does not
+reveal neighboring geometry. Unknown manual scan origins retain the usual fog checks.
+Observations are session-memory only; loading a save already inside a dungeon uses the
+existing generated-room fallback until the doorway is traversed again.

@@ -13,9 +13,10 @@ internal sealed class DungeonLocator
     /// Uses the selected-language catalog when delegating manual scan-area creation.
     /// </summary>
     /// <param name="text">Selected-language catalog used for manual scan labels.</param>
-    public DungeonLocator(GuideText text)
+    /// <param name="entrances">Confirmed local dungeon arrivals.</param>
+    public DungeonLocator(GuideText text, DungeonEntranceRecorder entrances)
     {
-        _areas = new DungeonAreaFactory(text);
+        _areas = new DungeonAreaFactory(text, entrances);
     }
 
     /// <summary>
