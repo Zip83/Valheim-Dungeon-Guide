@@ -34,6 +34,9 @@ internal sealed class MapControlsView : IDisposable
         get;
     }
 
+    /// <summary>Whether the legend currently owns map pointer input.</summary>
+    public bool LegendOpen => _legend.IsOpen;
+
     /// <summary>Builds fresh guide controls with native visual assets and independent command callbacks.</summary>
     /// <param name="parent">Native map transform that owns the toolbar.</param>
     /// <param name="numbering">Policy for displaying floor numbers.</param>
@@ -51,13 +54,13 @@ internal sealed class MapControlsView : IDisposable
         _worldLabel = NativeUi.Button(Root, style, text.WorldMap, () => command(GuideCommand.ToggleWorld));
         _first.Add(((RectTransform)_worldLabel.transform.parent, 150));
 
+        _legend = new MapLegendView(parent, style, text);
         (_floorLabel, _moreLabel, _overviewLabel) = CreateFloorControls(command, style);
         CreateNavigationControls(command, style);
 
         _advanced = CreateContainer("AdvancedControls", _details);
         (_revealLabel, _rescanButton, _breakLabel, _hints) = CreateAdvancedControls(command, style);
         _advanced.gameObject.SetActive(false);
-        _legend = new MapLegendView(_details, style, text);
     }
 
     private static TMP_Text Add(List<(RectTransform Rect, float Weight)> row, Transform parent,
@@ -91,6 +94,7 @@ internal sealed class MapControlsView : IDisposable
     /// <summary>Updates labels, collapse-on-open policy, and layout at the game's current UI scale.</summary>
     public void Refresh(DungeonSession session, MapViewState view, int displayedFloor, bool mapOpen)
     {
+        _legend.SetAvailable(session != null && view.Dungeon && mapOpen);
         Root.gameObject.SetActive(session != null);
         if (session == null)
         {
@@ -114,6 +118,7 @@ internal sealed class MapControlsView : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        _legend.Dispose();
         if (Root)
         {
             UnityEngine.Object.Destroy(Root.gameObject);
@@ -155,8 +160,7 @@ internal sealed class MapControlsView : IDisposable
         var width = Mathf.Max(240, Mathf.Min(960, parent.rect.width - 24));
         var hintsHeight = HintHeight(width - 16);
         var controlsHeight = _state.Expanded ? 116 + hintsHeight : 82;
-        var legendHeight = dungeon ? _legend.Layout(width, controlsHeight) : 0;
-        Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + legendHeight + 4 : 46);
+        Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + 4 : 46);
         if (dungeon)
         {
             Layout(_first, width, -8);
@@ -214,6 +218,7 @@ internal sealed class MapControlsView : IDisposable
         Add(_first, _details, style, _text.FloorUp, 80, () => command(GuideCommand.FloorUp));
         Add(_first, _details, style, _text.FollowFloor, 130, () => command(GuideCommand.Follow));
         var overviewLabel = Add(_first, _details, style, _text.Overview, 130, () => command(GuideCommand.ToggleOverview));
+        Add(_first, _details, style, _text.Legend, 100, _legend.Toggle);
         var moreLabel = Add(_first, _details, style, _text.More, 100, _state.Toggle);
 
         return (floorLabel, moreLabel, overviewLabel);

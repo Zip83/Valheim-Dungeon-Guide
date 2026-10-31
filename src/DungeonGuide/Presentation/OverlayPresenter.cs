@@ -36,20 +36,28 @@ internal sealed class OverlayPresenter : IDisposable
 
         Dispose();
         var style = GameUiStyle.Read();
-        _root = NativeUi.Rect("DungeonGuideOverlay", GameUiStyle.MapCanvas());
         _boundMap = Minimap.instance;
         _czech = _text.IsCzech;
+        CreateFrame(style);
+        CreateMapLayers();
+        CreateFooter(style);
+    }
+
+    private void CreateFrame(GameUiStyle style)
+    {
+        _root = NativeUi.Rect("DungeonGuideOverlay", GameUiStyle.MapCanvas());
         _root.anchorMin = _root.anchorMax = _root.pivot = new Vector2(0, 1);
         _root.anchoredPosition = new Vector2(20, -90);
-        _root.sizeDelta = new Vector2(470, 530);
+        _root.sizeDelta = new Vector2(470, 553);
         _root.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = false;
         NativeUi.Panel(_root, style, false);
         _title = NativeUi.Label(_root, style, "", new Vector2(12, -8), new Vector2(446, 30));
-        CreateMapLayers();
+    }
 
+    private void CreateFooter(GameUiStyle style)
+    {
         _footer = NativeUi.Label(_root, style, "", new Vector2(12, -495), new Vector2(446, 24), 14);
-        var legend = new MapLegendView(_root, style, _text);
-        _root.sizeDelta = new Vector2(470, 525 + legend.Layout(470, 525));
+        NativeUi.Label(_root, style, _text.LegendOverlayHint, new Vector2(12, -520), new Vector2(446, 24), 14);
     }
 
     /// <summary>Updates the optional panel after game UI logic, without consuming pointer or keyboard input.</summary>
