@@ -13,6 +13,7 @@ internal sealed class MapMarkerRenderer : IDisposable
     private const int Size = 768;
     private readonly List<int> _touched = new();
     private readonly Color32[] _pixels = new Color32[Size * Size];
+    private readonly PlayerMarkerRenderer _player;
 
     /// <summary>
     /// Shared texture used by the native dungeon map views and optional overlay.
@@ -38,6 +39,7 @@ internal sealed class MapMarkerRenderer : IDisposable
     /// <summary>Clears the backing texture before incremental rectangle uploads begin.</summary>
     public MapMarkerRenderer()
     {
+        _player = new PlayerMarkerRenderer(Set);
         Texture.SetPixels32(_pixels);
         Texture.Apply(false);
     }
@@ -299,23 +301,13 @@ internal sealed class MapMarkerRenderer : IDisposable
 
     private void DrawPlayer(MapViewState view, Player player, int floor)
     {
-        if (view.CurrentFloor == floor)
+        if (view.CurrentFloor != floor)
         {
-            _playerMarker = true;
-            var uv = UV(UnityPoints.P(player.transform.position));
-            var yaw = player.transform.eulerAngles.y * Mathf.Deg2Rad;
-            var x = (int)(uv.x * Size);
-            var y = (int)(uv.y * Size);
-            for (var i = 0; i < 13; i++)
-            {
-                for (var side = -Mathf.Max(1, (12 - i) / 3); side <= Mathf.Max(1, (12 - i) / 3); side++)
-                {
-                    Set(
-                        x + (int)(Mathf.Sin(yaw) * i + Mathf.Cos(yaw) * side),
-                        y + (int)(Mathf.Cos(yaw) * i - Mathf.Sin(yaw) * side),
-                        MapPalette.Player);
-                }
-            }
+            return;
         }
+
+        _playerMarker = true;
+        var uv = UV(UnityPoints.P(player.transform.position));
+        _player.Draw((int)(uv.x * Size), (int)(uv.y * Size), player.transform.eulerAngles.y);
     }
 }
