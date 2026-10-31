@@ -17,6 +17,7 @@ internal static class MapPalette
     internal static readonly Color32 RouteOutline = new Color32(25, 20, 15, 255);
     internal static readonly Color32 Route = new Color32(255, 222, 65, 255);
     internal static readonly Color32 FloorTransition = new Color32(105, 198, 255, 255);
+    internal static readonly Color32 FloorTransitionOutline = new Color32(10, 24, 38, 255);
     internal static readonly Color32 UnverifiedPassage = new Color32(180, 126, 208, 255);
     internal static readonly Color32 CollectionChest = new Color32(255, 214, 50, 255);
     internal static readonly Color32 KnownChest = new Color32(198, 134, 62, 255);
@@ -24,7 +25,7 @@ internal static class MapPalette
     internal static readonly Color32 Waypoint = new Color32(255, 130, 175, 255);
     internal static readonly Color32 Player = new Color32(255, 255, 255, 255);
 
-    /// <summary>Generates deterministic cloud shading independently of hidden dungeon geometry.</summary>
+    /// <summary>Generates dark charcoal cloud shading independently of hidden dungeon geometry.</summary>
     public static Color32 Cloud(int x, int y)
     {
         var gx = x / 64;
@@ -35,7 +36,7 @@ internal static class MapPalette
         ty = ty * ty * (3 - 2 * ty);
         var noise = Mathf.Lerp(Mathf.Lerp(Noise(gx, gy), Noise(gx + 1, gy), tx),
             Mathf.Lerp(Noise(gx, gy + 1), Noise(gx + 1, gy + 1), tx), ty);
-        return new Color32((byte)(156 + noise * 22), (byte)(166 + noise * 22), (byte)(176 + noise * 22), 255);
+        return new Color32((byte)(23 + noise * 8), (byte)(29 + noise * 8), (byte)(35 + noise * 8), 255);
     }
 
     private static float Noise(int x, int y) => ((x * 73856093 ^ y * 19349663) & 255) / 255f;

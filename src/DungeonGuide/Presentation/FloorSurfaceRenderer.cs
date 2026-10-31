@@ -237,7 +237,7 @@ internal sealed class FloorSurfaceRenderer : IDisposable
         var floor = owner >= 0 && !_raster.Boundary[index];
         var color = floor && visited ? MapPalette.VisitedRoom : _terrain[index];
         _fullPixels[local] = floor && !visited ? MapPalette.ScannedFloor : color;
-        _tilePixels[local] = Color32.Lerp(color, _cloud[index], _fog.Fog.Opacity[index] / 255f);
+        _tilePixels[local] = Color32.Lerp(_terrain[index], _cloud[index], _fog.Fog.Opacity[index] / 255f);
     }
 
     private void UploadTile(int tile, FogTileRegion region)
