@@ -137,8 +137,5 @@ respective owners. External reference assemblies are not included in the plugin 
 
 ## Responsive map development
 
-Initial maps appear before navigation linking. Discovery defaults to 30 m with collision/floor limits.
-All floors highlights actually entered room layers, persisted by save schema 3. The optional isolated
-UI shader composes fog and room masks on the GPU, with incremental CPU fallback.
-See [GPU build and verification](docs/map-shader.md), [fog updates](docs/incremental-fog.md), and
-[room visit compatibility](docs/room-visits.md). Gameplay timing remains a separate manual check.
+Target Valheim 1.0.21. Maps use incremental CPU compositing for floor colors, exploration and visits.
+See [fog updates](docs/incremental-fog.md) and [room visits](docs/room-visits.md).

@@ -45,12 +45,3 @@ coverage/
 .nuget/
 .DS_Store
 Thumbs.db
-
-# Unity UI shader temporary build output
-# The verified runtime bundle in plugin Content is intentionally versioned.
-assets/map-shader/Library/
-assets/map-shader/Temp/
-assets/map-shader/Logs/
-assets/map-shader/UserSettings/
-assets/map-shader/BundleOutput/
-__pycache__/

@@ -43,11 +43,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Verify versioned shader bundle and sources
-        run: |
-          python -m unittest discover -s build -p test_shader_bundle.py
-          python build/verify_shader_bundle.py src/DungeonGuide/Content/dungeonguide-ui
-
       - name: Check workflow version prefix
         shell: pwsh
         run: |
@@ -140,8 +135,6 @@ jobs:
           mkdir -p artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs
           cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
-          cp src/DungeonGuide/bin/Release/net48/dungeonguide-ui artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
-          python3 build/verify_shader_bundle.py artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/dungeonguide-ui
           cp LICENSE artifacts/DungeonGuide/
           cp packaging/README.md artifacts/DungeonGuide/README.md
           python3 - <<'PY'
@@ -160,7 +153,6 @@ jobs:
               "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
               "valheimTarget": "1.0.21",
               "channel": "development",
-              "shader": json.loads(Path("src/DungeonGuide/Content/map-shader-bundle.json").read_text(encoding="utf-8")),
           }
           Path("artifacts/DungeonGuide/build-info.json").write_text(
               json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
