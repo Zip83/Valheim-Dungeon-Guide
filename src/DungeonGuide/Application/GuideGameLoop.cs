@@ -94,18 +94,25 @@ internal sealed class GuideGameLoop : IDisposable
         _runtime.Tick();
         _input.Tick(_view.Dungeon && (_maps.IsLargeOpen || _view.Overlay));
         var session = _runtime.Session;
-        _texture.Tick(session, _view);
         var player = Player.m_localPlayer;
+        TrackPhysicalFloor(session, player);
+        _texture.Tick(session, _view);
         if (session == null || !player || session.Scan == null)
         {
             return;
         }
 
-        _view.Track(session.Floors, player.transform.position.y);
-
         ObserveChests(session);
         UpdateRoute(session, player);
         RenderMap(session, player);
+    }
+
+    private void TrackPhysicalFloor(DungeonSession session, Player player)
+    {
+        if (session?.Scan != null && player)
+        {
+            _view.Track(session.Floors, player.transform.position.y);
+        }
     }
 
     /// <summary>
