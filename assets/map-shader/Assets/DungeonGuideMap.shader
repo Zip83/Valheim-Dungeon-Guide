@@ -75,7 +75,7 @@ Shader "DungeonGuide/Map"
                 t = t * t * (3 - 2 * t);
                 float n = lerp(lerp(noise(grid), noise(grid + int2(1,0)), t.x),
                     lerp(noise(grid + int2(0,1)), noise(grid + int2(1,1)), t.x), t.y);
-                return floor(float3(72,78,82) + n * float3(30,33,35)) / 255;
+                return floor(float3(156,166,176) + n * float3(22,22,22)) / 255;
             }
             fixed4 frag(v2f input) : SV_Target
             {

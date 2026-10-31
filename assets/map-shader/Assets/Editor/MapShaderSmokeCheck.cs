@@ -65,7 +65,7 @@ public static class MapShaderSmokeCheck
     }
 
     private static void CheckExplored(MapShaderSmokeFixture fixture) =>
-        Expect(fixture.Render(new Color32(0, 0, 255, 255), false), new Color32(159, 139, 99, 255), "explored floor");
+        Expect(fixture.Render(new Color32(0, 0, 255, 255), false), new Color32(91, 109, 121, 255), "explored floor");
 
     private static void CheckFullMap(MapShaderSmokeFixture fixture) =>
         Expect(fixture.Render(new Color32(0, 0, 255, 255), true), new Color32(91, 109, 121, 255), "unvisited full map");
@@ -76,7 +76,8 @@ public static class MapShaderSmokeCheck
     private static void CheckFog(MapShaderSmokeFixture fixture)
     {
         var fog = fixture.Render(new Color32(255, 0, 255, 255), false);
-        if (fog.r > 110 || fog.g > 120 || fog.b > 130 || fog.a < 250)
+        if (fog.r < 153 || fog.r > 181 || fog.g < 163 || fog.g > 191
+            || fog.b < 173 || fog.b > 201 || fog.a < 250)
         {
             throw new InvalidOperationException("Opaque fog did not hide floor geometry: " + fog);
         }

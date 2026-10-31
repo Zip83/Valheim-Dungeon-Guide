@@ -14,7 +14,7 @@ internal sealed class MapShaderSmokeFixture : IDisposable
     public MapShaderSmokeFixture(Shader shader)
     {
         _material = new Material(shader);
-        _terrain = Solid(new Color32(159, 139, 99, 255), false);
+        _terrain = Solid(new Color32(91, 109, 121, 255), false);
         _mask = Solid(new Color32(0, 0, 255, 255), true);
         _target = new RenderTexture(4, 4, 24, RenderTextureFormat.ARGB32);
         _mesh = Quad();

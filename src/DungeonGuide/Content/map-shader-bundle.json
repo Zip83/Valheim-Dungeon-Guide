@@ -5,9 +5,9 @@
     "Direct3D11",
     "Vulkan"
   ],
-  "sha256": "c1297d8fda361b3a3337c71f7d46eab7d97d829a9f95971829b62387a5dac7d2",
+  "sha256": "04888175be864cc2e93a0a6eda4875c8cc40dd4356905720f680ed8b296a64ef",
   "sources": {
-    "assets/map-shader/Assets/DungeonGuideMap.shader": "c422157ae2a1461131372986046b035b38300b8790703c19af731f20079b1e7e",
+    "assets/map-shader/Assets/DungeonGuideMap.shader": "ab783105d6caa0d3bab6df99144684c28bffcfc89de3f592efd00b113befae08",
     "assets/map-shader/Assets/DungeonGuideMap.shader.meta": "744893be3890d3930e831cbcc1e2fbd71a5cdf2033b01be7f3d96c4d3864f895",
     "assets/map-shader/Assets/Editor/BuildMapShader.cs": "9cdecfffc0dd7dc3e0fc7b074ba37886a924c68c44d783ef6a2c57e7aaec4cca",
     "assets/map-shader/Assets/Editor/BuildMapShader.cs.meta": "2c2080742d837029e1206f5682be63c0637aced5ffbacd3ee0c992a5a681ecb4",
