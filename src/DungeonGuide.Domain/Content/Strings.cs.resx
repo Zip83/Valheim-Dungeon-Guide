@@ -246,4 +246,31 @@
     <data name="LegendUnverified" xml:space="preserve">
         <value>Neověřený průchod</value>
     </data>
+    <data name="WaypointPrefix" xml:space="preserve">
+        <value>Místo </value>
+    </data>
+    <data name="WaypointNamePrompt" xml:space="preserve">
+        <value>Název / poznámka místa návratu</value>
+    </data>
+    <data name="WaypointAdded" xml:space="preserve">
+        <value>Místo označeno: </value>
+    </data>
+    <data name="WaypointSelected" xml:space="preserve">
+        <value>Návrat na místo: </value>
+    </data>
+    <data name="WaypointRemoved" xml:space="preserve">
+        <value>Místo odstraněno: </value>
+    </data>
+    <data name="NoWaypoint" xml:space="preserve">
+        <value>Není vybrané vlastní místo. Alt+F7 označí pozici, Alt+F8 vybere místo.</value>
+    </data>
+    <data name="WaypointControls" xml:space="preserve">
+        <value>Alt+F7 místo zde · Alt+F8 další místo · Alt+Shift+F7 název · Alt+Ctrl+F7 smazat</value>
+    </data>
+    <data name="WaypointMapControls" xml:space="preserve">
+        <value>Alt+klik označit · klik navigovat · Shift+klik název · pravý klik smazat místo</value>
+    </data>
+    <data name="LegendWaypoint" xml:space="preserve">
+        <value>Vlastní místo návratu</value>
+    </data>
 </root>

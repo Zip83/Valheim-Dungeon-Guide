@@ -179,6 +179,24 @@ internal sealed class GuideText
 
     internal string LegendUnverified => Get(nameof(LegendUnverified));
 
+    internal string WaypointPrefix => Get(nameof(WaypointPrefix));
+
+    internal string WaypointNamePrompt => Get(nameof(WaypointNamePrompt));
+
+    internal string WaypointAdded => Get(nameof(WaypointAdded));
+
+    internal string WaypointSelected => Get(nameof(WaypointSelected));
+
+    internal string WaypointRemoved => Get(nameof(WaypointRemoved));
+
+    internal string NoWaypoint => Get(nameof(NoWaypoint));
+
+    internal string WaypointControls => Get(nameof(WaypointControls));
+
+    internal string WaypointMapControls => Get(nameof(WaypointMapControls));
+
+    internal string LegendWaypoint => Get(nameof(LegendWaypoint));
+
     private string Get(string key) =>
         s_resources.GetString(key, IsCzech ? s_czech : CultureInfo.InvariantCulture)
         ?? throw new MissingManifestResourceException($"Missing localized text: {key}");

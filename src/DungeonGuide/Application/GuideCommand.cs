@@ -78,5 +78,13 @@ internal enum GuideCommand
     /// <summary>
     /// Cycle known chest navigation destinations.
     /// </summary>
-    NextChest
+    NextChest,
+    /// <summary>Save the player's current physical location.</summary>
+    MarkLocation,
+    /// <summary>Cycle personal return locations.</summary>
+    NextLocation,
+    /// <summary>Edit the selected personal location name.</summary>
+    RenameLocation,
+    /// <summary>Delete the selected personal location.</summary>
+    RemoveLocation
 }

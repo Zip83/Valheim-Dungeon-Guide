@@ -39,7 +39,8 @@ public sealed class DungeonGuide : BaseUnityPlugin
         var chests = CreateChestActions(locator, lifecycle, notice, text);
         chests.DestinationRequested += navigator.ToChest;
 
-        var commands = new CommandDispatcher(runtime, view, navigator, chests, settings, notice, floorPolicy, text);
+        var waypoints = new WaypointActions(runtime, lifecycle, navigator, new NoteDialog(), notice, text);
+        var commands = new CommandDispatcher(runtime, view, navigator, chests, waypoints, settings, notice, floorPolicy, text);
         var input = new InputRouter(settings, commands.Execute);
 
         var texture = new MapTextureRenderer(new MapExtentFitter());
