@@ -11,17 +11,6 @@ namespace DungeonGuide;
 internal sealed class MapHooks : IDisposable
 {
     // Exact member names form the reflection contract with the loaded Valheim version.
-    private const string OnMapLeftDownMethod = "OnMapLeftDown";
-    private const string OnMapLeftUpMethod = "OnMapLeftUp";
-    private const string OnMapDblClickMethod = "OnMapDblClick";
-    private const string OnMapLeftClickMethod = "OnMapLeftClick";
-    private const string OnMapMiddleClickMethod = "OnMapMiddleClick";
-    private const string OnSmallMapClickMethod = "OnSmallMapClick";
-    private const string RemovePinUnderPointerMethod = "RemovePinUnderPointer";
-    private const string DebugTeleportMethod = "DebugTeleport";
-    private const string OnPressedPingIconMethod = "OnPressedPingIcon";
-    private const string CreateMapNamePinMethod = "CreateMapNamePin";
-    private const string ShowPinNameInputMethod = "ShowPinNameInput";
     private const string ShowPointOnMapMethod = "ShowPointOnMap";
     private const string SetMapModeMethod = "SetMapMode";
 
@@ -62,23 +51,8 @@ internal sealed class MapHooks : IDisposable
 
     private void InstallPointerGuards()
     {
-        string[] blocked =
-        {
-            OnMapLeftDownMethod,
-            OnMapLeftUpMethod,
-            OnMapDblClickMethod,
-            OnMapLeftClickMethod,
-            OnMapMiddleClickMethod,
-            OnSmallMapClickMethod,
-            RemovePinUnderPointerMethod,
-            DebugTeleportMethod,
-            OnPressedPingIconMethod,
-            CreateMapNamePinMethod,
-            ShowPinNameInputMethod
-        };
-
         foreach (var method in typeof(Minimap).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(m => blocked.Contains(m.Name)))
+            .Where(m => NativeMapInteractionPolicy.RequiresPointerGuard(m.Name)))
         {
             _harmony.Patch(method, new HarmonyMethod(typeof(MapHooks), nameof(AllowPointer)));
         }
