@@ -14,7 +14,7 @@ permissions:
 jobs:
   detect:
     name: Detect code changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       code: ${{ steps.filter.outputs.code || 'true' }}
@@ -34,6 +34,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
-          base: ${{ github.ref_name }}
+          # PRs use the API; base is only used for push comparisons.
+          base: ${{ github.event_name == 'push' && github.ref_name || '' }}
           filters: .github/filters.yml
           predicate-quantifier: every
