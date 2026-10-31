@@ -29,9 +29,6 @@ internal sealed class MapTextureRenderer : IDisposable
     /// <summary>Last fully initialized surface, or null before first publication.</summary>
     public Texture2D Texture => _surface?.Texture;
 
-    /// <summary>Private GPU material, or null when CPU compositing is selected.</summary>
-    public Material Material => _surface?.Material;
-
     /// <summary>Transparent marker layer, independent of fog compositing.</summary>
     public Texture2D Markers => _markers.Texture;
 

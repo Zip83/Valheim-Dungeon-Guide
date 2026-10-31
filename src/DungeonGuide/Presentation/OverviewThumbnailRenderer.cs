@@ -14,9 +14,6 @@ internal sealed class OverviewThumbnailRenderer : IDisposable
     /// <summary>Completed surface retained while a replacement is prepared.</summary>
     public Texture2D Texture => _surface?.Texture;
 
-    /// <summary>Owned shader material, or null for CPU compositing.</summary>
-    public Material Material => _surface?.Material;
-
     /// <summary>Advances only dirty mask tiles after initial terrain construction.</summary>
     public void Tick(DungeonSession session, OverviewFloor floor, bool revealAll, FrameWorkBudget budget)
     {

@@ -12,8 +12,7 @@ Unity Apply may upload an entire backing texture, depending on the graphics back
 Switching from full to explored never retains a full-map image while its replacement is prepared.
 Published physical elevation preserves manual zoom/pan when provisional floor numbers change.
 
-This step uses CPU compositing. The surface/material boundary supports subsequent room masks
-and the optional shader without altering native game materials. Actual nearest-fog latency,
+This step uses CPU compositing. Room masks and colors are composed without changing native game materials. Actual nearest-fog latency,
 door interactions, UI rendering and frame timings require in-game measurement.
 
 ## Continuous movement regression
@@ -26,7 +25,7 @@ stationary. Distance and physical-floor filters use the current player position,
 candidates. Discovery rays originate at the player's actual eye position instead of a fixed 0.65 m
 above the floor, while retaining solid collision checks and the same-floor restriction.
 
-The CPU renderer uses the same exploration mask regardless of shader availability. Unknown pixels
+The CPU renderer consumes the exploration mask directly. Unknown pixels
 must remain fully opaque, and visible distant samples must not require stepping onto each tile.
 Automated regressions cover movement starvation, nearby responsiveness, resets, door retries and
 opaque unknown masks. Eye-level collision behavior and actual UI appearance require in-game checks
