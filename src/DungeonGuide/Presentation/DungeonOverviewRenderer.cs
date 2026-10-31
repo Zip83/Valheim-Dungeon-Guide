@@ -108,17 +108,17 @@ internal sealed class DungeonOverviewRenderer : IDisposable
     private void UpdateCatalog(DungeonSession session)
     {
         if (_catalogJob == null
-            && (_catalog == null || !_revealAll && _explorationRevision != session.Exploration.Revision))
+            && (_catalog == null || !_revealAll && _explorationRevision != session.OverviewExploration.Revision))
         {
-            _explorationRevision = session.Exploration.Revision;
+            _explorationRevision = session.OverviewExploration.Revision;
             if (_catalog == null)
             {
                 _catalog = new OverviewFloorCatalog();
-                _catalogJob = _catalog.Build(_graph, session.Exploration, _revealAll).GetEnumerator();
+                _catalogJob = _catalog.Build(_graph, session.OverviewExploration, _revealAll).GetEnumerator();
             }
             else
             {
-                _catalogJob = _catalog.Update(session.Exploration).GetEnumerator();
+                _catalogJob = _catalog.Update(session.OverviewExploration).GetEnumerator();
             }
         }
 

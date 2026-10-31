@@ -9,7 +9,8 @@ Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
   to the game and other plugins while dungeon pointer actions stay guarded.
 - Restart the game after replacing the plugin to recreate name UI and remove the old patch.
 
-Save schema remains version 2. Gameplay verification is pending. The independent
+Save schema 3 records actual room visits separately and migrates versions 1/2 without changing old fog or notes.
+Gameplay verification is pending. The independent
 ShowPlantProgress missing-field error is outside this fix.
 
 ## 0.1.0

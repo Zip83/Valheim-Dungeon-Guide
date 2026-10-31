@@ -7,7 +7,6 @@ namespace DungeonGuide;
 internal sealed class OverviewThumbnailRenderer : IDisposable
 {
     private readonly FloorPlanCache _plan = new();
-    private readonly Exploration _noVisits = new();
     private FloorPlanRaster _raster;
     private FloorSurfaceRenderer _surface;
     private FloorSurfaceRenderer _pending;
@@ -40,7 +39,7 @@ internal sealed class OverviewThumbnailRenderer : IDisposable
         }
 
         var next = _pending ?? _surface;
-        next.Tick(session.Exploration, _noVisits, revealAll, budget);
+        next.Tick(session.OverviewExploration, session.VisitedRoomCoverage, revealAll, budget);
         if (_pending?.Ready == true)
         {
             _surface?.Dispose();

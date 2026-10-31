@@ -33,6 +33,7 @@ internal static class ScanPreviewArea
             IsManual = area.IsManual,
             Bounds = bounds,
             Rooms = area.Rooms,
+            RoomVolumes = area.RoomVolumes,
             Entrance = area.Entrance
         };
     }
