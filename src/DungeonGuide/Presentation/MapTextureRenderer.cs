@@ -4,12 +4,13 @@ using UnityEngine;
 
 namespace DungeonGuide;
 
-/// <summary>Publishes the selected map while retaining a bounded set of ready adjacent floor surfaces.</summary>
+/// <summary>Publishes the selected map while retaining every prepared floor until the dungeon snapshot is replaced.</summary>
 internal sealed class MapTextureRenderer : IDisposable
 {
     private const int Size = 768;
     private readonly FloorResourceCache<CachedFloorSurface> _floors = new();
-    private readonly List<int> _wanted = new(4);
+    private readonly List<int> _wanted = new();
+    private readonly Func<int, bool> _isReady;
     private readonly FloorPrefetchScheduler _prefetch = new();
     private readonly MapMarkerRenderer _markers = new();
     private readonly FrameWorkBudget _budget = new(8192, 1);
@@ -19,11 +20,15 @@ internal sealed class MapTextureRenderer : IDisposable
     private bool _reveal;
     private bool _hasPublishedImage;
     private float _firstStarted;
+    private int _physicalFloor = -1;
+    private int _selectedFloor = -1;
+    private int _priorityCount;
 
     /// <summary>Uses a shared floor-fitting policy for the map and overlay.</summary>
     public MapTextureRenderer(MapExtentFitter extentFitter)
     {
         _extentFitter = extentFitter;
+        _isReady = IsFloorReady;
     }
 
     /// <summary>Last fully initialized surface, or null before first publication.</summary>
@@ -67,9 +72,9 @@ internal sealed class MapTextureRenderer : IDisposable
 
         SetMode(view.RevealAll);
         _budget.BeginFrame();
-        UpdateWorkingSet(session, view);
+        UpdatePreloadOrder(session, view);
         var selected = AdvanceSelected(session);
-        PreloadNeighbor(session, selected);
+        AdvanceBackground(session, selected);
         _floors.Retain(session.Scan.Graph, _wanted, _published);
     }
 
@@ -99,10 +104,16 @@ internal sealed class MapTextureRenderer : IDisposable
         _markers.Clear();
     }
 
-    private void UpdateWorkingSet(DungeonSession session, MapViewState view)
+    private void UpdatePreloadOrder(DungeonSession session, MapViewState view)
     {
-        FloorPreloadPolicy.Fill(_wanted, view.CurrentFloor, view.SelectedFloor, session.Floors.Count);
-        _floors.Retain(session.Scan.Graph, _wanted, _published);
+        if (_physicalFloor != view.CurrentFloor || _selectedFloor != view.SelectedFloor
+            || _wanted.Count != session.Floors.Count)
+        {
+            _priorityCount = FloorPreloadPolicy.Fill(_wanted, view.CurrentFloor, view.SelectedFloor, session.Floors.Count);
+            _physicalFloor = view.CurrentFloor;
+            _selectedFloor = view.SelectedFloor;
+            _prefetch.Reset();
+        }
     }
 
     private CachedFloorSurface GetFloor(DungeonSession session, int floor)
@@ -144,13 +155,16 @@ internal sealed class MapTextureRenderer : IDisposable
         }
     }
 
-    private void PreloadNeighbor(DungeonSession session, CachedFloorSurface selected)
+    private void AdvanceBackground(DungeonSession session, CachedFloorSurface selected)
     {
-        if (_prefetch.TrySelect(_wanted, selected?.Ready == true, _budget, out var floor))
+        if (_prefetch.TrySelect(_wanted, _priorityCount, selected?.Ready == true, _isReady, _budget, out var floor))
         {
             GetFloor(session, floor).Tick(session, _reveal, _budget);
         }
     }
+
+    private bool IsFloorReady(int floor) =>
+        _floors.TryGet(_session.Scan.Graph, floor, out var surface) && surface.Ready;
 
     private void LogFirstImage(bool navigationReady)
     {
@@ -177,6 +191,8 @@ internal sealed class MapTextureRenderer : IDisposable
         _published = null;
         _session = null;
         _wanted.Clear();
+        _physicalFloor = _selectedFloor = -1;
+        _priorityCount = 0;
         _prefetch.Reset();
         _hasPublishedImage = false;
         _reveal = false;
