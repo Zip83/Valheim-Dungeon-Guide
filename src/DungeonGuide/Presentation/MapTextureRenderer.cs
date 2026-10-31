@@ -11,7 +11,6 @@ internal sealed class MapTextureRenderer : IDisposable
     private readonly MapMarkerRenderer _markers = new();
     private readonly FrameWorkBudget _budget = new(8192, 1);
     private readonly MapExtentFitter _extentFitter;
-    private readonly Exploration _noVisits = new();
     private FloorSurfaceRenderer _surface;
     private FloorSurfaceRenderer _pending;
     private FloorPlanRaster _pendingRaster;
@@ -120,12 +119,12 @@ internal sealed class MapTextureRenderer : IDisposable
     {
         if (raster == Published)
         {
-            _surface.Tick(session.Exploration, _noVisits, reveal, _budget);
+            _surface.Tick(session.Exploration, session.VisitedRoomCoverage, reveal, _budget);
             return;
         }
 
         PrepareReplacement(session, raster);
-        _pending.Tick(session.Exploration, _noVisits, reveal, _budget);
+        _pending.Tick(session.Exploration, session.VisitedRoomCoverage, reveal, _budget);
         if (_pending.Ready)
         {
             PublishReplacement(raster, session.NavigationReady);

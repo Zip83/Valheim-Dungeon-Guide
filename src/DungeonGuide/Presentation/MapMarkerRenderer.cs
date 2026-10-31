@@ -235,22 +235,30 @@ internal sealed class MapMarkerRenderer : IDisposable
                 continue;
             }
 
-            var cross = node.Edges.FirstOrDefault(e => graph.Nodes[e.To].Floor != floor);
-            if (cross != null)
-            {
-                // A small directional chevron marks a floor crossing rather than an extra floor slice.
-                var uv = UV(node.Position);
-                var x = (int)(uv.x * Size);
-                var y = (int)(uv.y * Size);
-                var up = graph.Nodes[cross.To].Floor > floor;
-                Chevron(x, y, up, MapPalette.FloorTransition);
-            }
+            DrawStairDirections(graph, id);
 
             if (node.Edges.Any(e => !e.Verified
                     && (e.Kind == PassageKind.Jump || e.Kind == PassageKind.Drop || e.Kind == PassageKind.Breakable)))
             {
                 Square(node.Position, 2, MapPalette.UnverifiedPassage);
             }
+        }
+    }
+
+    private void DrawStairDirections(NavGraph graph, int id)
+    {
+        var directions = StairMarkerPolicy.Directions(graph, id);
+        var uv = UV(graph.Nodes[id].Position);
+        var x = (int)(uv.x * Size);
+        var y = (int)(uv.y * Size);
+        if (directions.Up)
+        {
+            Chevron(x - (directions.Down ? 5 : 0), y, true, MapPalette.FloorTransition);
+        }
+
+        if (directions.Down)
+        {
+            Chevron(x + (directions.Up ? 5 : 0), y, false, MapPalette.FloorTransition);
         }
     }
 

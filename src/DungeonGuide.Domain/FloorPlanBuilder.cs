@@ -95,7 +95,8 @@ internal sealed class FloorPlanBuilder
         foreach (var edge in node.Edges)
         {
             var other = graph.Nodes[edge.To];
-            feature |= other.Floor != node.Floor || edge.Kind == PassageKind.Breakable
+            feature |= other.Floor != node.Floor || StairMarkerPolicy.IsTransition(node, other, edge)
+                || edge.Kind == PassageKind.Breakable
                 || edge.Kind == PassageKind.Jump || edge.Kind == PassageKind.Drop;
             if (!CanBridge(node, other, edge, spacing))
             {
