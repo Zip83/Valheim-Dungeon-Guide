@@ -195,8 +195,8 @@ internal sealed class NativeMapPresenter : IDisposable
 
     private void ShowDungeon(DungeonSession session)
     {
-        _small.SetSurface(_renderer.Texture, _renderer.Material);
-        _large.SetSurface(_renderer.Texture, _renderer.Material);
+        _small.SetSurface(_renderer.Texture);
+        _large.SetSurface(_renderer.Texture);
         var uv = _renderer.UV(UnityPoints.P(Player.m_localPlayer.transform.position));
         var height = _renderer.DisplayedHeight;
         if (float.IsNaN(_lastFloorHeight) || Mathf.Abs(_lastFloorHeight - height) > 1.2f)

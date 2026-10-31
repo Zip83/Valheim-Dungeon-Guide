@@ -17,11 +17,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Content/dungeonguide-ui" Condition="Exists('Content/dungeonguide-ui')"
-          CopyToOutputDirectory="PreserveNewest" TargetPath="dungeonguide-ui" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" IncludeAssets="compile" PrivateAssets="all" />
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.75" IncludeAssets="compile" PrivateAssets="all" />

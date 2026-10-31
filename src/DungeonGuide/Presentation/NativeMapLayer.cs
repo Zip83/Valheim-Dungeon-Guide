@@ -55,12 +55,11 @@ internal sealed class NativeMapLayer : IDisposable
     }
 
     /// <summary>
-    /// Binds the published renderer-owned texture and material without changing native game materials.
+    /// Binds the published renderer-owned CPU texture to the default UI rendering path.
     /// </summary>
-    public void SetSurface(Texture texture, Material material)
+    public void SetSurface(Texture texture)
     {
         _image.texture = texture;
-        _image.material = material;
     }
 
     /// <summary>Updates dungeon visibility while preserving the native map layer.</summary>

@@ -30,9 +30,6 @@ internal sealed class DungeonOverviewRenderer : IDisposable
     /// <summary>Whether the first visible-floor classification is still running.</summary>
     public bool Preparing => _catalogJob != null && Floors.Count == 0;
 
-    /// <summary>Returns the material paired with a completed floor thumbnail.</summary>
-    public Material Material(int floor) => _thumbnails.TryGetValue(floor, out var thumbnail) ? thumbnail.Material : null;
-
     /// <summary>Returns a completed thumbnail without allocating or performing rendering work.</summary>
     public Texture2D Texture(int floor) => _thumbnails.TryGetValue(floor, out var thumbnail) ? thumbnail.Texture : null;
 

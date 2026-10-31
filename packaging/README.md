@@ -105,13 +105,8 @@ your character or transfers inventory items.
 
 License: MIT; see LICENSE.
 
-## Responsive maps and GPU compositing
+## Responsive maps
 
-The first local map does not wait for navigation linking. Discovery defaults to 25 m and is blocked
-by walls and physical floors. All floors colors entered room layers green. Save schema 3 preserves
-old fog and notes while tracking room entries separately. Keep a pre-upgrade backup for rollback.
-
-GPU test packages include `dungeonguide-ui` beside both DLLs. Keep this file when extracting the
-BepInEx folder. Missing/unsupported bundles automatically use incremental CPU rendering. The shader
-has passed isolated Unity 6000.0.75 Direct3D 11/Vulkan pixel checks; Valheim gameplay timings and
-multiplayer interactions still require manual verification.
+Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to 25 m,
+limited by walls and physical floors. The package contains the plugin DLLs, Czech translations,
+installation notes and exact build identity. Preserve the cs translation directory when installing.
