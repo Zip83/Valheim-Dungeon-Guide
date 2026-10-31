@@ -8,6 +8,8 @@ namespace DungeonGuide;
 /// <summary>Owns a responsive two-row native toolbar and an explicitly expanded advanced panel.</summary>
 internal sealed class MapControlsView : IDisposable
 {
+    private const float HintsTop = 94;
+    private const float HintsInset = 12;
     private readonly GuideText _text;
     private readonly FloorNumbering _numbering;
     private readonly MapToolbarState _state = new();
@@ -20,9 +22,7 @@ internal sealed class MapControlsView : IDisposable
     private readonly TMP_Text _overviewLabel;
     private readonly List<(RectTransform Rect, float Weight)> _first = new();
     private readonly List<(RectTransform Rect, float Weight)> _second = new();
-    private readonly TMP_Text _hints;
-    private float _hintWidth = -1;
-    private float _hintHeight;
+    private readonly MapShortcutHintsView _hints;
     private readonly MapLegendView _legend;
 
     /// <summary>Root rectangle defining the map area owned by controls and pointer interaction.</summary>
@@ -56,7 +56,7 @@ internal sealed class MapControlsView : IDisposable
         _revealLabel = CreateNavigationControls(command, style);
 
         _advanced = CreateContainer("AdvancedControls", _details);
-        _hints = CreateHints(style);
+        _hints = new MapShortcutHintsView(_advanced, style, text);
         _advanced.gameObject.SetActive(false);
     }
 
@@ -153,16 +153,15 @@ internal sealed class MapControlsView : IDisposable
     {
         var parent = Root.parent as RectTransform;
         var width = Mathf.Max(240, Mathf.Min(960, parent.rect.width - 24));
-        var hintsHeight = HintHeight(width - 16);
-        var controlsHeight = _state.Expanded ? 80 + hintsHeight : 82;
+        var hintsHeight = _hints.Layout(width - HintsInset * 2);
+        var controlsHeight = _state.Expanded ? HintsTop + hintsHeight + HintsInset : 82;
         Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + 4 : 46);
         if (dungeon)
         {
             Layout(_first, width, -8);
             Layout(_second, width, -44);
 
-            _hints.rectTransform.anchoredPosition = new Vector2(8, -80);
-            _hints.rectTransform.sizeDelta = new Vector2(width - 16, hintsHeight);
+            _hints.Root.anchoredPosition = new Vector2(HintsInset, -HintsTop);
         }
         else
         {
@@ -170,17 +169,6 @@ internal sealed class MapControlsView : IDisposable
             world.anchoredPosition = new Vector2(8, -8);
             world.sizeDelta = new Vector2(164, 30);
         }
-    }
-
-    private float HintHeight(float width)
-    {
-        if (_hintWidth != width)
-        {
-            _hintWidth = width;
-            _hintHeight = Mathf.Max(28, _hints.GetPreferredValues(_hints.text, width, 0).y + 8);
-        }
-
-        return _hintHeight;
     }
 
     private static RectTransform CreateRoot(Transform parent, GameUiStyle style)
@@ -230,14 +218,4 @@ internal sealed class MapControlsView : IDisposable
         return Add(_second, _details, style, _text.Explored, 160, () => command(GuideCommand.ToggleReveal));
     }
 
-    private TMP_Text CreateHints(GameUiStyle style)
-    {
-        var hints = NativeUi.Label(_advanced, style, _text.ChestControls + "\n" + _text.WaypointControls
-            + "\n" + _text.WaypointMapControls, Vector2.zero, Vector2.zero, 13);
-        hints.enableAutoSizing = false;
-        hints.textWrappingMode = TextWrappingModes.Normal;
-        hints.overflowMode = TextOverflowModes.Overflow;
-
-        return hints;
-    }
 }
