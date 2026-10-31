@@ -19,6 +19,7 @@ internal static class MapPalette
     internal static readonly Color32 CollectionChest = new Color32(255, 214, 50, 255);
     internal static readonly Color32 KnownChest = new Color32(198, 134, 62, 255);
     internal static readonly Color32 Entrance = new Color32(45, 215, 223, 255);
+    internal static readonly Color32 Waypoint = new Color32(255, 130, 175, 255);
     internal static readonly Color32 Player = new Color32(255, 255, 255, 255);
 
     /// <summary>Generates deterministic cloud shading independently of hidden dungeon geometry.</summary>

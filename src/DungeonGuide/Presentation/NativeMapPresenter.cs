@@ -16,7 +16,7 @@ internal sealed class NativeMapPresenter : IDisposable
     private readonly MapViewState _state;
     private readonly MapTextureRenderer _renderer;
     private readonly Action<GuideCommand> _command;
-    private readonly Action<ChestRecord> _select;
+    private readonly MapTargetSelector _targets;
     private readonly MapViewportController _viewport;
     private NativeMapLayer _small;
     private NativeMapLayer _large;
@@ -51,7 +51,7 @@ internal sealed class NativeMapPresenter : IDisposable
         MapViewportController viewport,
         FloorNumbering numbering,
         Action<GuideCommand> command,
-        Action<ChestRecord> select,
+        MapTargetSelector targets,
         GuideText text)
     {
         _text = text;
@@ -60,7 +60,7 @@ internal sealed class NativeMapPresenter : IDisposable
         _viewport = viewport;
         _numbering = numbering;
         _command = command;
-        _select = select;
+        _targets = targets;
     }
 
     private void Bind()
@@ -139,7 +139,7 @@ internal sealed class NativeMapPresenter : IDisposable
         UpdateOverview(session, overviewVisible);
         if (ready && Minimap.IsOpen() && !overviewVisible)
         {
-            _viewport.Tick(_large, _controls.Root, session, _state, _renderer, _select);
+            _viewport.Tick(_large, _controls.Root, session, _state, _renderer, _targets);
         }
     }
 

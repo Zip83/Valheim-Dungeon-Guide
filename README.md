@@ -83,6 +83,13 @@ Mark a chest by opening it or aiming at its interaction target. Cycling with F8
 selects a navigation destination; it does not select the chest affected by F7.
 Collection markers record your confirmation; the plugin does not move items.
 
+### Personal return locations
+
+Personal return locations: Alt+F7 marks here, Alt+F8 cycles return targets, Alt+Shift+F7 names
+the selected location and Alt+Ctrl+F7 removes it. On a single-floor dungeon map use Alt+click
+to add a pink diamond, click to navigate, Shift+click to name and right-click to remove it.
+Locations persist per world/dungeon in schema 4; they do not prevent dropped item despawning.
+
 ## Settings and saved exploration
 
 The first run creates `BepInEx/config/zip.dungeonguide.cfg`. Shortcuts are

@@ -38,6 +38,7 @@ internal sealed class MapLegendView
         Entry(MapPalette.Route, text.LegendRoute),
         Entry(MapPalette.FloorTransition, text.LegendStairs),
         Entry(MapPalette.Entrance, text.LegendEntrance),
+        Entry(MapPalette.Waypoint, text.LegendWaypoint),
         Entry(MapPalette.KnownChest, text.LegendChest),
         Entry(MapPalette.CollectionChest, text.LegendCollection),
         Entry(MapPalette.UnverifiedPassage, text.LegendUnverified)

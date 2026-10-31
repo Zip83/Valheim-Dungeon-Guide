@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace DungeonGuide;
@@ -41,7 +40,7 @@ internal sealed class MapViewportController
     }
 
     /// <summary>
-    /// Handles dungeon-map pan, zoom, and chest selection without consuming control-panel input.
+    /// Handles dungeon-map pan, zoom, and target selection without consuming control-panel input.
     /// </summary>
     public void Tick(
         NativeMapLayer layer,
@@ -49,8 +48,14 @@ internal sealed class MapViewportController
         DungeonSession session,
         MapViewState state,
         MapTextureRenderer renderer,
-        Action<ChestRecord> select)
+        MapTargetSelector targets)
     {
+        if (TextInput.IsVisible() || Chat.instance && Chat.instance.HasFocus())
+        {
+            _dragging = false;
+            return;
+        }
+
         Vector2 mouse = Input.mousePosition;
         if (RectTransformUtility.RectangleContainsScreenPoint(controls, mouse, null) || !layer.Contains(mouse))
         {
@@ -60,7 +65,12 @@ internal sealed class MapViewportController
 
         var viewport = Zoom(layer, mouse);
         Drag(layer, mouse, ref viewport);
-        FinishDrag(layer, session, state, renderer, select, mouse, viewport.width);
+        FinishDrag(layer, session, state, renderer, targets, mouse, viewport.width);
+        if (Input.GetMouseButtonUp(1))
+        {
+            targets.Delete(layer, session, renderer, mouse, viewport.width);
+        }
+
         viewport.x = Mathf.Clamp(viewport.x, -0.1f, 1.1f - viewport.width);
         viewport.y = Mathf.Clamp(viewport.y, -0.1f, 1.1f - viewport.height);
         Viewport = viewport;
@@ -103,7 +113,7 @@ internal sealed class MapViewportController
         DungeonSession session,
         MapViewState state,
         MapTextureRenderer renderer,
-        Action<ChestRecord> select,
+        MapTargetSelector targets,
         Vector2 mouse,
         float width)
     {
@@ -112,29 +122,8 @@ internal sealed class MapViewportController
             _dragging = false;
             if (Vector2.Distance(_dragOrigin, mouse) < 6)
             {
-                SelectChest(layer, session, state, renderer, select, mouse, width);
+                targets.Click(layer, session, state, renderer, mouse, width);
             }
-        }
-    }
-
-    private static void SelectChest(
-        NativeMapLayer layer,
-        DungeonSession session,
-        MapViewState state,
-        MapTextureRenderer renderer,
-        Action<ChestRecord> select,
-        Vector2 mouse,
-        float width)
-    {
-        var uv = layer.MouseUV(mouse);
-        var chest = session.Data.chests.Where(c => !c.done && (state.RevealAll || c.discovered || c.collect)
-                && FloorDetector.Nearest(session.Floors, c.position.y) == renderer.DisplayedFloor
-                && renderer.IsVisible(c.position))
-            .OrderBy(c => Vector2.Distance(renderer.UV(c.position), uv))
-            .FirstOrDefault();
-        if (chest != null && Vector2.Distance(renderer.UV(chest.position), uv) < width * 0.025f)
-        {
-            select(chest);
         }
     }
 }

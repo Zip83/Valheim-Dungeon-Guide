@@ -24,7 +24,9 @@ internal sealed class MapControlsView : IDisposable
     private readonly List<(RectTransform Rect, float Weight)> _first = new();
     private readonly List<(RectTransform Rect, float Weight)> _second = new();
     private readonly List<(RectTransform Rect, float Weight)> _extra = new();
-    private readonly RectTransform _hints;
+    private readonly TMP_Text _hints;
+    private float _hintWidth = -1;
+    private float _hintHeight;
     private readonly MapLegendView _legend;
 
     /// <summary>Root rectangle defining the map area owned by controls and pointer interaction.</summary>
@@ -153,7 +155,8 @@ internal sealed class MapControlsView : IDisposable
     {
         var parent = Root.parent as RectTransform;
         var width = Mathf.Max(240, Mathf.Min(960, parent.rect.width - 24));
-        var controlsHeight = _state.Expanded ? 152 : 82;
+        var hintsHeight = HintHeight(width - 16);
+        var controlsHeight = _state.Expanded ? 116 + hintsHeight : 82;
         var legendHeight = dungeon ? _legend.Layout(width, controlsHeight) : 0;
         Root.sizeDelta = new Vector2(dungeon ? width : 180, dungeon ? controlsHeight + legendHeight + 4 : 46);
         if (dungeon)
@@ -162,8 +165,8 @@ internal sealed class MapControlsView : IDisposable
             Layout(_second, width, -44);
             Layout(_extra, width, -80);
 
-            _hints.anchoredPosition = new Vector2(8, -116);
-            _hints.sizeDelta = new Vector2(width - 16, 28);
+            _hints.rectTransform.anchoredPosition = new Vector2(8, -116);
+            _hints.rectTransform.sizeDelta = new Vector2(width - 16, hintsHeight);
         }
         else
         {
@@ -171,6 +174,17 @@ internal sealed class MapControlsView : IDisposable
             world.anchoredPosition = new Vector2(8, -8);
             world.sizeDelta = new Vector2(164, 30);
         }
+    }
+
+    private float HintHeight(float width)
+    {
+        if (_hintWidth != width)
+        {
+            _hintWidth = width;
+            _hintHeight = Mathf.Max(28, _hints.GetPreferredValues(_hints.text, width, 0).y + 8);
+        }
+
+        return _hintHeight;
     }
 
     private static RectTransform CreateRoot(Transform parent, GameUiStyle style)
@@ -217,7 +231,7 @@ internal sealed class MapControlsView : IDisposable
         Add(_second, _details, style, _text.Chests, 180, () => command(GuideCommand.NextChest));
     }
 
-    private (TMP_Text Reveal, UnityEngine.UI.Button Rescan, TMP_Text Break, TMP_Text Jump, RectTransform Hints)
+    private (TMP_Text Reveal, UnityEngine.UI.Button Rescan, TMP_Text Break, TMP_Text Jump, TMP_Text Hints)
         CreateAdvancedControls(Action<GuideCommand> command, GameUiStyle style)
     {
         var revealLabel = Add(_extra, _advanced, style, _text.Explored, 210, () => command(GuideCommand.ToggleReveal));
@@ -225,7 +239,11 @@ internal sealed class MapControlsView : IDisposable
         var rescanButton = rescan.transform.parent.GetComponent<UnityEngine.UI.Button>();
         var breakLabel = Add(_extra, _advanced, style, "", 260, () => command(GuideCommand.ToggleBreakables));
         var jumpLabel = Add(_extra, _advanced, style, "", 230, () => command(GuideCommand.ToggleJumps));
-        var hints = NativeUi.Label(_advanced, style, _text.ChestControls, Vector2.zero, Vector2.zero, 14).rectTransform;
+        var hints = NativeUi.Label(_advanced, style, _text.ChestControls + "\n" + _text.WaypointControls
+            + "\n" + _text.WaypointMapControls, Vector2.zero, Vector2.zero, 13);
+        hints.enableAutoSizing = false;
+        hints.textWrappingMode = TextWrappingModes.Normal;
+        hints.overflowMode = TextOverflowModes.Overflow;
 
         return (revealLabel, rescanButton, breakLabel, jumpLabel, hints);
     }

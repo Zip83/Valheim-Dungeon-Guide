@@ -86,6 +86,8 @@ internal sealed class MapMarkerRenderer : IDisposable
 
         DrawChests(session, floor, reveal);
 
+        DrawWaypoints(session, navigator, floor);
+
         DrawEntrance(session, floor, reveal);
 
         DrawPlayer(view, player, floor);
@@ -282,6 +284,34 @@ internal sealed class MapMarkerRenderer : IDisposable
             {
                 var uv = UV(chest.position);
                 Chevron((int)(uv.x * Size), (int)(uv.y * Size), cf > floor, MapPalette.CollectionChest);
+            }
+        }
+    }
+
+    private void DrawWaypoints(DungeonSession session, NavigationCoordinator navigator, int floor)
+    {
+        foreach (var record in session.Data.waypoints)
+        {
+            if (FloorDetector.Nearest(session.Floors, record.position.y) == floor)
+            {
+                DrawWaypoint(record.position, navigator.Waypoint == record);
+            }
+        }
+    }
+
+    private void DrawWaypoint(Point position, bool selected)
+    {
+        var uv = UV(position) * Size;
+        for (var y = -7; y <= 7; y++)
+        {
+            for (var x = -7; x <= 7; x++)
+            {
+                var distance = Math.Abs(x) + Math.Abs(y);
+                if (distance <= 7)
+                {
+                    var color = distance >= 6 ? MapPalette.TextureBackground : MapPalette.Waypoint;
+                    Set((int)uv.x + x, (int)uv.y + y, selected && distance <= 2 ? MapPalette.Player : color);
+                }
             }
         }
     }
