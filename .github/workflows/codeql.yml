@@ -26,7 +26,7 @@ jobs:
     name: Analyze C#
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -63,7 +63,7 @@ jobs:
     name: CodeQL result
     needs: [changes, analyze]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Verify required analysis result
