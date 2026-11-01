@@ -5,7 +5,7 @@ and finding your way back to chests left behind.
 
 **Version:** 0.1.1 | **Development target:** Valheim **1.0.21** with
 BepInExPack Valheim **5.4.2351**.
-See [compatibility and verification](docs/development.md#compatibility-and-verification)
+See [compatibility and verification](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/development.md#compatibility-and-verification)
 for the recorded environment and verification status. Gameplay verification of
 this repository build is still pending.
 
@@ -19,7 +19,7 @@ this repository build is still pending.
   clipped by walls and the player's physical floor, with a soft edge inside explored areas.
 - A toggle for all scanned geometry on the selected floor; it never marks unseen areas explored.
 - A compact two-row toolbar uses loaded Valheim button sprites, fonts, and selectable
-  states. **More** opens scan/reveal/special-passage options and starts closed on each opening.
+  states. **More** opens keyboard and mouse hints and starts closed on each opening.
 - Automatic current-floor selection, with higher and lower floors available to browse.
 - A view fitted to the entire selected floor on first opening and when changing floors.
   Reopening preserves manual zoom and position; **Home** fits your current floor again.
@@ -39,9 +39,13 @@ logs, and repository documentation are English.
 
 ## Installation
 
+With Thunderstore Mod Manager or r2modman, install Dungeon Guide and its
+BepInExPack dependency into your Valheim profile, then launch through the manager.
+English is embedded in the main assemblies; the `cs/` directory contains Czech.
+
 Install BepInExPack Valheim 5 first. From a successful pull request's **CI** run,
 download the `DungeonGuide-<version>` artifact and extract its `BepInEx` directory
-into the Valheim installation. Alternatively, [build the solution](docs/development.md#build)
+into the Valheim installation. Alternatively, [build the solution](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/development.md#build)
 and copy **both** `DungeonGuide.dll` and `DungeonGuide.Domain.dll` from
 `src/DungeonGuide/bin/Release/net48/` to `BepInEx/plugins/DungeonGuide/`.
 Copy the `cs/` subdirectory alongside them as well; it contains
@@ -52,7 +56,13 @@ for example `DungeonGuide-0.1.1.83-dev.1`. The CI run name includes the full `0.
 its summary shows the assembled version and a package download link.
 Their `build-info.json` records the exact commit, CI run, PR, and Valheim target;
 startup logging reports that same build identity. Include it when reporting an issue.
-These artifacts are test builds rather than stable releases.
+These artifacts are test builds rather than stable releases. They include the
+Thunderstore manifest, 256 x 256 icon and this README directly in the ZIP root.
+To publish a reviewed build, upload the ZIP at
+[Thunderstore](https://thunderstore.io/package/create/) under your team and the
+Valheim community. Publication stays manual. The public package version comes
+from `Version.props` (for example, `0.1.1`); DLLs retain the exact development
+identity. Publish each public version once and increment it before the next update.
 
 Close the game before replacing DLLs. Keep one copy of this plugin installed;
 remove an older copy from another plugin directory. Disable competing dungeon-map
@@ -118,7 +128,7 @@ Observed doorway arrivals are retained with that geometry. Door permissions and
 special traversal evidence still need current-world validation before navigation.
 Incomplete or structurally changed layouts resume automatic scanning while the
 previous map remains visible. Cache files live in `DungeonGuide/Geometry/` beside
-the JSON saves; see [the format and recovery rules](docs/geometry-cache-format.md).
+the JSON saves; see [the format and recovery rules](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/geometry-cache-format.md).
 
 ## Limits and verification
 
@@ -147,24 +157,24 @@ previously observed directional traversal and current geometry/capability checks
 If ordinary routing fails, navigation can check a single grappling-hook crossing.
 The hook section is orange, its attachment surface is marked with an orange cross,
 and the HUD explicitly warns that the route requires a hook. All route lines are
-thicker and outlined. See [hook routing and current limitations](docs/grappling-routes.md).
+thicker and outlined. See [hook routing and current limitations](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/grappling-routes.md).
 The guide does not open doors, break objects, fire the hook, jump, or control your character.
 
 ## Contributing
 
-See [Development](docs/development.md), [CONTRIBUTING.md](CONTRIBUTING.md), and
-[C# coding conventions](docs/coding-conventions.md). AI coding assistants must
-also follow [AGENTS.md](AGENTS.md).
+See [Development](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/development.md), [CONTRIBUTING.md](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/CONTRIBUTING.md), and
+[C# coding conventions](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/coding-conventions.md). AI coding assistants must
+also follow [AGENTS.md](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/AGENTS.md).
 
 ## License
 
-[MIT](LICENSE). Valheim and third-party components remain the property of their
+[MIT](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/LICENSE). Valheim and third-party components remain the property of their
 respective owners. External reference assemblies are not included in the plugin artifact.
 
 ## Responsive map development
 
 Target Valheim 1.0.21. Maps use incremental CPU compositing for floor colors, exploration and visits.
-See [fog updates](docs/incremental-fog.md) and [room visits](docs/room-visits.md).
+See [fog updates](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/incremental-fog.md) and [room visits](https://github.com/Zip83/Valheim-Dungeon-Guide/blob/master/docs/room-visits.md).
 
 The **Legend** button opens a separate, scrollable color legend with native fonts
 and actual color swatches. Close it with **Close** or by clicking outside the panel.
