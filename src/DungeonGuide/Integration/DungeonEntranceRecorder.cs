@@ -19,7 +19,8 @@ internal sealed class DungeonEntranceRecorder
     public void Observe(Teleport source, Humanoid character)
     {
         var target = source ? source.m_targetPoint : null;
-        if (!target || !Player.m_localPlayer || character != Player.m_localPlayer || !ZNet.instance
+        var world = GameWorld.Id;
+        if (!target || !Player.m_localPlayer || character != Player.m_localPlayer || !world.HasValue
             || Character.InInterior(source.transform.position) || !Character.InInterior(target.transform.position))
         {
             return;
@@ -30,14 +31,14 @@ internal sealed class DungeonEntranceRecorder
         // Freeze the native GetTeleportPoint result before doorway objects can unload.
         _arrival = UnityPoints.P(doorway.position + doorway.forward - doorway.up);
         _observed = true;
-        _world = ZNet.instance.GetWorldUID();
+        _world = world.Value;
         Observed?.Invoke();
     }
 
     /// <summary>Returns the native arrival point only for the same world and containing generated room.</summary>
     public Point? Find(Room[] rooms)
     {
-        if (!_observed || !ZNet.instance || _world != ZNet.instance.GetWorldUID()
+        if (!_observed || _world != GameWorld.Id
             || !rooms.Any(room => DungeonRoomGeometry.Contains(room, UnityPoints.V(_doorway))
                 || DungeonRoomGeometry.Contains(room, UnityPoints.V(_arrival))))
         {

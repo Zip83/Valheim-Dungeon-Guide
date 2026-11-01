@@ -87,7 +87,7 @@ internal sealed class GuideRuntime : IDisposable
         _scans.FullScanStarted += BeginFullScan;
     }
 
-    private string World => ZNet.instance ? ZNet.instance.GetWorldUID().ToString(CultureInfo.InvariantCulture) : null;
+    private string World => GameWorld.Id?.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Detects dungeon transitions and schedules exploration, traversal observation, and periodic saves.

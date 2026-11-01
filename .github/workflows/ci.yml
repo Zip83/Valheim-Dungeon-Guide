@@ -1,5 +1,5 @@
 name: CI
-run-name: CI build 0.1.1.${{ github.run_number }}
+run-name: CI build 0.1.2.${{ github.run_number }}
 
 on:
   pull_request:
