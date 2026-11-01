@@ -1,0 +1,8 @@
+{
+  "name": "Dungeon_Guide",
+  "website_url": "https://github.com/Zip83/Valheim-Dungeon-Guide",
+  "description": "Dungeon floor maps, minimap, fog of war, route guidance, chest tracking and personal return markers. Persistent layouts and English/Czech UI.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2351"
+  ]
+}

@@ -1,11 +1,14 @@
-# Valheim Dungeon Guide 0.1.1
+# Valheim Dungeon Guide
 
 Development target: Valheim 1.0.21 with BepInExPack Valheim 5.4.2351.
 Gameplay verification of this repository build is pending.
 
 ## Installation
 
-Close Valheim. Extract this package's `BepInEx` directory into the game directory.
+With a mod manager, install this package and its BepInExPack dependency into your
+Valheim profile, then launch through the manager. Server installation is not required.
+
+For manual installation, close Valheim. Extract this package's `BepInEx` directory into the game directory.
 Keep both `DungeonGuide.dll` and `DungeonGuide.Domain.dll` together in
 `BepInEx/plugins/DungeonGuide/`, preserving the `cs/` translation subdirectory
 with `DungeonGuide.Domain.resources.dll`. Install BepInExPack first and remove duplicate
@@ -13,7 +16,8 @@ copies of this plugin. Disable competing dungeon-map mods in the same profile.
 
 ## Build identity
 
-This is a development build of the release version shown above. See
+CI packages are development builds, not automatically published stable releases.
+The Thunderstore package version comes from the repository release prefix. See
 `build-info.json` for its exact development version, commit, PR, CI run, and
 Valheim target. The startup log reports the full build identity; BepInEx uses
 its numeric equivalent. Include the development version in bug reports.
@@ -31,15 +35,15 @@ its numeric equivalent. Include the development version in bug reports.
 - **Mouse wheel** — Zoom the floor detail, or scroll through floors in the overview.
 - **Hold left mouse button and drag** — Pan the floor detail.
 - **F6** — Show or hide the optional standalone map overlay. It starts hidden.
-- **Insert** — Rescan dungeon geometry.
 
-The map shows explored areas by default. Cloud fog completely hides unknown rooms;
-exploration reveals nearby visible floor within the configured radius (25 metres by default), stopping at walls
+The map shows explored areas by default. Dark fog hides unknown areas;
+exploration reveals visible floor in a circle (10-metre radius by default), stopping at walls
 and keeping other floors hidden. Saved exploration restores the same fog after re-entry.
 
 The two-row toolbar uses Valheim artwork and fonts. **More** opens advanced
-controls: rescan, reveal mode, breakable passages. Verified jumps are automatic. It starts
-closed whenever the large map opens. Full scanned geometry temporarily removes
+keyboard and mouse hints. It starts closed whenever the large map opens.
+Verified jumps and breakable routes are automatic; there are no manual rescan or
+traversal switches. Full scanned geometry temporarily removes
 fog on the selected floor without adding exploration to your save.
 
 The overview follows the same reveal mode: explored mode lists only discovered
@@ -54,7 +58,9 @@ overlay continue to show a single floor.
 - **Left Shift + F9** — Stop navigation.
 - **F10** — Navigate to the entrance. If the entrance is unknown, the destination
   is explicitly labeled as the scan origin.
-- **Go up / Go down map buttons** — Navigate to an adjacent floor. Page Up and
+- **Go up / Go down map buttons** — Keep navigating upward or downward until
+  stopped or replaced by another destination. At the known floor limit, navigation
+  stays active and can resume when more geometry becomes available. Page Up and
   Page Down only change the displayed floor; they do not start navigation.
 
 ### Chests and collection
@@ -81,13 +87,13 @@ Locations persist per world/dungeon in schema 4; they do not prevent dropped ite
 - **Saved exploration and chest notes:** `BepInEx/config/DungeonGuide/`
 - **Diagnostic log:** `BepInEx/LogOutput.log`
 
-**Insert** is the default rescan shortcut; **F5** stays available for the Valheim
-console. Existing configurations keep saved shortcuts: under `[Keys]`, change
-`Rescan = F5` to `Rescan = Insert` if upgrading from the old default.
+Geometry scanning and refresh are automatic. There is no manual rescan button
+or shortcut. Outdoor bases retain the ordinary world map.
 
-Outdoor bases keep the ordinary world map by default. To map outdoors manually,
-enable `Display.AllowOutdoorMapping` in the configuration, then press **Insert**.
-Enabling this option never starts an outdoor scan automatically.
+Completed layouts are cached across dungeon exits and game restarts. Current-floor
+textures are prepared first, then adjacent floors and the remaining floors.
+Prepared textures are retained during the dungeon session. Structural changes
+refresh geometry automatically; passage permissions are rechecked separately.
 
 ## Scanning responsiveness
 
@@ -105,8 +111,10 @@ The interface defaults to English and uses Czech only when Valheim is set to Cze
 Other game languages fall back to English. Existing chest names and notes stay unchanged.
 
 Maps depend on loaded geometry. Routes and detected floors may be incomplete.
-Verified jumps are automatic; breakable routes are disabled by default. The guide never controls
+Verified jumps and breakable routes are automatic. The guide never controls
 your character or transfers inventory items.
+Directional jumps require a previously observed successful crossing and current
+geometry/capability checks. A crossing never authorizes its reverse direction.
 When ordinary routing fails, a usable grappling hook can enable a single checked
 crossing. Orange route sections and crosses identify the hook and its anchor;
 the HUD warns explicitly. Ordinary sections are yellow; all routes have thicker,
@@ -119,7 +127,7 @@ License: MIT; see LICENSE.
 
 ## Responsive maps
 
-Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to 25 m,
+Target Valheim 1.0.21. Maps use incremental CPU rendering and exploration defaults to a 10 m circle,
 limited by walls and physical floors. The package contains the plugin DLLs, Czech translations,
 installation notes and exact build identity. Preserve the cs translation directory when installing.
 

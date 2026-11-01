@@ -19,7 +19,7 @@ this repository build is still pending.
   clipped by walls and the player's physical floor, with a soft edge inside explored areas.
 - A toggle for all scanned geometry on the selected floor; it never marks unseen areas explored.
 - A compact two-row toolbar uses loaded Valheim button sprites, fonts, and selectable
-  states. **More** opens scan/reveal/special-passage options and starts closed on each opening.
+  states. **More** opens keyboard and mouse hints and starts closed on each opening.
 - Automatic current-floor selection, with higher and lower floors available to browse.
 - A view fitted to the entire selected floor on first opening and when changing floors.
   Reopening preserves manual zoom and position; **Home** fits your current floor again.
@@ -52,7 +52,9 @@ for example `DungeonGuide-0.1.1.83-dev.1`. The CI run name includes the full `0.
 its summary shows the assembled version and a package download link.
 Their `build-info.json` records the exact commit, CI run, PR, and Valheim target;
 startup logging reports that same build identity. Include it when reporting an issue.
-These artifacts are test builds rather than stable releases.
+These artifacts are test builds rather than stable releases. They include the
+Thunderstore manifest and icon for manual publication; see
+[Thunderstore packaging](docs/thunderstore.md) for versioning and upload instructions.
 
 Close the game before replacing DLLs. Keep one copy of this plugin installed;
 remove an older copy from another plugin directory. Disable competing dungeon-map

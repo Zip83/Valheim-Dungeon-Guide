@@ -132,10 +132,24 @@ jobs:
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
           cp LICENSE artifacts/DungeonGuide/
           cp packaging/README.md artifacts/DungeonGuide/README.md
+          cp packaging/icon.png artifacts/DungeonGuide/icon.png
           python3 - <<'PY'
           import json
           import os
+          import re
+          import xml.etree.ElementTree as ET
           from pathlib import Path
+
+          package = Path("artifacts/DungeonGuide")
+          release_version = ET.parse("Version.props").findtext("./PropertyGroup/VersionPrefix")
+          if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", release_version or ""):
+              raise ValueError("Thunderstore requires a three-part release version.")
+
+          metadata = json.loads(Path("packaging/manifest.json").read_text(encoding="utf-8"))
+          metadata["version_number"] = release_version
+          (package / "manifest.json").write_text(
+              json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+          )
 
           manifest = {
               "version": os.environ["BUILD_VERSION"],
@@ -152,6 +166,46 @@ jobs:
           Path("artifacts/DungeonGuide/build-info.json").write_text(
               json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
           )
+          PY
+
+      - name: Validate Thunderstore package
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          import struct
+          from pathlib import Path
+
+          package = Path("artifacts/DungeonGuide")
+          required = (
+              "manifest.json", "icon.png", "README.md", "LICENSE", "build-info.json",
+              "BepInEx/plugins/DungeonGuide/DungeonGuide.dll",
+              "BepInEx/plugins/DungeonGuide/DungeonGuide.Domain.dll",
+              "BepInEx/plugins/DungeonGuide/cs/DungeonGuide.Domain.resources.dll",
+          )
+          for name in required:
+              if not (package / name).is_file() or not (package / name).stat().st_size:
+                  raise ValueError(f"Missing or empty package file: {name}")
+
+          metadata = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
+          if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", metadata["version_number"]):
+              raise ValueError("Invalid Thunderstore package version.")
+          icon = (package / "icon.png").read_bytes()
+          if (icon[:8] != b"\x89PNG\r\n\x1a\n" or icon[12:16] != b"IHDR"
+                  or struct.unpack(">II", icon[16:24]) != (256, 256)):
+              raise ValueError("Thunderstore icon must be a 256 x 256 PNG.")
+          if not re.fullmatch(r"[A-Za-z0-9_]{1,128}", metadata["name"]):
+              raise ValueError("Invalid Thunderstore package name.")
+          if not 0 < len(metadata["description"]) <= 250:
+              raise ValueError("Thunderstore description must contain 1-250 characters.")
+          if not metadata["website_url"].startswith("https://") or not metadata["dependencies"]:
+              raise ValueError("Package website and loader dependency are required.")
+          for dependency in metadata["dependencies"]:
+              if not re.fullmatch(r"[A-Za-z0-9_]+-[A-Za-z0-9_]+-[0-9]+\.[0-9]+\.[0-9]+", dependency):
+                  raise ValueError(f"Invalid dependency: {dependency}")
+          for name in ("README.md", "manifest.json", "build-info.json"):
+              (package / name).read_bytes().decode("utf-8", errors="strict")
           PY
 
       - name: Upload plugin artifact
