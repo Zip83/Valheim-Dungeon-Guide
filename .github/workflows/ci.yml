@@ -131,7 +131,7 @@ jobs:
           cp src/DungeonGuide/bin/Release/net48/DungeonGuide.dll src/DungeonGuide/bin/Release/net48/DungeonGuide.Domain.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
           cp LICENSE artifacts/DungeonGuide/
-          cp packaging/README.md artifacts/DungeonGuide/README.md
+          cp README.md artifacts/DungeonGuide/README.md
           cp packaging/icon.png artifacts/DungeonGuide/icon.png
           python3 - <<'PY'
           import json
