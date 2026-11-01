@@ -37,6 +37,28 @@ Changing the game language updates the map controls and navigation text. Existin
 saved chest names and personal notes are preserved. Configuration descriptions,
 logs, and repository documentation are English.
 
+## Screenshots
+
+**Route guidance**
+
+![Route guidance](https://raw.githubusercontent.com/Zip83/Valheim-Dungeon-Guide/master/docs/images/dungeon-guide-path.png)
+
+**All floors**
+
+![All floors](https://raw.githubusercontent.com/Zip83/Valheim-Dungeon-Guide/master/docs/images/dungeon-guide-all-floors.png)
+
+**Floor map**
+
+![Floor map](https://raw.githubusercontent.com/Zip83/Valheim-Dungeon-Guide/master/docs/images/dungeon-guide-map.png)
+
+**Minimap**
+
+![Minimap](https://raw.githubusercontent.com/Zip83/Valheim-Dungeon-Guide/master/docs/images/dungeon-guide-mini-map.png)
+
+**Chest tracking**
+
+![Chest tracking](https://raw.githubusercontent.com/Zip83/Valheim-Dungeon-Guide/master/docs/images/dungeon-guide-chest-collected.png)
+
 ## Installation
 
 With Thunderstore Mod Manager or r2modman, install Dungeon Guide and its
