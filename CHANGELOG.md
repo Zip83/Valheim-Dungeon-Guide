@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+Target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
+
+- Fixed repeated errors while connecting to a multiplayer server before the world finishes loading.
+- Protected dungeon entrance tracking during connection transitions.
+
 ## 0.1.1
 
 Development target: **Valheim 1.0.21**, BepInExPack Valheim **5.4.2351**.
