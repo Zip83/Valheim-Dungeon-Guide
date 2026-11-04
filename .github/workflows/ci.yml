@@ -132,6 +132,7 @@ jobs:
           cp src/DungeonGuide/bin/Release/net48/cs/DungeonGuide.Domain.resources.dll artifacts/DungeonGuide/BepInEx/plugins/DungeonGuide/cs/
           cp LICENSE artifacts/DungeonGuide/
           cp README.md artifacts/DungeonGuide/README.md
+          cp CHANGELOG.md artifacts/DungeonGuide/CHANGELOG.md
           cp packaging/icon.png artifacts/DungeonGuide/icon.png
           python3 - <<'PY'
           import json
@@ -179,7 +180,7 @@ jobs:
 
           package = Path("artifacts/DungeonGuide")
           required = (
-              "manifest.json", "icon.png", "README.md", "LICENSE", "build-info.json",
+              "manifest.json", "icon.png", "README.md", "CHANGELOG.md", "LICENSE", "build-info.json",
               "BepInEx/plugins/DungeonGuide/DungeonGuide.dll",
               "BepInEx/plugins/DungeonGuide/DungeonGuide.Domain.dll",
               "BepInEx/plugins/DungeonGuide/cs/DungeonGuide.Domain.resources.dll",
@@ -204,7 +205,7 @@ jobs:
           for dependency in metadata["dependencies"]:
               if not re.fullmatch(r"[A-Za-z0-9_]+-[A-Za-z0-9_]+-[0-9]+\.[0-9]+\.[0-9]+", dependency):
                   raise ValueError(f"Invalid dependency: {dependency}")
-          for name in ("README.md", "manifest.json", "build-info.json"):
+          for name in ("README.md", "CHANGELOG.md", "manifest.json", "build-info.json"):
               (package / name).read_bytes().decode("utf-8", errors="strict")
           PY
 
